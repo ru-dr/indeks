@@ -7,6 +7,7 @@ import Image from "next/image";
 import { LogOut, User, Lock, X, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 interface User {
   id: string;
@@ -44,13 +45,13 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0D0D0D]">
-        <div className="text-base text-white">Loading...</div>
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }
 
   return (
-    <div className="flex items-center min-h-screen bg-[#0D0D0D] p-4 md:p-6">
+    <div className="flex items-center min-h-screen bg-[#0D0D0D] p-4 md:p-6 dark">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <Card className="mb-6 relative overflow-hidden bg-[#1A1A1A] border-[#2A2A2A] shadow-lg">
@@ -61,7 +62,7 @@ export default function DashboardPage() {
             <div className="flex-1 bg-indeks-green"></div>
           </div>
 
-          <CardContent className="p-6">
+          <CardContent className="p-6 pt-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-4">
                 <Image
@@ -89,7 +90,7 @@ export default function DashboardPage() {
           {/* User Information Card */}
           <Card className="lg:col-span-2 bg-[#1A1A1A] border-[#2A2A2A] shadow-lg">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+              <CardTitle className="text-lg font-semibold  flex items-center gap-2">
                 <User className="h-5 w-5 text-indeks-blue" />
                 User Information
               </CardTitle>
@@ -97,18 +98,24 @@ export default function DashboardPage() {
             <CardContent className="space-y-3">
               <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
                 <p className="text-xs font-medium text-gray-400 mb-1.5">Name</p>
-                <p className="text-sm text-white">{user?.name}</p>
+                <p className="text-sm ">{user?.name}</p>
               </div>
               <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                <p className="text-xs font-medium text-gray-400 mb-1.5">Email</p>
-                <p className="text-sm text-white">{user?.email}</p>
+                <p className="text-xs font-medium text-gray-400 mb-1.5">
+                  Email
+                </p>
+                <p className="text-sm ">{user?.email}</p>
               </div>
               <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                <p className="text-xs font-medium text-gray-400 mb-1.5">User ID</p>
-                <p className="text-xs text-white font-mono break-all">{user?.id}</p>
+                <p className="text-xs font-medium text-gray-400 mb-1.5">
+                  User ID
+                </p>
+                <p className="text-xs  font-mono break-all">{user?.id}</p>
               </div>
               <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                <p className="text-xs font-medium text-gray-400 mb-1.5">Email Verified</p>
+                <p className="text-xs font-medium text-gray-400 mb-1.5">
+                  Email Verified
+                </p>
                 <div className="flex items-center gap-1.5 text-sm">
                   {user?.emailVerified ? (
                     <>
@@ -129,7 +136,9 @@ export default function DashboardPage() {
           {/* Quick Actions Card */}
           <Card className="bg-[#1A1A1A] border-[#2A2A2A] shadow-lg">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-white">Quick Actions</CardTitle>
+              <CardTitle className="text-lg font-semibold ">
+                Quick Actions
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button

@@ -5,12 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Mail,
-  Lock,
-  ArrowRight,
-  AlertTriangle,
-} from "lucide-react";
+import { Mail, Lock, ArrowRight, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,7 +77,7 @@ export default function SignInPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-200">
+                  <Label htmlFor="email" className="text-sm font-medium ">
                     Email
                   </Label>
                   <div className="relative">
@@ -95,7 +90,7 @@ export default function SignInPage() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
+                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A]  placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -110,7 +105,7 @@ export default function SignInPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-200">
+                  <Label htmlFor="password" className="text-sm font-medium ">
                     Password
                   </Label>
                   <div className="relative">
@@ -123,7 +118,7 @@ export default function SignInPage() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
+                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A]  placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
                       placeholder="••••••••"
                     />
                   </div>
@@ -154,7 +149,7 @@ export default function SignInPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 border-[#2A2A2A] text-white hover:bg-[#0D0D0D] hover:text-white"
+                className="w-full h-10 border-[#2A2A2A]  hover:bg-[#0D0D0D] hover:"
                 asChild
               >
                 <Link href="/auth/sign-up">Create an account</Link>

@@ -5,13 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Mail,
-  Lock,
-  User,
-  ArrowRight,
-  AlertTriangle,
-} from "lucide-react";
+import { Mail, Lock, User, ArrowRight, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +79,10 @@ export default function SignUpPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium text-gray-200">
+                  <Label
+                    htmlFor="name"
+                    className="text-sm font-medium text-gray-200"
+                  >
                     Name
                   </Label>
                   <div className="relative">
@@ -105,7 +102,10 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-200">
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-gray-200"
+                  >
                     Email
                   </Label>
                   <div className="relative">
@@ -125,7 +125,10 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-200">
+                  <Label
+                    htmlFor="password"
+                    className="text-sm font-medium text-gray-200"
+                  >
                     Password
                   </Label>
                   <div className="relative">
