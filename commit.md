@@ -12,6 +12,7 @@
 ```
 
 **Rules:**
+
 - `[TYPE]` in UPPERCASE with brackets
 - Space before and after `:`
 - Main info in lowercase, present tense, under 50 chars
@@ -22,66 +23,73 @@
 ## 🏷️ Commit Types
 
 ### Analytics-Specific
-| Type | Emoji | Purpose | Example |
-|------|-------|---------|---------|
-| **[TRACKING]** | 🎯 | Event tracking | `add click event tracking` |
-| **[METRIC]** | 📈 | Metrics & calculations | `add bounce rate calculation` |
-| **[DASHBOARD]** | 📊 | Dashboard features | `create visitor stats widget` |
-| **[DATA]** | 💾 | Data processing | `implement session aggregation` |
-| **[REPORT]** | 📑 | Reporting features | `add CSV export functionality` |
-| **[QUERY]** | 🔍 | Database queries | `optimize page views query` |
+
+| Type            | Emoji | Purpose                | Example                         |
+| --------------- | ----- | ---------------------- | ------------------------------- |
+| **[TRACKING]**  | 🎯    | Event tracking         | `add click event tracking`      |
+| **[METRIC]**    | 📈    | Metrics & calculations | `add bounce rate calculation`   |
+| **[DASHBOARD]** | 📊    | Dashboard features     | `create visitor stats widget`   |
+| **[DATA]**      | 💾    | Data processing        | `implement session aggregation` |
+| **[REPORT]**    | 📑    | Reporting features     | `add CSV export functionality`  |
+| **[QUERY]**     | 🔍    | Database queries       | `optimize page views query`     |
 
 ### Frontend
-| Type | Emoji | Purpose |
-|------|-------|---------|
-| **[UI]** | 🖼️ | User interface components |
-| **[CHART]** | 📉 | Data visualizations |
-| **[FILTER]** | 🔎 | Filtering features |
-| **[UX]** | ✨ | User experience |
+
+| Type         | Emoji | Purpose                   |
+| ------------ | ----- | ------------------------- |
+| **[UI]**     | 🖼️    | User interface components |
+| **[CHART]**  | 📉    | Data visualizations       |
+| **[FILTER]** | 🔎    | Filtering features        |
+| **[UX]**     | ✨    | User experience           |
 
 ### Backend
-| Type | Emoji | Purpose |
-|------|-------|---------|
-| **[API]** | 🌐 | API endpoints |
-| **[DB]** | 🗄️ | Database changes |
-| **[PIPELINE]** | 🔄 | Data pipelines |
-| **[CACHE]** | ⚡ | Caching layer |
-| **[QUEUE]** | 📬 | Queue systems |
-| **[AUTH]** | 🔐 | Authentication |
+
+| Type           | Emoji | Purpose          |
+| -------------- | ----- | ---------------- |
+| **[API]**      | 🌐    | API endpoints    |
+| **[DB]**       | 🗄️    | Database changes |
+| **[PIPELINE]** | 🔄    | Data pipelines   |
+| **[CACHE]**    | ⚡    | Caching layer    |
+| **[QUEUE]**    | 📬    | Queue systems    |
+| **[AUTH]**     | 🔐    | Authentication   |
 
 ### General
-| Type | Emoji | Purpose |
-|------|-------|---------|
-| **[FEAT]** | ✨ | New features |
-| **[FIX]** | 🐛 | Bug fixes |
-| **[REFACTOR]** | ♻️ | Code restructuring |
-| **[PERF]** | ⚡ | Performance improvements |
-| **[TEST]** | 🧪 | Testing |
-| **[DOCS]** | 📚 | Documentation |
-| **[CONFIG]** | ⚙️ | Configuration |
-| **[CHORE]** | 🧹 | Maintenance tasks |
+
+| Type           | Emoji | Purpose                  |
+| -------------- | ----- | ------------------------ |
+| **[FEAT]**     | ✨    | New features             |
+| **[FIX]**      | 🐛    | Bug fixes                |
+| **[REFACTOR]** | ♻️    | Code restructuring       |
+| **[PERF]**     | ⚡    | Performance improvements |
+| **[TEST]**     | 🧪    | Testing                  |
+| **[DOCS]**     | 📚    | Documentation            |
+| **[CONFIG]**   | ⚙️    | Configuration            |
+| **[CHORE]**    | 🧹    | Maintenance tasks        |
 
 ### Special
-| Type | Emoji | Purpose |
-|------|-------|---------|
-| **[HOTFIX]** | 🚑 | Critical production fixes |
-| **[SECURITY]** | 🔒 | Security fixes |
-| **[BREAKING]** | 💥 | Breaking changes |
-| **[MIGRATION]** | 🚚 | Data migration |
-| **[DEPLOY]** | 🚀 | Deployment |
-| **[REVERT]** | ⏪ | Rollback changes |
+
+| Type            | Emoji | Purpose                   |
+| --------------- | ----- | ------------------------- |
+| **[HOTFIX]**    | 🚑    | Critical production fixes |
+| **[SECURITY]**  | 🔒    | Security fixes            |
+| **[BREAKING]**  | 💥    | Breaking changes          |
+| **[MIGRATION]** | 🚚    | Data migration            |
+| **[DEPLOY]**    | 🚀    | Deployment                |
+| **[REVERT]**    | ⏪    | Rollback changes          |
 
 ---
 
 ## ✍️ Writing Guidelines
 
 **Do's:**
+
 - Use present tense ("add" not "added")
 - Start main info with lowercase
 - Be specific and descriptive
 - Explain the "why" in description
 
 **Don'ts:**
+
 - No periods at end of main info
 - No vague terms ("update", "fix stuff")
 - No past tense or gerunds
@@ -150,6 +158,7 @@ FEAT: Added new feature
 ## 🏁 Quick Reference
 
 **Most Common Types:**
+
 - 🎯 `[TRACKING]` - Event tracking
 - 📈 `[METRIC]` - Metrics & KPIs
 - 📊 `[DASHBOARD]` - Dashboard features
@@ -158,12 +167,14 @@ FEAT: Added new feature
 - ⚡ `[PERF]` - Performance
 
 **Format:**
+
 ```
 [TYPE] : action in present tense (< 50 chars)
 * why or how explanation (< 72 chars)
 ```
 
 **Key Principles:**
+
 1. 🎯 One commit = One logical change
 2. 📝 Present tense imperative
 3. 🔍 Specific and searchable
@@ -171,4 +182,4 @@ FEAT: Added new feature
 
 ---
 
-*Keep commits focused, descriptive, and consistent!* ✨
+_Keep commits focused, descriptive, and consistent!_ ✨

@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex min-h-screen flex-col items-center justify-center">
       <Image
         src="/assets/images/svgs/INDEKS-dark.svg"
         alt="INDEKS Logo"
