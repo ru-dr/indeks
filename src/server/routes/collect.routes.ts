@@ -66,13 +66,7 @@ export const collectRoutes = new Elysia({ prefix: "/v1/collect" })
       body: t.Object({
         events: t.Array(
           t.Object({
-            type: t.Union([
-              t.Literal("click"),
-              t.Literal("scroll"),
-              t.Literal("pageview"),
-              t.Literal("form_submit"),
-              t.Literal("custom"),
-            ]),
+            type: t.String(),
             url: t.Optional(t.String()),
             sessionId: t.Optional(t.String()),
             userId: t.Optional(t.String()),
