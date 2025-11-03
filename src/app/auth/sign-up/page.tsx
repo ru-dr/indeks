@@ -5,16 +5,18 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Lock, User, ArrowRight, AlertTriangle } from "lucide-react";
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toastManager } from "@/components/ui/toast";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -29,6 +31,7 @@ export default function SignUpPage() {
         email,
         password,
         name,
+        username,
       });
 
       if (error) {
@@ -37,8 +40,12 @@ export default function SignUpPage() {
       }
 
       if (data) {
-        alert("Sign up successful! You can now sign in.");
-        router.push("/auth/sign-in");
+        toastManager.add({
+          title: "Success!",
+          description: "Account created! Please check your email to verify your account.",
+          type: "success",
+        });
+        router.push(`/auth/sign-in?email=${encodeURIComponent(email)}`);
       }
     } catch {
       setError("An unexpected error occurred");
@@ -71,9 +78,10 @@ export default function SignUpPage() {
 
             <form onSubmit={handleSignUp} className="space-y-5">
               {error && (
-                <div className="p-3 text-sm rounded-lg bg-indeks-orange/10 text-indeks-orange border border-indeks-orange/20 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span className="leading-relaxed">{error}</span>
+                <div className="rounded-lg bg-indeks-orange/10 border border-indeks-orange/20 p-3">
+                  <div className="flex flex-col items-center text-center gap-2 text-sm text-indeks-orange">
+                    {error}
+                  </div>
                 </div>
               )}
 
@@ -97,6 +105,29 @@ export default function SignUpPage() {
                       onChange={(e) => setName(e.target.value)}
                       className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
                       placeholder="Your name"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="username"
+                    className="text-sm font-medium text-gray-200"
+                  >
+                    Username
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <Input
+                      id="username"
+                      type="text"
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
+                      placeholder="Choose a username"
                     />
                   </div>
                 </div>

@@ -1,22 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight, AlertTriangle } from "lucide-react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toastManager } from "@/components/ui/toast";
 
 export default function SignInPage() {
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | React.ReactNode>("");
   const [loading, setLoading] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setEmailOrUsername(decodeURIComponent(emailParam));
+    }
+  }, [searchParams]);
+
+  const handleResendVerification = async (userEmail: string) => {
+    setSendingVerification(true);
+    
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email: userEmail,
+        callbackURL: "/auth/sign-in",
+      });
+
+      if (error) {
+        toastManager.add({
+          title: "Error",
+          description: "Failed to send verification email. Please try again.",
+          type: "error",
+        });
+        return;
+      }
+
+      toastManager.add({
+        title: "Success!",
+        description: "Verification email sent! Please check your inbox.",
+        type: "success",
+      });
+      setError("");
+    } catch {
+      toastManager.add({
+        title: "Error",
+        description: "Failed to send verification email. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setSendingVerification(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +69,17 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const { data, error } = await authClient.signIn.email({
-        email,
-        password,
-      });
+      const isEmail = emailOrUsername.includes("@");
+      
+      const { data, error } = isEmail
+        ? await authClient.signIn.email({
+            email: emailOrUsername,
+            password,
+          })
+        : await authClient.signIn.username({
+            username: emailOrUsername,
+            password,
+          });
 
       if (error) {
         setError(error.message || "Failed to sign in");
@@ -35,8 +87,32 @@ export default function SignInPage() {
       }
 
       if (data) {
-        alert("Sign in successful!");
-        router.push("/");
+        if (!data.user.emailVerified) {
+          await authClient.signOut();
+          
+          setError(
+            <>
+              <p>Please verify your email before signing in.</p>
+              <Button
+                type="button"
+                onClick={() => handleResendVerification(data.user.email)}
+                variant="outline"
+                className="w-full h-9 text-sm bg-indeks-orange/10 hover:bg-indeks-orange/20 text-indeks-orange border-indeks-orange/20"
+                disabled={sendingVerification}
+              >
+                {sendingVerification ? "Sending..." : "Resend verification email"}
+              </Button>
+            </>
+          );
+          return;
+        }
+        
+        toastManager.add({
+          title: "Success!",
+          description: "Sign in successful. Redirecting...",
+          type: "success",
+        });
+        router.push("/profile");
       }
     } catch {
       setError("An unexpected error occurred");
@@ -69,29 +145,30 @@ export default function SignInPage() {
 
             <form onSubmit={handleSignIn} className="space-y-5">
               {error && (
-                <div className="p-3 text-sm rounded-lg bg-indeks-orange/10 text-indeks-orange border border-indeks-orange/20 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span className="leading-relaxed">{error}</span>
+                <div className="rounded-lg bg-indeks-orange/10 border border-indeks-orange/20 p-3">
+                  <div className="flex flex-col items-center text-center gap-2 text-sm text-indeks-orange">
+                    {error}
+                  </div>
                 </div>
               )}
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium ">
-                    Email
+                  <Label htmlFor="emailOrUsername" className="text-sm font-medium text-gray-200">
+                    Email or Username
                   </Label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Mail className="h-4 w-4 text-gray-500" />
                     </div>
                     <Input
-                      id="email"
-                      type="email"
+                      id="emailOrUsername"
+                      type="text"
                       required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={emailOrUsername}
+                      onChange={(e) => setEmailOrUsername(e.target.value)}
                       className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A]  placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
-                      placeholder="your@email.com"
+                      placeholder="your@email.com or username"
                     />
                   </div>
                   <div className="text-right">

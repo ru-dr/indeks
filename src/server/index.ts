@@ -9,5 +9,4 @@ export const app = new Elysia({ prefix: "/api" })
     message: "INDEKS is running",
     timestamp: Date.now(),
   }))
-  // Mount Better Auth handler at /api/auth/*
   .all("/auth/*", ({ request }) => auth.handler(request));
