@@ -14,6 +14,8 @@ interface User {
   name: string;
   email: string;
   emailVerified: boolean;
+  username?: string | null;
+  displayUsername?: string | null;
 }
 
 export default function DashboardPage() {
@@ -100,6 +102,22 @@ export default function DashboardPage() {
                 <p className="text-xs font-medium text-gray-400 mb-1.5">Name</p>
                 <p className="text-sm ">{user?.name}</p>
               </div>
+              {user?.username && (
+                <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
+                  <p className="text-xs font-medium text-gray-400 mb-1.5">
+                    Username
+                  </p>
+                  <p className="text-sm ">@{user?.username}</p>
+                </div>
+              )}
+              {user?.displayUsername && (
+                <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
+                  <p className="text-xs font-medium text-gray-400 mb-1.5">
+                    Display Username
+                  </p>
+                  <p className="text-sm ">{user?.displayUsername}</p>
+                </div>
+              )}
               <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
                 <p className="text-xs font-medium text-gray-400 mb-1.5">
                   Email
