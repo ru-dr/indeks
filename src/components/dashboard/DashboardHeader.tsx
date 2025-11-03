@@ -1,8 +1,8 @@
 "use client";
 
-import { Bell, Search, Menu } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { GlobalSearch } from "@/components/dashboard/GlobalSearch";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -20,11 +20,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         <Menu className="h-5 w-5" />
       </Button>
 
-      <div className="flex-1">
-        <form className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input type="search" placeholder="Search..." className="pl-10" />
-        </form>
+      <div className="flex-1 max-w-md">
+        <GlobalSearch />
       </div>
 
       <div className="flex items-center gap-2">

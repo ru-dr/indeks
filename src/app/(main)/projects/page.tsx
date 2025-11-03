@@ -2,14 +2,11 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import {
   MoreVertical,
   Activity,
   Plus,
-  Search,
-  Filter,
   Eye,
   Users,
   Clock,
@@ -30,22 +27,6 @@ export default function ProjectsPage() {
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             New Project
-          </Button>
-        </div>
-
-        {/* Search and Filter Bar */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search projects..."
-              className="pl-10"
-            />
-          </div>
-          <Button variant="outline">
-            <Filter className="mr-2 h-4 w-4" />
-            Filter
           </Button>
         </div>
 
