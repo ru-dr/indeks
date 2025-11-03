@@ -259,12 +259,14 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={
-      // show a spinner in the center of the screen
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner className="h-8 w-8 text-indeks-blue" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        // show a spinner in the center of the screen
+        <div className="min-h-screen flex items-center justify-center">
+          <Spinner className="h-8 w-8 text-indeks-blue" />
+        </div>
+      }
+    >
       <SignInForm />
     </Suspense>
   );
