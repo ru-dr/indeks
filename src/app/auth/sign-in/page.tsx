@@ -149,8 +149,7 @@ export default function SignInPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 border-[#2A2A2A]  hover:bg-[#0D0D0D] hover:"
-                asChild
+                className="w-full h-10 border-[#2A2A2A] hover:bg-[#0D0D0D] hover:text-white"
               >
                 <Link href="/auth/sign-up">Create an account</Link>
               </Button>

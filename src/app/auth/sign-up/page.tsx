@@ -95,7 +95,7 @@ export default function SignUpPage() {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
+                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
                       placeholder="Your name"
                     />
                   </div>
@@ -118,7 +118,7 @@ export default function SignUpPage() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
+                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -142,7 +142,7 @@ export default function SignUpPage() {
                       minLength={8}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
+                      className="h-10 pl-10 bg-[#0D0D0D] border-[#2A2A2A] placeholder:text-gray-500 focus:border-indeks-blue focus:ring-indeks-blue focus-visible:ring-1"
                       placeholder="••••••••"
                     />
                   </div>
@@ -168,8 +168,7 @@ export default function SignUpPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 border-[#2A2A2A] text-white hover:bg-[#0D0D0D] hover:text-white"
-                asChild
+                className="w-full h-10 border-[#2A2A2A] hover:bg-[#0D0D0D] hover:text-white"
               >
                 <Link href="/auth/sign-in">Already have an account?</Link>
               </Button>
