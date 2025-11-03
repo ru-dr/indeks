@@ -1,13 +1,29 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { LogOut, User, Lock, X, Check } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  LogOut, 
+  User, 
+  Mail, 
+  Shield, 
+  Check, 
+  X, 
+  Key,
+  Calendar,
+  Clock,
+  Settings,
+  Edit,
+  Camera,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface User {
   id: string;
@@ -16,12 +32,34 @@ interface User {
   emailVerified: boolean;
   username?: string | null;
   displayUsername?: string | null;
+  createdAt?: Date;
 }
 
-export default function DashboardPage() {
+export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const [userName, setUserName] = useState<string>("");
+  
+    useEffect(() => {
+      const loadUser = async () => {
+        const { data } = await authClient.getSession();
+        if (data?.user?.name) {
+          setUserName(data.user.name);
+        }
+      };
+      loadUser();
+    }, []);
+  
+    const userInitials = userName
+      ? userName
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2)
+      : "U";
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -43,140 +81,275 @@ export default function DashboardPage() {
     await authClient.signOut();
     router.push("/auth/sign-in");
   };
-
+  
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0D0D0D]">
-        <Spinner className="h-8 w-8" />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Spinner className="h-8 w-8" />
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="flex items-center min-h-screen bg-[#0D0D0D] p-4 md:p-6 dark">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <Card className="mb-6 relative overflow-hidden bg-[#1A1A1A] border-[#2A2A2A] shadow-lg">
-          <div className="absolute top-0 left-0 right-0 flex h-1">
-            <div className="flex-1 bg-indeks-blue"></div>
-            <div className="flex-1 bg-indeks-yellow"></div>
-            <div className="flex-1 bg-indeks-orange"></div>
-            <div className="flex-1 bg-indeks-green"></div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your profile information and account settings
+            </p>
           </div>
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            className="text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
 
-          <CardContent className="p-6 pt-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center gap-4">
-                <Image
-                  src="/assets/images/svgs/INDEKS-dark.svg"
-                  alt="INDEKS"
-                  width={140}
-                  height={25}
-                  priority
-                />
-              </div>
-              <Button
-                onClick={handleSignOut}
-                variant="outline"
-                className="h-10 border-indeks-orange/20 bg-indeks-orange/10 text-indeks-orange hover:bg-indeks-orange/20 hover:text-indeks-orange hover:border-indeks-orange/30"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
+        {/* Profile Overview Card */}
+        <Card className="p-6">
+          <div className="flex items-start gap-6">
+            {/* Avatar */}
+            <div className="relative group">
+              <Avatar className="h-24 w-24">
+                <AvatarFallback className="text-2xl">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* User Information Card */}
-          <Card className="lg:col-span-2 bg-[#1A1A1A] border-[#2A2A2A] shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold  flex items-center gap-2">
-                <User className="h-5 w-5 text-indeks-blue" />
-                User Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                <p className="text-xs font-medium text-gray-400 mb-1.5">Name</p>
-                <p className="text-sm ">{user?.name}</p>
-              </div>
-              {user?.username && (
-                <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                  <p className="text-xs font-medium text-gray-400 mb-1.5">
-                    Username
-                  </p>
-                  <p className="text-sm ">@{user?.username}</p>
-                </div>
-              )}
-              {user?.displayUsername && (
-                <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                  <p className="text-xs font-medium text-gray-400 mb-1.5">
-                    Display Username
-                  </p>
-                  <p className="text-sm ">{user?.displayUsername}</p>
-                </div>
-              )}
-              <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                <p className="text-xs font-medium text-gray-400 mb-1.5">
-                  Email
-                </p>
-                <p className="text-sm ">{user?.email}</p>
-              </div>
-              <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                <p className="text-xs font-medium text-gray-400 mb-1.5">
-                  User ID
-                </p>
-                <p className="text-xs  font-mono break-all">{user?.id}</p>
-              </div>
-              <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#2A2A2A]">
-                <p className="text-xs font-medium text-gray-400 mb-1.5">
-                  Email Verified
-                </p>
-                <div className="flex items-center gap-1.5 text-sm">
-                  {user?.emailVerified ? (
-                    <>
-                      <Check className="h-4 w-4 text-indeks-green" />
-                      <span className="text-indeks-green">Verified</span>
-                    </>
-                  ) : (
-                    <>
-                      <X className="h-4 w-4 text-indeks-orange" />
-                      <span className="text-indeks-orange">Not Verified</span>
-                    </>
+            {/* User Info */}
+            <div className="flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">{user?.name}</h2>
+                  {user?.username && (
+                    <p className="text-muted-foreground mt-1">@{user?.username}</p>
                   )}
                 </div>
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
               </div>
-            </CardContent>
+
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span>{user?.email}</span>
+                </div>
+                {user?.emailVerified ? (
+                  <Badge variant="success" className="text-xs">
+                    <Check className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs text-[var(--color-indeks-orange)]">
+                    <X className="h-3 w-3 mr-1" />
+                    Not Verified
+                  </Badge>
+                )}
+              </div>
+
+              {user?.createdAt && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>Member since {user.createdAt.toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* Account Details */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Personal Information */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-[var(--color-indeks-blue)]/10">
+                <User className="h-5 w-5 text-[var(--color-indeks-blue)]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Personal Information</h3>
+                <p className="text-xs text-muted-foreground">
+                  Your account details
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                <Input value={user?.name} readOnly className="bg-muted/50" />
+              </div>
+
+              {user?.username && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Username</label>
+                  <Input value={`@${user?.username}`} readOnly className="bg-muted/50" />
+                </div>
+              )}
+
+              {user?.displayUsername && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Display Name</label>
+                  <Input value={user?.displayUsername} readOnly className="bg-muted/50" />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Email Address</label>
+                <Input value={user?.email} readOnly className="bg-muted/50" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">User ID</label>
+                <Input value={user?.id} readOnly className="bg-muted/50 font-mono text-xs" />
+              </div>
+            </div>
           </Card>
 
-          {/* Quick Actions Card */}
-          <Card className="bg-[#1A1A1A] border-[#2A2A2A] shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold ">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full h-10 border-indeks-blue/20 bg-indeks-blue/10 text-indeks-blue hover:bg-indeks-blue/20 hover:text-indeks-blue hover:border-indeks-blue/30 justify-start"
-              >
-                <User className="h-4 w-4 mr-2" />
-                Profile Settings
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full h-10 border-indeks-green/20 bg-indeks-green/10 text-indeks-green hover:bg-indeks-green/20 hover:text-indeks-green hover:border-indeks-green/30 justify-start"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                API Keys
-              </Button>
-            </CardContent>
+          {/* Account Security */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-[var(--color-indeks-green)]/10">
+                <Shield className="h-5 w-5 text-[var(--color-indeks-green)]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Account Security</h3>
+                <p className="text-xs text-muted-foreground">
+                  Security and verification status
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Email Verification</span>
+                  </div>
+                  {user?.emailVerified ? (
+                    <Badge variant="success" className="text-xs">
+                      <Check className="h-3 w-3 mr-1" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      <X className="h-3 w-3 mr-1" />
+                      Not Verified
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {user?.emailVerified 
+                    ? "Your email address has been verified" 
+                    : "Verify your email to unlock all features"}
+                </p>
+                {!user?.emailVerified && (
+                  <Button variant="outline" size="sm" className="w-full mt-3">
+                    Send Verification Email
+                  </Button>
+                )}
+              </div>
+
+              <div className="p-4 rounded-lg border">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Key className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Password</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    Set
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Last changed recently
+                </p>
+                <Button variant="outline" size="sm" className="w-full">
+                  Change Password
+                </Button>
+              </div>
+
+              <div className="p-4 rounded-lg border">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Active Session</span>
+                  </div>
+                  <Badge variant="success" className="text-xs">
+                    Active
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This device is currently signed in
+                </p>
+              </div>
+            </div>
           </Card>
         </div>
+
+        {/* Quick Actions */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <Button
+              variant="outline"
+              className="h-auto flex-col items-start p-4 hover:border-primary/50"
+              onClick={() => router.push("/settings")}
+            >
+              <Settings className="h-5 w-5 mb-2 text-[var(--color-indeks-blue)]" />
+              <span className="font-medium">Account Settings</span>
+              <span className="text-xs text-muted-foreground mt-1">
+                Manage preferences
+              </span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto flex-col items-start p-4 hover:border-primary/50"
+              onClick={() => router.push("/settings")}
+            >
+              <Key className="h-5 w-5 mb-2 text-[var(--color-indeks-green)]" />
+              <span className="font-medium">API Keys</span>
+              <span className="text-xs text-muted-foreground mt-1">
+                Manage integrations
+              </span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto flex-col items-start p-4 hover:border-primary/50"
+              onClick={() => router.push("/settings")}
+            >
+              <Shield className="h-5 w-5 mb-2 text-[var(--color-indeks-yellow)]" />
+              <span className="font-medium">Security</span>
+              <span className="text-xs text-muted-foreground mt-1">
+                2FA & passwords
+              </span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto flex-col items-start p-4 hover:border-primary/50"
+            >
+              <User className="h-5 w-5 mb-2 text-[var(--color-indeks-orange)]" />
+              <span className="font-medium">Edit Profile</span>
+              <span className="text-xs text-muted-foreground mt-1">
+                Update information
+              </span>
+            </Button>
+          </div>
+        </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

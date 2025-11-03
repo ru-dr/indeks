@@ -5,16 +5,17 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart3,
-  Users,
   Settings,
   FileText,
-  Activity,
   Globe,
   TrendingUp,
   FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
 const navigationItems = [
   {
@@ -33,13 +34,8 @@ const navigationItems = [
     icon: BarChart3,
   },
   {
-    name: "Real-time",
-    href: "/realtime",
-    icon: Activity,
-  },
-  {
-    name: "Traffic Sources",
-    href: "/traffic",
+    name: "Realtime Traffic",
+    href: "/realtime-traffic",
     icon: Globe,
   },
   {
@@ -53,11 +49,6 @@ const navigationItems = [
     icon: TrendingUp,
   },
   {
-    name: "Users",
-    href: "/users",
-    icon: Users,
-  },
-  {
     name: "Settings",
     href: "/settings",
     icon: Settings,
@@ -66,6 +57,26 @@ const navigationItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data } = await authClient.getSession();
+      if (data?.user?.name) {
+        setUserName(data.user.name);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const userInitials = userName
+    ? userName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "U";
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background">
@@ -111,11 +122,13 @@ export function Sidebar() {
             href="/profile"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-              <Users className="h-4 w-4" />
-            </div>
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1">
-              <p className="text-sm font-medium">Profile</p>
+              <p className="text-sm font-medium">{userName || "User"}</p>
               <p className="text-xs text-muted-foreground">View profile</p>
             </div>
           </Link>
