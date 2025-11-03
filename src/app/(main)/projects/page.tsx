@@ -3,10 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
-  Key,
   MoreVertical,
-  Copy,
   Activity,
   Plus,
   Search,
@@ -54,9 +53,10 @@ export default function ProjectsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[
             {
+              id: "e-commerce-store",
               name: "E-commerce Store",
               domain: "shop.example.com",
-              apiKey: "pk_live_51H7H8H9H0H1H2H3H",
+              apiKey: "indeks_pk_live_51H7H8H9H0H1H2H3H",
               views: "45.2K",
               visitors: "12.3K",
               avgTime: "3m 24s",
@@ -65,9 +65,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-green)]",
             },
             {
+              id: "marketing-site",
               name: "Marketing Site",
               domain: "marketing.example.com",
-              apiKey: "pk_live_62I8I9I0I1I2I3I4I",
+              apiKey: "indeks_pk_live_62I8I9I0I1I2I3I4I",
               views: "33.4K",
               visitors: "9.8K",
               avgTime: "2m 45s",
@@ -76,9 +77,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-blue)]",
             },
             {
+              id: "blog-platform",
               name: "Blog Platform",
               domain: "blog.example.com",
-              apiKey: "pk_live_73J9J0J1J2J3J4J5J",
+              apiKey: "indeks_pk_live_73J9J0J1J2J3J4J5J",
               views: "28.1K",
               visitors: "8.2K",
               avgTime: "4m 12s",
@@ -87,9 +89,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-yellow)]",
             },
             {
+              id: "landing-page",
               name: "Landing Page",
               domain: "landing.example.com",
-              apiKey: "pk_live_84K0K1K2K3K4K5K6K",
+              apiKey: "indeks_pk_live_84K0K1K2K3K4K5K6K",
               views: "21.9K",
               visitors: "6.5K",
               avgTime: "1m 58s",
@@ -98,9 +101,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-orange)]",
             },
             {
+              id: "portfolio-site",
               name: "Portfolio Site",
               domain: "portfolio.example.com",
-              apiKey: "pk_live_95L1L2L3L4L5L6L7L",
+              apiKey: "indeks_pk_live_95L1L2L3L4L5L6L7L",
               views: "16.5K",
               visitors: "5.1K",
               avgTime: "3m 45s",
@@ -109,9 +113,10 @@ export default function ProjectsPage() {
               statusColor: "bg-muted-foreground",
             },
             {
+              id: "documentation",
               name: "Documentation",
               domain: "docs.example.com",
-              apiKey: "pk_live_06M2M3M4M5M6M7M8M",
+              apiKey: "indeks_pk_live_06M2M3M4M5M6M7M8M",
               views: "12.3K",
               visitors: "4.2K",
               avgTime: "5m 32s",
@@ -120,9 +125,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-blue)]",
             },
             {
+              id: "saas-dashboard",
               name: "SaaS Dashboard",
               domain: "app.example.com",
-              apiKey: "pk_live_17N3N4N5N6N7N8N9N",
+              apiKey: "indeks_pk_live_17N3N4N5N6N7N8N9N",
               views: "9.8K",
               visitors: "3.5K",
               avgTime: "6m 15s",
@@ -131,9 +137,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-green)]",
             },
             {
+              id: "community-forum",
               name: "Community Forum",
               domain: "forum.example.com",
-              apiKey: "pk_live_28O4O5O6O7O8O9O0O",
+              apiKey: "indeks_pk_live_28O4O5O6O7O8O9O0O",
               views: "7.2K",
               visitors: "2.8K",
               avgTime: "8m 45s",
@@ -142,9 +149,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-yellow)]",
             },
             {
+              id: "api-documentation",
               name: "API Documentation",
               domain: "api-docs.example.com",
-              apiKey: "pk_live_39P5P6P7P8P9P0P1P",
+              apiKey: "indeks_pk_live_39P5P6P7P8P9P0P1P",
               views: "5.4K",
               visitors: "2.1K",
               avgTime: "4m 30s",
@@ -153,9 +161,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-orange)]",
             },
             {
+              id: "mobile-app-landing",
               name: "Mobile App Landing",
               domain: "mobile.example.com",
-              apiKey: "pk_live_40Q6Q7Q8Q9Q0Q1Q2Q",
+              apiKey: "indeks_pk_live_40Q6Q7Q8Q9Q0Q1Q2Q",
               views: "4.1K",
               visitors: "1.8K",
               avgTime: "2m 10s",
@@ -164,9 +173,10 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-blue)]",
             },
             {
+              id: "beta-testing-site",
               name: "Beta Testing Site",
               domain: "beta.example.com",
-              apiKey: "pk_live_51R7R8R9R0R1R2R3R",
+              apiKey: "indeks_pk_live_51R7R8R9R0R1R2R3R",
               views: "2.3K",
               visitors: "892",
               avgTime: "3m 05s",
@@ -175,9 +185,10 @@ export default function ProjectsPage() {
               statusColor: "bg-muted-foreground",
             },
             {
+              id: "customer-portal",
               name: "Customer Portal",
               domain: "portal.example.com",
-              apiKey: "pk_live_62S8S9S0S1S2S3S4S",
+              apiKey: "indeks_pk_live_62S8S9S0S1S2S3S4S",
               views: "1.9K",
               visitors: "645",
               avgTime: "7m 20s",
@@ -186,7 +197,8 @@ export default function ProjectsPage() {
               statusColor: "bg-[var(--color-indeks-green)]",
             },
           ].map((project, index) => (
-            <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+            <Link key={index} href={`/projects/${project.id}`}>
+              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -210,21 +222,6 @@ export default function ProjectsPage() {
                 <Button variant="ghost" size="icon">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
-              </div>{" "}
-              {/* API Key */}
-              <div className="mb-4 rounded-lg bg-secondary p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Key
-                      className="h-4 w-4"
-                      style={{ color: "var(--color-indeks-blue)" }}
-                    />
-                    <code className="text-xs font-mono">{project.apiKey}</code>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
               </div>
               {/* Project Stats */}
               <div className="grid grid-cols-3 gap-3 mb-4">
@@ -268,6 +265,7 @@ export default function ProjectsPage() {
                 <span>Last active {project.lastActive}</span>
               </div>
             </Card>
+            </Link>
           ))}
         </div>
       </div>

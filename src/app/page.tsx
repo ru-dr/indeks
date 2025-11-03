@@ -11,9 +11,7 @@ import {
   MousePointerClick,
   TrendingUp,
   FolderKanban,
-  Key,
   MoreVertical,
-  Copy,
   Calendar,
   Activity,
   ArrowRight,
@@ -165,9 +163,10 @@ export default function Home() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
+                id: "e-commerce-store",
                 name: "E-commerce Store",
                 domain: "shop.example.com",
-                apiKey: "pk_live_51H7H8H9H0H1H2H3H",
+                apiKey: "indeks_pk_live_51H7H8H9H0H1H2H3H",
                 views: "45.2K",
                 visitors: "12.3K",
                 status: "active",
@@ -175,9 +174,10 @@ export default function Home() {
                 statusColor: "bg-[var(--color-indeks-green)]",
               },
               {
+                id: "marketing-site",
                 name: "Marketing Site",
                 domain: "marketing.example.com",
-                apiKey: "pk_live_62I8I9I0I1I2I3I4I",
+                apiKey: "indeks_pk_live_62I8I9I0I1I2I3I4I",
                 views: "33.4K",
                 visitors: "9.8K",
                 status: "active",
@@ -185,9 +185,10 @@ export default function Home() {
                 statusColor: "bg-[var(--color-indeks-blue)]",
               },
               {
+                id: "blog-platform",
                 name: "Blog Platform",
                 domain: "blog.example.com",
-                apiKey: "pk_live_73J9J0J1J2J3J4J5J",
+                apiKey: "indeks_pk_live_73J9J0J1J2J3J4J5J",
                 views: "28.1K",
                 visitors: "8.2K",
                 status: "active",
@@ -195,9 +196,10 @@ export default function Home() {
                 statusColor: "bg-[var(--color-indeks-yellow)]",
               },
               {
+                id: "landing-page",
                 name: "Landing Page",
                 domain: "landing.example.com",
-                apiKey: "pk_live_84K0K1K2K3K4K5K6K",
+                apiKey: "indeks_pk_live_84K0K1K2K3K4K5K6K",
                 views: "21.9K",
                 visitors: "6.5K",
                 status: "active",
@@ -205,9 +207,10 @@ export default function Home() {
                 statusColor: "bg-[var(--color-indeks-orange)]",
               },
               {
+                id: "portfolio-site",
                 name: "Portfolio Site",
                 domain: "portfolio.example.com",
-                apiKey: "pk_live_95L1L2L3L4L5L6L7L",
+                apiKey: "indeks_pk_live_95L1L2L3L4L5L6L7L",
                 views: "16.5K",
                 visitors: "5.1K",
                 status: "inactive",
@@ -215,9 +218,10 @@ export default function Home() {
                 statusColor: "bg-muted-foreground",
               },
               {
+                id: "documentation",
                 name: "Documentation",
                 domain: "docs.example.com",
-                apiKey: "pk_live_06M2M3M4M5M6M7M8M",
+                apiKey: "indeks_pk_live_06M2M3M4M5M6M7M8M",
                 views: "12.3K",
                 visitors: "4.2K",
                 status: "active",
@@ -225,71 +229,75 @@ export default function Home() {
                 statusColor: "bg-[var(--color-indeks-blue)]",
               },
             ].map((project, index) => (
-              <Card
-                key={index}
-                className="p-6 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div
-                        className={`h-2 w-2 rounded-full ${project.statusColor}`}
-                      />
-                      <h3 className="text-lg font-semibold">{project.name}</h3>
-                      <Badge
-                        variant={
-                          project.status === "active" ? "success" : "error"
-                        }
-                        className="text-xs"
-                      >
-                        {project.status}
-                      </Badge>
+              <Link key={index} href={`/projects/${project.id}`}>
+                <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div
+                          className={`h-2 w-2 rounded-full ${project.statusColor}`}
+                        />
+                        <h3 className="text-lg font-semibold">{project.name}</h3>
+                        <Badge
+                          variant={
+                            project.status === "active" ? "success" : "error"
+                          }
+                          className="text-xs"
+                        >
+                          {project.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {project.domain}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {project.domain}
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* API Key */}
-                <div className="mb-4 rounded-lg bg-secondary p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Key
-                        className="h-4 w-4"
-                        style={{ color: "var(--color-indeks-blue)" }}
-                      />
-                      <code className="text-xs font-mono">
-                        {project.apiKey}
-                      </code>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <Copy className="h-3 w-3" />
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
 
                 {/* Project Stats */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Views</p>
-                    <p className="text-lg font-semibold">{project.views}</p>
+                <div className="space-y-4 mb-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 rounded-lg bg-secondary/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Eye className="h-4 w-4" style={{ color: "var(--color-indeks-green)" }} />
+                        <p className="text-xs text-muted-foreground">Views</p>
+                      </div>
+                      <p className="text-xl font-bold">{project.views}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-secondary/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="h-4 w-4" style={{ color: "var(--color-indeks-blue)" }} />
+                        <p className="text-xs text-muted-foreground">Visitors</p>
+                      </div>
+                      <p className="text-xl font-bold">{project.visitors}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Visitors</p>
-                    <p className="text-lg font-semibold">{project.visitors}</p>
+                  
+                  {/* Quick Stats Bar */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <TrendingUp className="h-3 w-3" style={{ color: "var(--color-indeks-green)" }} />
+                      <span>+12.5%</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <MousePointerClick className="h-3 w-3" style={{ color: "var(--color-indeks-yellow)" }} />
+                      <span>2.4K events</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Last Active */}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Activity className="h-3 w-3" />
-                  <span>Last active {project.lastActive}</span>
+                <div className="flex items-center justify-between pt-3 border-t">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Activity className="h-3 w-3" />
+                    <span>Last active {project.lastActive}</span>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
                 </div>
               </Card>
+              </Link>
             ))}
           </div>
         </div>
