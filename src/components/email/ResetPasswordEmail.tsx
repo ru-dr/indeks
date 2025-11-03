@@ -10,17 +10,17 @@ export default function ResetPasswordEmail({ url }: ResetPasswordEmailProps) {
     <BaseTemplate>
       <Heading style={h1}>Reset Your Password</Heading>
       <Text style={text}>
-        We received a request to reset your password for your INDEKS account. Click the button below to create a new password.
+        We received a request to reset your password for your INDEKS account.
+        Click the button below to create a new password.
       </Text>
       <Button href={url} style={button}>
         Reset Password
       </Button>
-      <Text style={text}>
-        Or copy and paste this link into your browser:
-      </Text>
+      <Text style={text}>Or copy and paste this link into your browser:</Text>
       <Text style={link}>{url}</Text>
       <Text style={subtext}>
-        This reset link will expire in 1 hour. If you didn&apos;t request this reset, please ignore this email.
+        This reset link will expire in 1 hour. If you didn&apos;t request this
+        reset, please ignore this email.
       </Text>
     </BaseTemplate>
   );

@@ -29,9 +29,7 @@ export const auth = betterAuth({
       await emailService.sendVerificationEmail({ user, url });
     },
   },
-  plugins: [
-    username(),
-  ],
+  plugins: [username()],
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL!,
 });

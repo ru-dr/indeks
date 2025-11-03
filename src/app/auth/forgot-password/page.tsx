@@ -67,9 +67,13 @@ export default function ForgotPasswordPage() {
 
               <div className="text-center space-y-4">
                 <CheckCircle className="w-16 h-16 text-indeks-green mx-auto" />
-                <h2 className="text-xl font-semibold text-white">Reset Link Sent</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  Reset Link Sent
+                </h2>
                 <p className="text-gray-400">
-                  If an account exists with the email <strong className="text-gray-300">{email}</strong>, you will receive a password reset link shortly.
+                  If an account exists with the email{" "}
+                  <strong className="text-gray-300">{email}</strong>, you will
+                  receive a password reset link shortly.
                 </p>
               </div>
 
@@ -128,7 +132,10 @@ export default function ForgotPasswordPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-200">
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-gray-200"
+                  >
                     Email
                   </Label>
                   <div className="relative">

@@ -43,7 +43,8 @@ export default function SignUpPage() {
       if (data) {
         toastManager.add({
           title: "Success!",
-          description: "Account created! Please check your email to verify your account.",
+          description:
+            "Account created! Please check your email to verify your account.",
           type: "success",
         });
         router.push(`/auth/sign-in?email=${encodeURIComponent(email)}`);

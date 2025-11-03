@@ -10,14 +10,13 @@ export default function VerificationEmail({ url }: VerificationEmailProps) {
     <BaseTemplate>
       <Heading style={h1}>Verify Your Email Address</Heading>
       <Text style={text}>
-        Welcome to INDEKS! To get started, please verify your email address by clicking the button below.
+        Welcome to INDEKS! To get started, please verify your email address by
+        clicking the button below.
       </Text>
       <Button href={url} style={button}>
         Verify Email Address
       </Button>
-      <Text style={text}>
-        Or copy and paste this link into your browser:
-      </Text>
+      <Text style={text}>Or copy and paste this link into your browser:</Text>
       <Text style={link}>{url}</Text>
       <Text style={subtext}>
         This verification link will expire in 24 hours.
@@ -57,7 +56,7 @@ const button = {
 };
 
 const link = {
-  color: "#00A8E8", // indeks-blue
+  color: "#00A8E8",
   fontSize: "13px",
   wordBreak: "break-all" as const,
   margin: "12px 0",

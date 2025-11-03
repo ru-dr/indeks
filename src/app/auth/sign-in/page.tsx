@@ -31,7 +31,7 @@ export default function SignInPage() {
 
   const handleResendVerification = async (userEmail: string) => {
     setSendingVerification(true);
-    
+
     try {
       const { error } = await authClient.sendVerificationEmail({
         email: userEmail,
@@ -71,7 +71,7 @@ export default function SignInPage() {
 
     try {
       const isEmail = emailOrUsername.includes("@");
-      
+
       const { data, error } = isEmail
         ? await authClient.signIn.email({
             email: emailOrUsername,
@@ -90,7 +90,7 @@ export default function SignInPage() {
       if (data) {
         if (!data.user.emailVerified) {
           await authClient.signOut();
-          
+
           setError(
             <>
               <p>Please verify your email before signing in.</p>
@@ -101,13 +101,15 @@ export default function SignInPage() {
                 className="w-full h-9 text-sm bg-indeks-orange/10 hover:bg-indeks-orange/20 text-indeks-orange border-indeks-orange/20"
                 disabled={sendingVerification}
               >
-                {sendingVerification ? "Sending..." : "Resend verification email"}
+                {sendingVerification
+                  ? "Sending..."
+                  : "Resend verification email"}
               </Button>
-            </>
+            </>,
           );
           return;
         }
-        
+
         toastManager.add({
           title: "Success!",
           description: "Sign in successful. Redirecting...",
@@ -155,7 +157,10 @@ export default function SignInPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="emailOrUsername" className="text-sm font-medium text-gray-200">
+                  <Label
+                    htmlFor="emailOrUsername"
+                    className="text-sm font-medium text-gray-200"
+                  >
                     Email or Username
                   </Label>
                   <div className="relative">

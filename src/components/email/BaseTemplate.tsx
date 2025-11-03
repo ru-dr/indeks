@@ -1,4 +1,13 @@
-import { Html, Head, Body, Container, Section, Text, Hr, Img } from "@react-email/components";
+import {
+  Html,
+  Head,
+  Body,
+  Container,
+  Section,
+  Text,
+  Hr,
+  Img,
+} from "@react-email/components";
 
 interface BaseTemplateProps {
   children: React.ReactNode;
@@ -23,17 +32,14 @@ export default function BaseTemplate({ children }: BaseTemplateProps) {
               />
             </Section>
             <Hr style={divider} />
-            <Section style={content}>
-              {children}
-            </Section>
+            <Section style={content}>{children}</Section>
           </Section>
           <Section style={footer}>
             <Text style={footerText}>
-              This email was sent by INDEKS. If you didn&apos;t request this, please ignore this email.
+              This email was sent by INDEKS. If you didn&apos;t request this,
+              please ignore this email.
             </Text>
-            <Text style={footerText}>
-              © 2025 INDEKS. All rights reserved.
-            </Text>
+            <Text style={footerText}>© 2025 INDEKS. All rights reserved.</Text>
           </Section>
         </Container>
       </Body>
@@ -58,7 +64,8 @@ const card = {
   border: "1px solid #2d2d2d",
   borderRadius: "12px",
   overflow: "hidden" as const,
-  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
+  boxShadow:
+    "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
 };
 
 const header = {
