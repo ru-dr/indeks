@@ -4,19 +4,18 @@ import { authClient } from "@/lib/auth-client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { 
-  LogOut, 
-  User, 
-  Mail, 
-  Shield, 
-  Check, 
-  X, 
+import {
+  LogOut,
+  User,
+  Mail,
+  Shield,
+  Check,
+  X,
   Key,
   Calendar,
   Clock,
   Settings,
   Edit,
-  Camera,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,27 +38,27 @@ export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [userName, setUserName] = useState<string>("");
-  
-    useEffect(() => {
-      const loadUser = async () => {
-        const { data } = await authClient.getSession();
-        if (data?.user?.name) {
-          setUserName(data.user.name);
-        }
-      };
-      loadUser();
-    }, []);
-  
-    const userInitials = userName
-      ? userName
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
-          .slice(0, 2)
-      : "U";
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data } = await authClient.getSession();
+      if (data?.user?.name) {
+        setUserName(data.user.name);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const userInitials = userName
+    ? userName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "U";
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -81,7 +80,7 @@ export default function ProfilePage() {
     await authClient.signOut();
     router.push("/auth/sign-in");
   };
-  
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -131,7 +130,9 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-2xl font-bold">{user?.name}</h2>
                   {user?.username && (
-                    <p className="text-muted-foreground mt-1">@{user?.username}</p>
+                    <p className="text-muted-foreground mt-1">
+                      @{user?.username}
+                    </p>
                   )}
                 </div>
                 <Button variant="outline" size="sm">
@@ -151,7 +152,10 @@ export default function ProfilePage() {
                     Verified
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="text-xs text-[var(--color-indeks-orange)]">
+                  <Badge
+                    variant="outline"
+                    className="text-xs text-[var(--color-indeks-orange)]"
+                  >
                     <X className="h-3 w-3 mr-1" />
                     Not Verified
                   </Badge>
@@ -161,7 +165,9 @@ export default function ProfilePage() {
               {user?.createdAt && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Member since {user.createdAt.toLocaleDateString()}</span>
+                  <span>
+                    Member since {user.createdAt.toLocaleDateString()}
+                  </span>
                 </div>
               )}
             </div>
@@ -186,32 +192,54 @@ export default function ProfilePage() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Full Name
+                </label>
                 <Input value={user?.name} readOnly className="bg-muted/50" />
               </div>
 
               {user?.username && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Username</label>
-                  <Input value={`@${user?.username}`} readOnly className="bg-muted/50" />
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Username
+                  </label>
+                  <Input
+                    value={`@${user?.username}`}
+                    readOnly
+                    className="bg-muted/50"
+                  />
                 </div>
               )}
 
               {user?.displayUsername && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Display Name</label>
-                  <Input value={user?.displayUsername} readOnly className="bg-muted/50" />
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Display Name
+                  </label>
+                  <Input
+                    value={user?.displayUsername}
+                    readOnly
+                    className="bg-muted/50"
+                  />
                 </div>
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Email Address</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Email Address
+                </label>
                 <Input value={user?.email} readOnly className="bg-muted/50" />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">User ID</label>
-                <Input value={user?.id} readOnly className="bg-muted/50 font-mono text-xs" />
+                <label className="text-sm font-medium text-muted-foreground">
+                  User ID
+                </label>
+                <Input
+                  value={user?.id}
+                  readOnly
+                  className="bg-muted/50 font-mono text-xs"
+                />
               </div>
             </div>
           </Card>
@@ -235,7 +263,9 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Email Verification</span>
+                    <span className="text-sm font-medium">
+                      Email Verification
+                    </span>
                   </div>
                   {user?.emailVerified ? (
                     <Badge variant="success" className="text-xs">
@@ -250,8 +280,8 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {user?.emailVerified 
-                    ? "Your email address has been verified" 
+                  {user?.emailVerified
+                    ? "Your email address has been verified"
                     : "Verify your email to unlock all features"}
                 </p>
                 {!user?.emailVerified && (

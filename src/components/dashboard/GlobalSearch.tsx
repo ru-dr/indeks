@@ -2,10 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogPopup,
-} from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import {
@@ -245,13 +242,15 @@ export function GlobalSearch() {
 
   const filteredItems = query
     ? allItems.filter((item) => {
-        const searchText = `${item.title} ${item.description || ""} ${item.keywords?.join(" ") || ""}`.toLowerCase();
+        const searchText =
+          `${item.title} ${item.description || ""} ${item.keywords?.join(" ") || ""}`.toLowerCase();
         return searchText.includes(query.toLowerCase());
       })
     : allItems;
 
   // Smart project creation: if user types "project" and project name doesn't exist
-  const isProjectQuery = query.toLowerCase().includes("project") && filteredItems.length === 0;
+  const isProjectQuery =
+    query.toLowerCase().includes("project") && filteredItems.length === 0;
   const showCreateProject = isProjectQuery && query.trim().length > 7;
 
   const groupedItems = filteredItems.reduce(
@@ -324,7 +323,14 @@ export function GlobalSearch() {
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [open, selectedIndex, filteredItems, handleSelect, showCreateProject, handleCreateProject]);
+  }, [
+    open,
+    selectedIndex,
+    filteredItems,
+    handleSelect,
+    showCreateProject,
+    handleCreateProject,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -354,7 +360,10 @@ export function GlobalSearch() {
 
       {/* Search Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogPopup className="max-w-2xl p-0 overflow-hidden" showCloseButton={false}>
+        <DialogPopup
+          className="max-w-2xl p-0 overflow-hidden"
+          showCloseButton={false}
+        >
           <div className="border-b">
             <div className="flex items-center gap-3 px-4 py-3">
               <Search className="h-5 w-5 text-muted-foreground" />
@@ -377,7 +386,10 @@ export function GlobalSearch() {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors w-full bg-accent text-accent-foreground"
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                    <Plus className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
+                    <Plus
+                      className="h-5 w-5"
+                      style={{ color: "var(--color-indeks-blue)" }}
+                    />
                   </div>
                   <div className="flex-1 text-left">
                     <p className="font-medium">Create New Project</p>
@@ -426,9 +438,7 @@ export function GlobalSearch() {
                             <div
                               className={cn(
                                 "flex h-9 w-9 items-center justify-center rounded-lg",
-                                isSelected
-                                  ? "bg-primary/10"
-                                  : "bg-secondary",
+                                isSelected ? "bg-primary/10" : "bg-secondary",
                               )}
                             >
                               <Icon

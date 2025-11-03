@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-beta.4",
+    "@clickhouse/client": "^1.12.1",
     "@elysiajs/openapi": "^1.4.11",
     "@neondatabase/serverless": "^1.0.2",
     "@plunk/node": "^3.0.3",
@@ -22,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cobe": "^0.6.5",
+    "crypto": "^1.0.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.6",
     "elysia": "^1.4.9",

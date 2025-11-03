@@ -42,24 +42,79 @@ export default function SettingsPage() {
   ];
 
   const notificationSettings = [
-    { label: "Email notifications", description: "Receive email updates about your account", enabled: true },
-    { label: "Product updates", description: "News about new features and improvements", enabled: true },
-    { label: "Weekly reports", description: "Weekly analytics summary via email", enabled: false },
-    { label: "Security alerts", description: "Notifications about security events", enabled: true },
-    { label: "Marketing emails", description: "Promotional content and offers", enabled: false },
+    {
+      label: "Email notifications",
+      description: "Receive email updates about your account",
+      enabled: true,
+    },
+    {
+      label: "Product updates",
+      description: "News about new features and improvements",
+      enabled: true,
+    },
+    {
+      label: "Weekly reports",
+      description: "Weekly analytics summary via email",
+      enabled: false,
+    },
+    {
+      label: "Security alerts",
+      description: "Notifications about security events",
+      enabled: true,
+    },
+    {
+      label: "Marketing emails",
+      description: "Promotional content and offers",
+      enabled: false,
+    },
   ];
 
   const securitySettings = [
-    { label: "Two-Factor Authentication", value: "Enabled", status: "success", icon: Lock },
-    { label: "Password", value: "Last changed 45 days ago", status: "warning", icon: Key },
-    { label: "Active Sessions", value: "3 devices", status: "default", icon: Globe },
-    { label: "Login History", value: "View recent activity", status: "default", icon: Eye },
+    {
+      label: "Two-Factor Authentication",
+      value: "Enabled",
+      status: "success",
+      icon: Lock,
+    },
+    {
+      label: "Password",
+      value: "Last changed 45 days ago",
+      status: "warning",
+      icon: Key,
+    },
+    {
+      label: "Active Sessions",
+      value: "3 devices",
+      status: "default",
+      icon: Globe,
+    },
+    {
+      label: "Login History",
+      value: "View recent activity",
+      status: "default",
+      icon: Eye,
+    },
   ];
 
   const teamMembers = [
-    { name: "John Doe", email: "john@example.com", role: "Owner", status: "Active" },
-    { name: "Jane Smith", email: "jane@example.com", role: "Admin", status: "Active" },
-    { name: "Bob Johnson", email: "bob@example.com", role: "Member", status: "Active" },
+    {
+      name: "John Doe",
+      email: "john@example.com",
+      role: "Owner",
+      status: "Active",
+    },
+    {
+      name: "Jane Smith",
+      email: "jane@example.com",
+      role: "Admin",
+      status: "Active",
+    },
+    {
+      name: "Bob Johnson",
+      email: "bob@example.com",
+      role: "Member",
+      status: "Active",
+    },
   ];
 
   return (
@@ -211,7 +266,7 @@ export default function SettingsPage() {
                 Create New Key
               </Button>
             </div>
-            
+
             <div className="space-y-3 mt-6">
               {apiKeys.map((api, index) => (
                 <div
@@ -230,7 +285,11 @@ export default function SettingsPage() {
                         <code className="text-xs bg-muted px-3 py-1.5 rounded font-mono">
                           {api.key}
                         </code>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0"
+                        >
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
@@ -245,7 +304,11 @@ export default function SettingsPage() {
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Rotate
                       </Button>
-                      <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:bg-destructive/10"
+                      >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Revoke
                       </Button>
@@ -298,11 +361,16 @@ export default function SettingsPage() {
                 </thead>
                 <tbody className="divide-y">
                   {teamMembers.map((member, index) => (
-                    <tr key={index} className="hover:bg-muted/50 transition-colors">
+                    <tr
+                      key={index}
+                      className="hover:bg-muted/50 transition-colors"
+                    >
                       <td className="py-3 px-4">
                         <div>
                           <p className="text-sm font-medium">{member.name}</p>
-                          <p className="text-xs text-muted-foreground">{member.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {member.email}
+                          </p>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -321,7 +389,11 @@ export default function SettingsPage() {
                             Edit
                           </Button>
                           {member.role !== "Owner" && (
-                            <Button size="sm" variant="ghost" className="text-destructive">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive"
+                            >
                               Remove
                             </Button>
                           )}
@@ -343,7 +415,9 @@ export default function SettingsPage() {
                 <Trash2 className="h-5 w-5 text-destructive" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+                <h3 className="text-lg font-semibold text-destructive">
+                  Danger Zone
+                </h3>
                 <p className="text-xs text-muted-foreground">
                   Irreversible and destructive actions
                 </p>
@@ -364,7 +438,9 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/30 bg-destructive/5">
                 <div>
-                  <p className="text-sm font-medium text-destructive">Delete Account</p>
+                  <p className="text-sm font-medium text-destructive">
+                    Delete Account
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Permanently delete your account and all data
                   </p>

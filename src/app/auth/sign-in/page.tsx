@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -9,10 +9,11 @@ import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Label } from "@/components/ui/label";
 import { toastManager } from "@/components/ui/toast";
 
-export default function SignInPage() {
+function SignInForm() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | React.ReactNode>("");
@@ -253,5 +254,18 @@ export default function SignInPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      // show a spinner in the center of the screen
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="h-8 w-8 text-indeks-blue" />
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   );
 }

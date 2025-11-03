@@ -19,65 +19,63 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export default function RealtimeTrafficPage() {
- 
   const getCountryFlag = (countryName: string): string => {
     const countryToCode: Record<string, string> = {
       "United States": "US",
       "United Kingdom": "GB",
-      "Germany": "DE",
-      "France": "FR",
-      "Canada": "CA",
-      "Australia": "AU",
-      "Japan": "JP",
-      "China": "CN",
-      "India": "IN",
-      "Brazil": "BR",
-      "Mexico": "MX",
-      "Spain": "ES",
-      "Italy": "IT",
-      "Netherlands": "NL",
-      "Sweden": "SE",
-      "Norway": "NO",
-      "Denmark": "DK",
-      "Finland": "FI",
-      "Poland": "PL",
-      "Russia": "RU",
+      Germany: "DE",
+      France: "FR",
+      Canada: "CA",
+      Australia: "AU",
+      Japan: "JP",
+      China: "CN",
+      India: "IN",
+      Brazil: "BR",
+      Mexico: "MX",
+      Spain: "ES",
+      Italy: "IT",
+      Netherlands: "NL",
+      Sweden: "SE",
+      Norway: "NO",
+      Denmark: "DK",
+      Finland: "FI",
+      Poland: "PL",
+      Russia: "RU",
       "South Korea": "KR",
-      "Singapore": "SG",
-      "Indonesia": "ID",
-      "Thailand": "TH",
-      "Vietnam": "VN",
-      "Philippines": "PH",
-      "Malaysia": "MY",
-      "Argentina": "AR",
-      "Chile": "CL",
-      "Colombia": "CO",
+      Singapore: "SG",
+      Indonesia: "ID",
+      Thailand: "TH",
+      Vietnam: "VN",
+      Philippines: "PH",
+      Malaysia: "MY",
+      Argentina: "AR",
+      Chile: "CL",
+      Colombia: "CO",
       "South Africa": "ZA",
-      "Egypt": "EG",
-      "Nigeria": "NG",
-      "Kenya": "KE",
-      "Turkey": "TR",
+      Egypt: "EG",
+      Nigeria: "NG",
+      Kenya: "KE",
+      Turkey: "TR",
       "Saudi Arabia": "SA",
       "United Arab Emirates": "AE",
-      "Israel": "IL",
-      "Pakistan": "PK",
-      "Bangladesh": "BD",
+      Israel: "IL",
+      Pakistan: "PK",
+      Bangladesh: "BD",
       "New Zealand": "NZ",
-      "Portugal": "PT",
-      "Greece": "GR",
+      Portugal: "PT",
+      Greece: "GR",
       "Czech Republic": "CZ",
-      "Austria": "AT",
-      "Switzerland": "CH",
-      "Belgium": "BE",
-      "Ireland": "IE",
-      "Romania": "RO",
-      "Ukraine": "UA",
+      Austria: "AT",
+      Switzerland: "CH",
+      Belgium: "BE",
+      Ireland: "IE",
+      Romania: "RO",
+      Ukraine: "UA",
     };
 
     const countryCode = countryToCode[countryName];
     if (!countryCode) return "🌍";
 
-   
     const codePoints = countryCode
       .toUpperCase()
       .split("")
@@ -85,7 +83,6 @@ export default function RealtimeTrafficPage() {
     return String.fromCodePoint(...codePoints);
   };
 
- 
   const realtimeStats = [
     {
       label: "Active Users",
@@ -122,27 +119,125 @@ export default function RealtimeTrafficPage() {
   ];
 
   const topLocations = [
-    { country: "United States", users: 456, percentage: 37, sessions: 892, avgSession: "4m 23s", bounceRate: "28%", growth: "+12%" },
-    { country: "United Kingdom", users: 234, percentage: 19, sessions: 445, avgSession: "3m 45s", bounceRate: "32%", growth: "+8%" },
-    { country: "Germany", users: 178, percentage: 14, sessions: 334, avgSession: "5m 12s", bounceRate: "25%", growth: "+15%" },
-    { country: "France", users: 145, percentage: 12, sessions: 278, avgSession: "3m 56s", bounceRate: "35%", growth: "+6%" },
-    { country: "Canada", users: 98, percentage: 8, sessions: 187, avgSession: "4m 34s", bounceRate: "30%", growth: "+18%" },
-    { country: "Australia", users: 67, percentage: 5, sessions: 123, avgSession: "4m 12s", bounceRate: "27%", growth: "+22%" },
+    {
+      country: "United States",
+      users: 456,
+      percentage: 37,
+      sessions: 892,
+      avgSession: "4m 23s",
+      bounceRate: "28%",
+      growth: "+12%",
+    },
+    {
+      country: "United Kingdom",
+      users: 234,
+      percentage: 19,
+      sessions: 445,
+      avgSession: "3m 45s",
+      bounceRate: "32%",
+      growth: "+8%",
+    },
+    {
+      country: "Germany",
+      users: 178,
+      percentage: 14,
+      sessions: 334,
+      avgSession: "5m 12s",
+      bounceRate: "25%",
+      growth: "+15%",
+    },
+    {
+      country: "France",
+      users: 145,
+      percentage: 12,
+      sessions: 278,
+      avgSession: "3m 56s",
+      bounceRate: "35%",
+      growth: "+6%",
+    },
+    {
+      country: "Canada",
+      users: 98,
+      percentage: 8,
+      sessions: 187,
+      avgSession: "4m 34s",
+      bounceRate: "30%",
+      growth: "+18%",
+    },
+    {
+      country: "Australia",
+      users: 67,
+      percentage: 5,
+      sessions: 123,
+      avgSession: "4m 12s",
+      bounceRate: "27%",
+      growth: "+22%",
+    },
   ];
 
   const topPages = [
-    { page: "/dashboard", views: 2456, avgTime: "3m 45s", bounce: "32%", icon: LayoutDashboard },
-    { page: "/products/analytics", views: 1876, avgTime: "5m 12s", bounce: "28%", icon: LineChart },
-    { page: "/pricing", views: 1543, avgTime: "2m 34s", bounce: "45%", icon: DollarSign },
-    { page: "/auth/sign-up", views: 987, avgTime: "1m 56s", bounce: "52%", icon: Sparkles },
-    { page: "/docs", views: 765, avgTime: "6m 23s", bounce: "21%", icon: BookOpen },
+    {
+      page: "/dashboard",
+      views: 2456,
+      avgTime: "3m 45s",
+      bounce: "32%",
+      icon: LayoutDashboard,
+    },
+    {
+      page: "/products/analytics",
+      views: 1876,
+      avgTime: "5m 12s",
+      bounce: "28%",
+      icon: LineChart,
+    },
+    {
+      page: "/pricing",
+      views: 1543,
+      avgTime: "2m 34s",
+      bounce: "45%",
+      icon: DollarSign,
+    },
+    {
+      page: "/auth/sign-up",
+      views: 987,
+      avgTime: "1m 56s",
+      bounce: "52%",
+      icon: Sparkles,
+    },
+    {
+      page: "/docs",
+      views: 765,
+      avgTime: "6m 23s",
+      bounce: "21%",
+      icon: BookOpen,
+    },
   ];
 
   const trafficSources = [
-    { source: "Direct", users: 487, percentage: 39, color: "bg-[var(--color-indeks-green)]" },
-    { source: "Organic Search", users: 356, percentage: 29, color: "bg-[var(--color-indeks-blue)]" },
-    { source: "Social Media", users: 245, percentage: 20, color: "bg-[var(--color-indeks-yellow)]" },
-    { source: "Referral", users: 146, percentage: 12, color: "bg-[var(--color-indeks-orange)]" },
+    {
+      source: "Direct",
+      users: 487,
+      percentage: 39,
+      color: "bg-[var(--color-indeks-green)]",
+    },
+    {
+      source: "Organic Search",
+      users: 356,
+      percentage: 29,
+      color: "bg-[var(--color-indeks-blue)]",
+    },
+    {
+      source: "Social Media",
+      users: 245,
+      percentage: 20,
+      color: "bg-[var(--color-indeks-yellow)]",
+    },
+    {
+      source: "Referral",
+      users: 146,
+      percentage: 12,
+      color: "bg-[var(--color-indeks-orange)]",
+    },
   ];
 
   return (
@@ -150,7 +245,9 @@ export default function RealtimeTrafficPage() {
       <div className="space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Realtime Traffic</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Realtime Traffic
+          </h1>
           <p className="text-muted-foreground">
             Monitor your website&apos;s traffic and user activity in real-time
           </p>
@@ -226,7 +323,9 @@ export default function RealtimeTrafficPage() {
                     className="bg-accent/30 hover:bg-accent/50 rounded-lg p-3 transition-colors border border-border/50"
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-2xl">{getCountryFlag(location.country)}</span>
+                      <span className="text-2xl">
+                        {getCountryFlag(location.country)}
+                      </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">
                           {location.country}
@@ -239,11 +338,18 @@ export default function RealtimeTrafficPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">Users</span>
+                          <span className="text-xs text-muted-foreground">
+                            Users
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-xs font-semibold">{location.users}</span>
-                          <Badge variant="success" className="text-[10px] px-1 py-0 h-4">
+                          <span className="text-xs font-semibold">
+                            {location.users}
+                          </span>
+                          <Badge
+                            variant="success"
+                            className="text-[10px] px-1 py-0 h-4"
+                          >
                             {location.growth}
                           </Badge>
                         </div>
@@ -251,22 +357,34 @@ export default function RealtimeTrafficPage() {
 
                       {/* Sessions */}
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Sessions</span>
-                        <span className="text-xs font-medium">{location.sessions}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Sessions
+                        </span>
+                        <span className="text-xs font-medium">
+                          {location.sessions}
+                        </span>
                       </div>
 
                       {/* Avg Session & Bounce Rate */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">Avg</span>
+                          <span className="text-xs text-muted-foreground">
+                            Avg
+                          </span>
                         </div>
-                        <span className="text-xs font-medium">{location.avgSession}</span>
+                        <span className="text-xs font-medium">
+                          {location.avgSession}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Bounce</span>
-                        <span className="text-xs font-medium text-orange-600">{location.bounceRate}</span>
+                        <span className="text-xs text-muted-foreground">
+                          Bounce
+                        </span>
+                        <span className="text-xs font-medium text-orange-600">
+                          {location.bounceRate}
+                        </span>
                       </div>
 
                       {/* Progress Bar */}
@@ -315,7 +433,9 @@ export default function RealtimeTrafficPage() {
                             {page.page}
                           </span>
                         </div>
-                        <span className="text-sm font-medium">{page.views} views</span>
+                        <span className="text-sm font-medium">
+                          {page.views} views
+                        </span>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground pl-8">
                         <div className="flex items-center gap-1">

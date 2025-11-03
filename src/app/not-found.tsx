@@ -19,7 +19,8 @@ export default function NotFound() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Page Not Found</h1>
           <p className="text-muted-foreground">
-            Sorry, we couldn&apos;t find the page you&apos;re looking for. It might have been moved or deleted.
+            Sorry, we couldn&apos;t find the page you&apos;re looking for. It
+            might have been moved or deleted.
           </p>
         </div>
 
@@ -31,7 +32,11 @@ export default function NotFound() {
               Go Home
             </Button>
           </Link>
-          <Button variant="outline" onClick={() => window.history.back()} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={() => window.history.back()}
+            className="w-full sm:w-auto"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Go Back
           </Button>

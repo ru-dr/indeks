@@ -237,7 +237,9 @@ export default function Home() {
                         <div
                           className={`h-2 w-2 rounded-full ${project.statusColor}`}
                         />
-                        <h3 className="text-lg font-semibold">{project.name}</h3>
+                        <h3 className="text-lg font-semibold">
+                          {project.name}
+                        </h3>
                         <Badge
                           variant={
                             project.status === "active" ? "success" : "error"
@@ -256,47 +258,61 @@ export default function Home() {
                     </Button>
                   </div>
 
-                {/* Project Stats */}
-                <div className="space-y-4 mb-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-lg bg-secondary/50">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Eye className="h-4 w-4" style={{ color: "var(--color-indeks-green)" }} />
-                        <p className="text-xs text-muted-foreground">Views</p>
+                  {/* Project Stats */}
+                  <div className="space-y-4 mb-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 rounded-lg bg-secondary/50">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Eye
+                            className="h-4 w-4"
+                            style={{ color: "var(--color-indeks-green)" }}
+                          />
+                          <p className="text-xs text-muted-foreground">Views</p>
+                        </div>
+                        <p className="text-xl font-bold">{project.views}</p>
                       </div>
-                      <p className="text-xl font-bold">{project.views}</p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-secondary/50">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Users className="h-4 w-4" style={{ color: "var(--color-indeks-blue)" }} />
-                        <p className="text-xs text-muted-foreground">Visitors</p>
+                      <div className="p-3 rounded-lg bg-secondary/50">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users
+                            className="h-4 w-4"
+                            style={{ color: "var(--color-indeks-blue)" }}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Visitors
+                          </p>
+                        </div>
+                        <p className="text-xl font-bold">{project.visitors}</p>
                       </div>
-                      <p className="text-xl font-bold">{project.visitors}</p>
                     </div>
-                  </div>
-                  
-                  {/* Quick Stats Bar */}
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <TrendingUp className="h-3 w-3" style={{ color: "var(--color-indeks-green)" }} />
-                      <span>+12.5%</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MousePointerClick className="h-3 w-3" style={{ color: "var(--color-indeks-yellow)" }} />
-                      <span>2.4K events</span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Last Active */}
-                <div className="flex items-center justify-between pt-3 border-t">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Activity className="h-3 w-3" />
-                    <span>Last active {project.lastActive}</span>
+                    {/* Quick Stats Bar */}
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <TrendingUp
+                          className="h-3 w-3"
+                          style={{ color: "var(--color-indeks-green)" }}
+                        />
+                        <span>+12.5%</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <MousePointerClick
+                          className="h-3 w-3"
+                          style={{ color: "var(--color-indeks-yellow)" }}
+                        />
+                        <span>2.4K events</span>
+                      </div>
+                    </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </Card>
+
+                  {/* Last Active */}
+                  <div className="flex items-center justify-between pt-3 border-t">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Activity className="h-3 w-3" />
+                      <span>Last active {project.lastActive}</span>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </Card>
               </Link>
             ))}
           </div>

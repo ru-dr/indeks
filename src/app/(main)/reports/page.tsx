@@ -108,37 +108,37 @@ export default function ReportsPage() {
   ];
 
   const scheduledReports = [
-    { 
-      name: "Daily Activity Summary", 
-      frequency: "Daily", 
+    {
+      name: "Daily Activity Summary",
+      frequency: "Daily",
       nextRun: "Tomorrow 9:00 AM",
       lastRun: "Today 9:00 AM",
       recipients: 5,
-      status: "Active"
+      status: "Active",
     },
-    { 
-      name: "Weekly Analytics", 
-      frequency: "Weekly", 
+    {
+      name: "Weekly Analytics",
+      frequency: "Weekly",
       nextRun: "Monday 8:00 AM",
       lastRun: "Last Monday 8:00 AM",
       recipients: 12,
-      status: "Active"
+      status: "Active",
     },
-    { 
-      name: "Monthly Overview", 
-      frequency: "Monthly", 
+    {
+      name: "Monthly Overview",
+      frequency: "Monthly",
       nextRun: "Dec 1, 9:00 AM",
       lastRun: "Nov 1, 9:00 AM",
       recipients: 8,
-      status: "Active"
+      status: "Active",
     },
-    { 
-      name: "Quarterly Business Review", 
-      frequency: "Quarterly", 
+    {
+      name: "Quarterly Business Review",
+      frequency: "Quarterly",
       nextRun: "Jan 1, 2026",
       lastRun: "Oct 1, 2025",
       recipients: 15,
-      status: "Active"
+      status: "Active",
     },
   ];
 
@@ -193,7 +193,10 @@ export default function ReportsPage() {
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
-            <Button variant="secondary" className="text-[var(--color-indeks-black)] bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90">
+            <Button
+              variant="secondary"
+              className="text-[var(--color-indeks-black)] bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90"
+            >
               <Plus className="h-4 w-4 mr-2" />
               New Report
             </Button>
@@ -234,7 +237,9 @@ export default function ReportsPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Report Templates</h2>
-            <Button variant="ghost" size="sm">View All</Button>
+            <Button variant="ghost" size="sm">
+              View All
+            </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {reportTemplates.map((template) => {
@@ -244,7 +249,9 @@ export default function ReportsPage() {
                   key={template.title}
                   className="p-6 hover:shadow-md transition-all cursor-pointer group flex flex-col h-full"
                 >
-                  <div className={`p-3 rounded-lg ${template.bgColor} w-fit mb-4`}>
+                  <div
+                    className={`p-3 rounded-lg ${template.bgColor} w-fit mb-4`}
+                  >
                     <Icon className={`h-6 w-6 ${template.color}`} />
                   </div>
                   <h3 className="font-semibold mb-2">{template.title}</h3>
@@ -255,9 +262,9 @@ export default function ReportsPage() {
                     <span className="text-xs text-muted-foreground">
                       {template.reports} reports
                     </span>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="group-hover:bg-accent"
                     >
                       Generate
@@ -274,7 +281,9 @@ export default function ReportsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Recent Reports</h3>
-              <Button variant="ghost" size="sm">View All</Button>
+              <Button variant="ghost" size="sm">
+                View All
+              </Button>
             </div>
             <div className="border rounded-lg overflow-hidden">
               <table className="w-full">
@@ -305,15 +314,22 @@ export default function ReportsPage() {
                 </thead>
                 <tbody className="divide-y">
                   {recentReports.map((report, index) => (
-                    <tr key={index} className="hover:bg-muted/50 transition-colors">
+                    <tr
+                      key={index}
+                      className="hover:bg-muted/50 transition-colors"
+                    >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded bg-muted">
                             <FileText className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{report.title}</p>
-                            <p className="text-xs text-muted-foreground">{report.author}</p>
+                            <p className="text-sm font-medium">
+                              {report.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {report.author}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -326,14 +342,18 @@ export default function ReportsPage() {
                         <span className="text-sm">{report.date}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-sm text-muted-foreground">{report.size}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {report.size}
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         <span className="text-sm">{report.downloads}</span>
                       </td>
                       <td className="text-center py-3 px-4">
                         <Badge
-                          variant={report.status === "Ready" ? "success" : "outline"}
+                          variant={
+                            report.status === "Ready" ? "success" : "outline"
+                          }
                           className="text-xs"
                         >
                           {report.status}
@@ -364,7 +384,9 @@ export default function ReportsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Scheduled Reports</h3>
-              <Button variant="ghost" size="sm">Manage All</Button>
+              <Button variant="ghost" size="sm">
+                Manage All
+              </Button>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {scheduledReports.map((schedule, index) => (
@@ -395,11 +417,15 @@ export default function ReportsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Last run:</span>
-                      <span className="text-muted-foreground text-xs">{schedule.lastRun}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {schedule.lastRun}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t">
                       <span className="text-muted-foreground">Recipients:</span>
-                      <span className="font-medium">{schedule.recipients} users</span>
+                      <span className="font-medium">
+                        {schedule.recipients} users
+                      </span>
                     </div>
                   </div>
                 </div>

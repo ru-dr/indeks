@@ -46,12 +46,48 @@ export default function EventsPage() {
   ];
 
   const topEvents = [
-    { event: "button_click", count: 23456, users: 12345, avgPerUser: 1.9, category: "Interaction" },
-    { event: "page_view", count: 18234, users: 8765, avgPerUser: 2.1, category: "Pageview" },
-    { event: "form_submit", count: 15678, users: 7890, avgPerUser: 2.0, category: "Conversion" },
-    { event: "video_play", count: 12345, users: 6543, avgPerUser: 1.9, category: "Media" },
-    { event: "download_pdf", count: 9876, users: 5432, avgPerUser: 1.8, category: "Download" },
-    { event: "search_query", count: 8765, users: 4321, avgPerUser: 2.0, category: "Search" },
+    {
+      event: "button_click",
+      count: 23456,
+      users: 12345,
+      avgPerUser: 1.9,
+      category: "Interaction",
+    },
+    {
+      event: "page_view",
+      count: 18234,
+      users: 8765,
+      avgPerUser: 2.1,
+      category: "Pageview",
+    },
+    {
+      event: "form_submit",
+      count: 15678,
+      users: 7890,
+      avgPerUser: 2.0,
+      category: "Conversion",
+    },
+    {
+      event: "video_play",
+      count: 12345,
+      users: 6543,
+      avgPerUser: 1.9,
+      category: "Media",
+    },
+    {
+      event: "download_pdf",
+      count: 9876,
+      users: 5432,
+      avgPerUser: 1.8,
+      category: "Download",
+    },
+    {
+      event: "search_query",
+      count: 8765,
+      users: 4321,
+      avgPerUser: 2.0,
+      category: "Search",
+    },
   ];
 
   const recentEvents = [
@@ -93,11 +129,36 @@ export default function EventsPage() {
   ];
 
   const eventsByCategory = [
-    { category: "User Interactions", count: 45678, percentage: 29, color: "bg-[var(--color-indeks-blue)]" },
-    { category: "Page Navigation", count: 38234, percentage: 24, color: "bg-[var(--color-indeks-green)]" },
-    { category: "Form Submissions", count: 29876, percentage: 19, color: "bg-[var(--color-indeks-yellow)]" },
-    { category: "Media Engagement", count: 24567, percentage: 16, color: "bg-[var(--color-indeks-orange)]" },
-    { category: "E-commerce", count: 17879, percentage: 12, color: "bg-purple-500" },
+    {
+      category: "User Interactions",
+      count: 45678,
+      percentage: 29,
+      color: "bg-[var(--color-indeks-blue)]",
+    },
+    {
+      category: "Page Navigation",
+      count: 38234,
+      percentage: 24,
+      color: "bg-[var(--color-indeks-green)]",
+    },
+    {
+      category: "Form Submissions",
+      count: 29876,
+      percentage: 19,
+      color: "bg-[var(--color-indeks-yellow)]",
+    },
+    {
+      category: "Media Engagement",
+      count: 24567,
+      percentage: 16,
+      color: "bg-[var(--color-indeks-orange)]",
+    },
+    {
+      category: "E-commerce",
+      count: 17879,
+      percentage: 12,
+      color: "bg-purple-500",
+    },
   ];
 
   return (
@@ -178,9 +239,14 @@ export default function EventsPage() {
                   </thead>
                   <tbody>
                     {topEvents.map((event, index) => (
-                      <tr key={index} className="border-b last:border-0 hover:bg-accent/50">
+                      <tr
+                        key={index}
+                        className="border-b last:border-0 hover:bg-accent/50"
+                      >
                         <td className="py-3 px-2">
-                          <span className="text-sm font-mono">{event.event}</span>
+                          <span className="text-sm font-mono">
+                            {event.event}
+                          </span>
                         </td>
                         <td className="text-right py-3 px-2">
                           <span className="text-sm font-semibold">
@@ -188,7 +254,9 @@ export default function EventsPage() {
                           </span>
                         </td>
                         <td className="text-right py-3 px-2">
-                          <span className="text-sm">{event.users.toLocaleString()}</span>
+                          <span className="text-sm">
+                            {event.users.toLocaleString()}
+                          </span>
                         </td>
                         <td className="text-right py-3 px-2">
                           <span className="text-sm">{event.avgPerUser}</span>
@@ -217,7 +285,9 @@ export default function EventsPage() {
                 {eventsByCategory.map((item) => (
                   <div key={item.category} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">{item.category}</span>
+                      <span className="text-xs font-medium">
+                        {item.category}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {item.count.toLocaleString()}
                       </span>
@@ -229,7 +299,9 @@ export default function EventsPage() {
                       />
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-medium">{item.percentage}%</span>
+                      <span className="text-xs font-medium">
+                        {item.percentage}%
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -258,23 +330,33 @@ export default function EventsPage() {
                     <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse" />
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-medium">{event.event}</span>
+                        <span className="font-mono text-sm font-medium">
+                          {event.event}
+                        </span>
                         <Badge variant="outline" className="text-xs">
                           {event.user}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-muted-foreground">{event.page}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {event.page}
+                        </span>
                         {event.value !== "-" && (
                           <>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs font-medium">{event.value}</span>
+                            <span className="text-xs text-muted-foreground">
+                              •
+                            </span>
+                            <span className="text-xs font-medium">
+                              {event.value}
+                            </span>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">{event.time}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {event.time}
+                  </span>
                 </div>
               ))}
             </div>

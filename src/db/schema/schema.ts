@@ -1,4 +1,6 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, uuid } from "drizzle-orm/pg-core";
+
+// ============================= BETTER AUTH Tables ============================= //
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -55,6 +57,33 @@ export const verification = pgTable("verification", {
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// ============================= INDEKS Tables ============================= //
+
+export const projects = pgTable("projects", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  // Core metadata
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category"),
+  link: text("link").notNull(),
+
+  // API key info
+  publicKey: text("public_key").notNull().unique(),
+  keyHash: text("key_hash").notNull(),
+
+  // Additional fields
+  isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

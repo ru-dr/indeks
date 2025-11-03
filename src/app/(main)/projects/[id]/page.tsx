@@ -4,6 +4,13 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -20,85 +27,105 @@ import {
   Calendar,
   BarChart3,
   MousePointerClick,
+  FileText,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-interface ProjectData {
-  name: string;
-  domain: string;
-  apiKey: string;
-  views: string;
-  visitors: string;
-  avgTime: string;
-  bounceRate: string;
-  events: string;
-  status: string;
-  lastActive: string;
-  statusColor: string;
+interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  link: string;
+  publicKey: string;
+  isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
-
-// Mock project data - in a real app, this would come from an API
-const projectsData: Record<string, ProjectData> = {
-  "e-commerce-store": {
-    name: "E-commerce Store",
-    domain: "shop.example.com",
-    apiKey: "indeks_pk_live_51H7H8H9H0H1H2H3H",
-    views: "45.2K",
-    visitors: "12.3K",
-    avgTime: "3m 24s",
-    bounceRate: "42.3%",
-    events: "12.4K",
-    status: "active",
-    lastActive: "2 min ago",
-    statusColor: "bg-[var(--color-indeks-green)]",
-    createdAt: "Jan 15, 2024",
-  },
-  "marketing-site": {
-    name: "Marketing Site",
-    domain: "marketing.example.com",
-    apiKey: "indeks_pk_live_62I8I9I0I1I2I3I4I",
-    views: "33.4K",
-    visitors: "9.8K",
-    avgTime: "2m 45s",
-    bounceRate: "38.7%",
-    events: "9.2K",
-    status: "active",
-    lastActive: "5 min ago",
-    statusColor: "bg-[var(--color-indeks-blue)]",
-    createdAt: "Feb 3, 2024",
-  },
-  "blog-platform": {
-    name: "Blog Platform",
-    domain: "blog.example.com",
-    apiKey: "indeks_pk_live_73J9J0J1J2J3J4J5J",
-    views: "28.1K",
-    visitors: "8.2K",
-    avgTime: "4m 12s",
-    bounceRate: "35.2%",
-    events: "7.8K",
-    status: "active",
-    lastActive: "12 min ago",
-    statusColor: "bg-[var(--color-indeks-yellow)]",
-    createdAt: "Mar 8, 2024",
-  },
-};
 
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.id as string;
-  const project = projectsData[projectId];
 
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/v1/projects/${projectId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          setProject(result.data);
+        } else {
+          setError(result.message || "Failed to fetch project");
+        }
+      } catch (err) {
+        setError("An error occurred while fetching the project");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [projectId]);
+
   const copyApiKey = () => {
-    navigator.clipboard.writeText(project.apiKey);
+    if (!project) return;
+    navigator.clipboard.writeText(project.publicKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!project) {
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? "bg-[var(--color-indeks-green)]" : "bg-muted-foreground";
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 60) return `${minutes} min ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    return `${days} day${days > 1 ? "s" : ""} ago`;
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Button variant="ghost" onClick={() => router.push("/projects")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Projects
+          </Button>
+          <Card className="p-12 text-center">
+            <p className="text-muted-foreground">Loading project...</p>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !project) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -134,35 +161,45 @@ export default function ProjectDetailPage() {
           <div className="flex items-start gap-4">
             <div className="mt-2">
               <div className="flex items-center gap-3 mb-2">
-                <div className={`h-3 w-3 rounded-full ${project.statusColor}`} />
+                <div
+                  className={`h-3 w-3 rounded-full ${getStatusColor(project.isActive)}`}
+                />
                 <h1 className="text-3xl font-bold tracking-tight">
-                  {project.name}
+                  {project.title}
                 </h1>
-                <Badge
-                  variant={project.status === "active" ? "success" : "error"}
-                >
-                  {project.status}
+                <Badge variant={project.isActive ? "success" : "error"}>
+                  {project.isActive ? "active" : "inactive"}
                 </Badge>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4" />
-                  <Link 
-                    href={`https://${project.domain}`} 
-                    target="_blank" 
+                  <Link
+                    href={
+                      project.link.startsWith("http")
+                        ? project.link
+                        : `https://${project.link}`
+                    }
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-[var(--color-indeks-blue)] transition-colors"
                   >
-                    {project.domain}
+                    {
+                      new URL(
+                        project.link.startsWith("http")
+                          ? project.link
+                          : `https://${project.link}`,
+                      ).hostname
+                    }
                   </Link>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Created {project.createdAt}</span>
+                  <span>Created {formatDate(project.createdAt)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4" />
-                  <span>Active {project.lastActive}</span>
+                  <span>Updated {getTimeAgo(project.updatedAt)}</span>
                 </div>
               </div>
             </div>
@@ -182,12 +219,17 @@ export default function ProjectDetailPage() {
                 Use this key to integrate analytics into your project
               </p>
             </div>
-            <Key className="h-6 w-6" style={{ color: "var(--color-indeks-blue)" }} />
+            <Key
+              className="h-6 w-6"
+              style={{ color: "var(--color-indeks-blue)" }}
+            />
           </div>
-          
+
           <div className="rounded-lg bg-secondary p-4">
             <div className="flex items-center justify-between gap-4">
-              <code className="text-sm font-mono flex-1">{project.apiKey}</code>
+              <code className="text-sm font-mono flex-1">
+                {project.publicKey}
+              </code>
               <Button
                 variant="outline"
                 size="sm"
@@ -202,10 +244,11 @@ export default function ProjectDetailPage() {
 
           <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-dashed">
             <p className="text-xs text-muted-foreground mb-2">
-              <strong>Installation:</strong> Add this script to your website&apos;s HTML:
+              <strong>Installation:</strong> Add this script to your
+              website&apos;s HTML:
             </p>
             <code className="text-xs font-mono text-muted-foreground block">
-              {`<script src="https://indeks.io/analytics.js" data-api-key="${project.apiKey}"></script>`}
+              {`<script src="https://indeks.io/analytics.js" data-api-key="${project.publicKey}"></script>`}
             </code>
           </div>
         </Card>
@@ -214,47 +257,99 @@ export default function ProjectDetailPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <Eye className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
+              <Eye
+                className="h-5 w-5"
+                style={{ color: "var(--color-indeks-green)" }}
+              />
               <p className="text-sm text-muted-foreground">Total Views</p>
             </div>
-            <p className="text-2xl font-bold">{project.views}</p>
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Eye />
+                </EmptyMedia>
+                <EmptyTitle>No views yet</EmptyTitle>
+                <EmptyDescription>View tracking coming soon</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <Users className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <Users
+                className="h-5 w-5"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
               <p className="text-sm text-muted-foreground">Visitors</p>
             </div>
-            <p className="text-2xl font-bold">{project.visitors}</p>
-            <p className="text-xs text-muted-foreground mt-1">Unique users</p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Users />
+                </EmptyMedia>
+                <EmptyTitle>No visitors yet</EmptyTitle>
+                <EmptyDescription>
+                  Visitor tracking coming soon
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <Clock className="h-5 w-5" style={{ color: "var(--color-indeks-yellow)" }} />
+              <Clock
+                className="h-5 w-5"
+                style={{ color: "var(--color-indeks-yellow)" }}
+              />
               <p className="text-sm text-muted-foreground">Avg Time</p>
             </div>
-            <p className="text-2xl font-bold">{project.avgTime}</p>
-            <p className="text-xs text-muted-foreground mt-1">Per session</p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Clock />
+                </EmptyMedia>
+                <EmptyTitle>No data</EmptyTitle>
+                <EmptyDescription>Time tracking coming soon</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <TrendingUp className="h-5 w-5" style={{ color: "var(--color-indeks-orange)" }} />
+              <TrendingUp
+                className="h-5 w-5"
+                style={{ color: "var(--color-indeks-orange)" }}
+              />
               <p className="text-sm text-muted-foreground">Bounce Rate</p>
             </div>
-            <p className="text-2xl font-bold">{project.bounceRate}</p>
-            <p className="text-xs text-muted-foreground mt-1">Exit rate</p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <TrendingUp />
+                </EmptyMedia>
+                <EmptyTitle>No data</EmptyTitle>
+                <EmptyDescription>Bounce tracking coming soon</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <MousePointerClick className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
+              <MousePointerClick
+                className="h-5 w-5"
+                style={{ color: "var(--color-indeks-green)" }}
+              />
               <p className="text-sm text-muted-foreground">Events</p>
             </div>
-            <p className="text-2xl font-bold">{project.events}</p>
-            <p className="text-xs text-muted-foreground mt-1">Tracked actions</p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <MousePointerClick />
+                </EmptyMedia>
+                <EmptyTitle>No events</EmptyTitle>
+                <EmptyDescription>Event tracking coming soon</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
         </div>
 
@@ -263,7 +358,10 @@ export default function ProjectDetailPage() {
           {/* Recent Activity */}
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <Activity className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <Activity
+                className="h-5 w-5"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
               <div>
                 <h3 className="text-lg font-semibold">Recent Activity</h3>
                 <p className="text-xs text-muted-foreground">
@@ -271,32 +369,26 @@ export default function ProjectDetailPage() {
                 </p>
               </div>
             </div>
-            <div className="space-y-3">
-              {[
-                { event: "Page View", path: "/products", time: "2 min ago" },
-                { event: "Button Click", path: "/checkout", time: "5 min ago" },
-                { event: "Form Submit", path: "/contact", time: "8 min ago" },
-                { event: "Page View", path: "/about", time: "12 min ago" },
-                { event: "Link Click", path: "/blog", time: "15 min ago" },
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between border-b pb-3 last:border-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{item.event}</p>
-                    <p className="text-xs text-muted-foreground">{item.path}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{item.time}</span>
-                </div>
-              ))}
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Activity />
+                </EmptyMedia>
+                <EmptyTitle>No activity yet</EmptyTitle>
+                <EmptyDescription>
+                  Events will appear here once your project starts tracking.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
 
           {/* Top Pages */}
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <BarChart3 className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
+              <BarChart3
+                className="h-5 w-5"
+                style={{ color: "var(--color-indeks-green)" }}
+              />
               <div>
                 <h3 className="text-lg font-semibold">Top Pages</h3>
                 <p className="text-xs text-muted-foreground">
@@ -304,34 +396,17 @@ export default function ProjectDetailPage() {
                 </p>
               </div>
             </div>
-            <div className="space-y-4">
-              {[
-                { path: "/", views: "12.4K", percentage: "35%" },
-                { path: "/products", views: "8.2K", percentage: "23%" },
-                { path: "/about", views: "5.1K", percentage: "15%" },
-                { path: "/contact", views: "3.8K", percentage: "11%" },
-                { path: "/blog", views: "2.9K", percentage: "8%" },
-              ].map((item, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">{item.path}</p>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{item.views}</p>
-                      <p className="text-xs text-muted-foreground">{item.percentage}</p>
-                    </div>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-secondary">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: item.percentage,
-                        backgroundColor: "var(--color-indeks-green)",
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>No page data</EmptyTitle>
+                <EmptyDescription>
+                  Page statistics will appear here once visitors start browsing.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </Card>
         </div>
       </div>

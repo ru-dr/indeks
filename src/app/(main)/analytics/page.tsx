@@ -52,23 +52,81 @@ export default function AnalyticsPage() {
   ];
 
   const deviceStats = [
-    { device: "Desktop", users: 23456, percentage: 52, icon: Monitor, color: "bg-[var(--color-indeks-blue)]" },
-    { device: "Mobile", users: 18234, percentage: 40, icon: Smartphone, color: "bg-[var(--color-indeks-green)]" },
-    { device: "Tablet", users: 3541, percentage: 8, icon: Tablet, color: "bg-[var(--color-indeks-yellow)]" },
+    {
+      device: "Desktop",
+      users: 23456,
+      percentage: 52,
+      icon: Monitor,
+      color: "bg-[var(--color-indeks-blue)]",
+    },
+    {
+      device: "Mobile",
+      users: 18234,
+      percentage: 40,
+      icon: Smartphone,
+      color: "bg-[var(--color-indeks-green)]",
+    },
+    {
+      device: "Tablet",
+      users: 3541,
+      percentage: 8,
+      icon: Tablet,
+      color: "bg-[var(--color-indeks-yellow)]",
+    },
   ];
 
   const topChannels = [
-    { channel: "Organic Search", sessions: 25678, conversion: "3.4%", revenue: "$12,345", trend: "+15%" },
-    { channel: "Direct", sessions: 18234, conversion: "4.2%", revenue: "$9,876", trend: "+8%" },
-    { channel: "Social Media", sessions: 12456, conversion: "2.1%", revenue: "$5,432", trend: "+22%" },
-    { channel: "Email", sessions: 8765, conversion: "5.6%", revenue: "$7,654", trend: "+12%" },
-    { channel: "Referral", sessions: 6543, conversion: "2.8%", revenue: "$3,210", trend: "+5%" },
-    { channel: "Paid Search", sessions: 4321, conversion: "6.2%", revenue: "$8,901", trend: "+18%" },
+    {
+      channel: "Organic Search",
+      sessions: 25678,
+      conversion: "3.4%",
+      revenue: "$12,345",
+      trend: "+15%",
+    },
+    {
+      channel: "Direct",
+      sessions: 18234,
+      conversion: "4.2%",
+      revenue: "$9,876",
+      trend: "+8%",
+    },
+    {
+      channel: "Social Media",
+      sessions: 12456,
+      conversion: "2.1%",
+      revenue: "$5,432",
+      trend: "+22%",
+    },
+    {
+      channel: "Email",
+      sessions: 8765,
+      conversion: "5.6%",
+      revenue: "$7,654",
+      trend: "+12%",
+    },
+    {
+      channel: "Referral",
+      sessions: 6543,
+      conversion: "2.8%",
+      revenue: "$3,210",
+      trend: "+5%",
+    },
+    {
+      channel: "Paid Search",
+      sessions: 4321,
+      conversion: "6.2%",
+      revenue: "$8,901",
+      trend: "+18%",
+    },
   ];
 
   const contentMetrics = [
     { metric: "Most Viewed Page", value: "/dashboard", views: "12,345" },
-    { metric: "Highest Engagement", value: "/products/analytics", time: "8m 32s" },
+    {
+      metric: "Highest Engagement",
+      value: "/products/analytics",
+      time: "8m 32s",
+    },
     { metric: "Best Conversion", value: "/pricing", rate: "12.4%" },
     { metric: "Lowest Bounce", value: "/docs", rate: "18.2%" },
   ];
@@ -132,7 +190,9 @@ export default function AnalyticsPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <DeviceIcon className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">{device.device}</span>
+                          <span className="text-sm font-medium">
+                            {device.device}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
@@ -170,7 +230,9 @@ export default function AnalyticsPage() {
                     className="flex items-center justify-between p-3 rounded-lg bg-accent/30 border border-border/50"
                   >
                     <div>
-                      <p className="text-xs text-muted-foreground">{item.metric}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.metric}
+                      </p>
                       <p className="text-sm font-medium mt-1">{item.value}</p>
                     </div>
                     <div className="text-right">
@@ -227,12 +289,19 @@ export default function AnalyticsPage() {
                 </thead>
                 <tbody>
                   {topChannels.map((channel, index) => (
-                    <tr key={index} className="border-b last:border-0 hover:bg-accent/50">
+                    <tr
+                      key={index}
+                      className="border-b last:border-0 hover:bg-accent/50"
+                    >
                       <td className="py-3 px-4">
-                        <span className="text-sm font-medium">{channel.channel}</span>
+                        <span className="text-sm font-medium">
+                          {channel.channel}
+                        </span>
                       </td>
                       <td className="text-right py-3 px-4">
-                        <span className="text-sm">{channel.sessions.toLocaleString()}</span>
+                        <span className="text-sm">
+                          {channel.sessions.toLocaleString()}
+                        </span>
                       </td>
                       <td className="text-right py-3 px-4">
                         <Badge variant="success" className="text-xs">
@@ -240,12 +309,16 @@ export default function AnalyticsPage() {
                         </Badge>
                       </td>
                       <td className="text-right py-3 px-4">
-                        <span className="text-sm font-semibold">{channel.revenue}</span>
+                        <span className="text-sm font-semibold">
+                          {channel.revenue}
+                        </span>
                       </td>
                       <td className="text-right py-3 px-4">
                         <div className="flex items-center justify-end gap-1">
                           <TrendingUp className="h-3 w-3 text-green-600" />
-                          <span className="text-xs text-green-600">{channel.trend}</span>
+                          <span className="text-xs text-green-600">
+                            {channel.trend}
+                          </span>
                         </div>
                       </td>
                     </tr>
