@@ -56,6 +56,11 @@ export const collectController = {
       throw new Error("Events array is required and cannot be empty");
     }
 
+    // Debug: Log first received event
+    if (process.env.NODE_ENV === 'development' && data.events.length > 0) {
+      console.log('📥 Received event from SDK:', JSON.stringify(data.events[0], null, 2));
+    }
+
     // Process events
     const processedEvents = data.events.map((event) => ({
       projectId: project.id,
@@ -87,6 +92,16 @@ export const collectController = {
           .replace("T", " ")
           .replace(/\.\d{3}Z$/, "");
 
+        // Ensure metadata is valid JSON object (not stringified)
+        // ClickHouse will handle stringification with JSONEachRow format
+        let metadataObj: Record<string, unknown>;
+        try {
+          metadataObj = event.metadata || {};
+        } catch (err) {
+          console.error('Invalid metadata:', event.metadata);
+          metadataObj = {};
+        }
+
         return {
           project_id: event.projectId,
           event_type: event.eventType,
@@ -95,7 +110,7 @@ export const collectController = {
           user_id: event.userId || null,
           user_agent: event.userAgent || null,
           referrer: event.referrer || null,
-          metadata: JSON.stringify(event.metadata),
+          metadata: metadataObj,
           timestamp: timestampStr,
         };
       });
@@ -104,6 +119,12 @@ export const collectController = {
       const BATCH_SIZE = 500;
       for (let i = 0; i < values.length; i += BATCH_SIZE) {
         const batch = values.slice(i, i + BATCH_SIZE);
+        
+        // Debug: Log first event to see format
+        if (process.env.NODE_ENV === 'development' && batch.length > 0) {
+          console.log('📤 Sending to ClickHouse:', JSON.stringify(batch[0], null, 2));
+        }
+        
         await clickhouse.insert({
           table: "events",
           values: batch,

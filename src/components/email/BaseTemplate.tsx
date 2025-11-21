@@ -26,7 +26,7 @@ export default function BaseTemplate({ children }: BaseTemplateProps) {
           <Section style={card}>
             <Section style={header}>
               <Img
-                src="https://i.postimg.cc/jwDm9rkQ/image.png"
+                src="https://ucarecdn.com/c5a29e25-d71b-45c0-89e0-7653eea0b7cf/INDEKSdark.svg"
                 alt="INDEKS"
                 style={logo}
               />

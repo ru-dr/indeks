@@ -6,6 +6,8 @@ import { ToastProvider } from "@/components/ui/toast";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
+import IndeksProvider from "@/components/providers/indeks-provider";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -27,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
@@ -37,6 +39,7 @@ export default function RootLayout({
             enableColorScheme
             defaultTheme="dark"
           >
+            {/* <IndeksProvider /> */}
             {children}
           </ThemeProvider>
         </ToastProvider>

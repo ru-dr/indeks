@@ -28,6 +28,15 @@ function SignInForm() {
     if (emailParam) {
       setEmailOrUsername(decodeURIComponent(emailParam));
     }
+
+    const errorParam = searchParams.get("error");
+    if (errorParam === "email-not-verified") {
+      setError(
+        <>
+          <p>Please verify your email before accessing the dashboard.</p>
+        </>,
+      );
+    }
   }, [searchParams]);
 
   const handleResendVerification = async (userEmail: string) => {
@@ -116,7 +125,9 @@ function SignInForm() {
           description: "Sign in successful. Redirecting...",
           type: "success",
         });
-        router.push("/profile");
+        
+        const redirectPath = searchParams.get("redirect") || "/";
+        router.push(redirectPath);
       }
     } catch {
       setError("An unexpected error occurred");
