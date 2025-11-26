@@ -7,13 +7,16 @@ export default function IndeksProvider() {
     <Indeks
       apiKey={process.env.NEXT_PUBLIC_INDEKS_PROJECT_KEY!}
       enableConsoleLogging={true}
+      
       config={{
-        captureMouseHover: true,
+        captureMouseHover: false,
+        captureMouseWheel: false,
         captureClicks: true,
         captureNetworkStatus: true,
+        localOnly: true
       }}
     >
-      <IndeksDebugger />
+      <IndeksDebugger  />
     </Indeks>
   );
 }
