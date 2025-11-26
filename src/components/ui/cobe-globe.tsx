@@ -13,13 +13,21 @@ type CobeVariant =
   | "auto-draggable"
   | "auto-rotation"
   | "rotate-to-location"
-  | "scaled";
+  | "scaled"
+  | "realtime";
 
 interface Location {
   name: string;
   lat?: number;
   long?: number;
   emoji?: string;
+}
+
+interface RealtimeMarker {
+  latitude: number;
+  longitude: number;
+  size?: number;
+  color?: [number, number, number];
 }
 
 interface GeocodeResult {
@@ -33,6 +41,7 @@ interface CobeProps {
   className?: string;
   style?: React.CSSProperties;
   locations?: Location[];
+  realtimeMarkers?: RealtimeMarker[];
 
   phi?: number;
   theta?: number;
@@ -63,6 +72,7 @@ export function Cobe({
     { name: "Tokyo", emoji: "📍" },
     { name: "Buenos Aires", emoji: "📍" },
   ],
+  realtimeMarkers = [],
 
   phi = 0,
   theta = 0.2,
@@ -86,6 +96,7 @@ export function Cobe({
   const focusRef = useRef<[number, number]>([0, 0]);
   const [customLocations, setCustomLocations] = useState<Location[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
+  const globeRef = useRef<ReturnType<typeof createGlobe> | null>(null);
 
   const [{ r }, api] = useSpring<{ r: number }>(() => ({
     r: 0,
@@ -172,8 +183,46 @@ export function Cobe({
     initializeLocations();
   }, [variant, locations, geocodeLocationList]);
 
+  // Generate markers based on variant
+  const getMarkers = useCallback(() => {
+    if (variant === "realtime" && realtimeMarkers.length > 0) {
+      // Use realtime markers from props
+      return realtimeMarkers.map((marker) => ({
+        location: [marker.latitude, marker.longitude] as [number, number],
+        size: marker.size || markerSize,
+        color: marker.color,
+      }));
+    }
+
+    if (variant === "rotate-to-location") {
+      return customLocations
+        .filter((loc) => loc.lat && loc.long)
+        .map((loc) => ({
+          location: [loc.lat!, loc.long!] as [number, number],
+          size: markerSize,
+        }));
+    }
+
+    // Default static markers for other variants
+    return [
+      { location: [37.7595, -122.4367], size: markerSize },
+      { location: [40.7128, -74.006], size: markerSize, color: [1, 0, 0] },
+      { location: [35.6895, 139.6917], size: markerSize, color: [0, 0.5, 1] },
+      { location: [-33.8688, 151.2093], size: markerSize, color: [0, 1, 0] },
+      { location: [-22.9068, -43.1729], size: markerSize, color: [0.8, 0, 0.8] },
+      { location: [48.8566, 2.3522], size: markerSize, color: [1, 1, 0] },
+      { location: [41.1579, -8.6291], size: markerSize, color: [1, 0.5, 0] },
+      { location: [37.9838, 23.7275], size: markerSize, color: [1, 0.5, 1] },
+      { location: [41.9028, 12.4964], size: markerSize, color: [0.5, 0.3, 0] },
+      { location: [27.7172, 85.324], size: markerSize, color: [0, 0.5, 1] },
+      { location: [43.4643, -0.5167], size: markerSize, color: [0, 1, 0] },
+      { location: [12.6683, -8.0076], size: markerSize, color: [1, 1, 0] },
+      { location: [11.55, 43.1667], size: markerSize, color: [0.8, 0, 0.8] },
+    ];
+  }, [variant, realtimeMarkers, customLocations, markerSize]);
+
   useEffect(() => {
-    let phi = 0;
+    let phiValue = 0;
     let width = 0;
     let currentPhi = 0;
     let currentTheta = 0;
@@ -190,11 +239,13 @@ export function Cobe({
 
     if (!canvasRef.current) return;
 
+    const markers = getMarkers();
+
     const globe = createGlobe(canvasRef.current, {
       devicePixelRatio: 2,
       width: width * 2,
       height: variant === "scaled" ? width * 2 * 0.4 : width * 2,
-      phi: phi,
+      phi: phiValue,
       theta: theta,
       dark: dark,
       diffuse: diffuse,
@@ -204,116 +255,29 @@ export function Cobe({
       baseColor: hexToRgb(baseColor),
       markerColor: hexToRgb(markerColor),
       glowColor: hexToRgb(glowColor),
-      markers:
-        variant === "default" ||
-        variant === "draggable" ||
-        variant === "auto-draggable" ||
-        variant === "auto-rotation" ||
-        variant === "scaled"
-          ? [
-              { location: [37.7595, -122.4367], size: markerSize },
-
-              {
-                location: [40.7128, -74.006],
-                size: markerSize,
-                color: [1, 0, 0],
-              },
-
-              {
-                location: [35.6895, 139.6917],
-                size: markerSize,
-                color: [0, 0.5, 1],
-              },
-
-              {
-                location: [-33.8688, 151.2093],
-                size: markerSize,
-                color: [0, 1, 0],
-              },
-
-              {
-                location: [-22.9068, -43.1729],
-                size: markerSize,
-                color: [0.8, 0, 0.8],
-              },
-
-              {
-                location: [48.8566, 2.3522],
-                size: markerSize,
-                color: [1, 1, 0],
-              },
-
-              {
-                location: [41.1579, -8.6291],
-                size: markerSize,
-                color: [1, 0.5, 0],
-              },
-
-              {
-                location: [37.9838, 23.7275],
-                size: markerSize,
-                color: [1, 0.5, 1],
-              },
-
-              {
-                location: [41.9028, 12.4964],
-                size: markerSize,
-                color: [0.5, 0.3, 0],
-              },
-
-              {
-                location: [27.7172, 85.324],
-                size: markerSize,
-                color: [0, 0.5, 1],
-              },
-
-              {
-                location: [43.4643, -0.5167],
-                size: markerSize,
-                color: [0, 1, 0],
-              },
-
-              {
-                location: [12.6683, -8.0076],
-                size: markerSize,
-                color: [1, 1, 0],
-              },
-
-              {
-                location: [11.55, 43.1667],
-                size: markerSize,
-                color: [0.8, 0, 0.8],
-              },
-            ]
-          : variant === "rotate-to-location"
-            ? customLocations
-                .filter((loc) => loc.lat && loc.long)
-                .map((loc) => ({
-                  location: [loc.lat!, loc.long!],
-                  size: markerSize,
-                }))
-            : [],
+      markers: markers,
       scale: variant === "scaled" ? 2.5 : undefined,
       offset: variant === "scaled" ? [0, width * 2 * 0.4 * 0.6] : undefined,
       opacity: opacity,
       onRender: (state: CobeState) => {
         switch (variant) {
           case "default":
-            state.phi = phi + r.get();
-            phi += 0.005;
+          case "realtime":
+            state.phi = phiValue + r.get();
+            phiValue += 0.005;
             break;
           case "draggable":
             state.phi = r.get();
             break;
           case "auto-draggable":
             if (!pointerInteracting.current) {
-              phi += 0.005;
+              phiValue += 0.005;
             }
-            state.phi = phi + r.get();
+            state.phi = phiValue + r.get();
             break;
           case "auto-rotation":
-            state.phi = phi;
-            phi += 0.005;
+            state.phi = phiValue;
+            phiValue += 0.005;
             break;
           case "rotate-to-location":
             state.phi = currentPhi;
@@ -337,6 +301,8 @@ export function Cobe({
       },
     });
 
+    globeRef.current = globe;
+
     if (canvasRef.current) {
       setTimeout(() => {
         if (canvasRef.current) {
@@ -347,6 +313,7 @@ export function Cobe({
 
     return () => {
       globe.destroy();
+      globeRef.current = null;
       window.removeEventListener("resize", onResize);
     };
   }, [
@@ -368,13 +335,15 @@ export function Cobe({
     offsetX,
     offsetY,
     opacity,
+    getMarkers,
   ]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (
       variant === "draggable" ||
       variant === "auto-draggable" ||
-      variant === "default"
+      variant === "default" ||
+      variant === "realtime"
     ) {
       pointerInteracting.current =
         e.clientX - pointerInteractionMovement.current;
@@ -386,7 +355,8 @@ export function Cobe({
     if (
       variant === "draggable" ||
       variant === "auto-draggable" ||
-      variant === "default"
+      variant === "default" ||
+      variant === "realtime"
     ) {
       pointerInteracting.current = null;
       if (canvasRef.current) canvasRef.current.style.cursor = "grab";
@@ -397,7 +367,8 @@ export function Cobe({
     if (
       variant === "draggable" ||
       variant === "auto-draggable" ||
-      variant === "default"
+      variant === "default" ||
+      variant === "realtime"
     ) {
       pointerInteracting.current = null;
       if (canvasRef.current) canvasRef.current.style.cursor = "grab";
@@ -408,7 +379,8 @@ export function Cobe({
     if (
       (variant === "draggable" ||
         variant === "auto-draggable" ||
-        variant === "default") &&
+        variant === "default" ||
+        variant === "realtime") &&
       pointerInteracting.current !== null
     ) {
       const delta = e.clientX - pointerInteracting.current;
@@ -423,7 +395,8 @@ export function Cobe({
     if (
       (variant === "draggable" ||
         variant === "auto-draggable" ||
-        variant === "default") &&
+        variant === "default" ||
+        variant === "realtime") &&
       pointerInteracting.current !== null &&
       e.touches[0]
     ) {
@@ -459,14 +432,16 @@ export function Cobe({
     cursor:
       variant === "draggable" ||
       variant === "auto-draggable" ||
-      variant === "default"
+      variant === "default" ||
+      variant === "realtime"
         ? "grab"
         : undefined,
     borderRadius:
       variant === "default" ||
       variant === "draggable" ||
       variant === "auto-draggable" ||
-      variant === "auto-rotation"
+      variant === "auto-rotation" ||
+      variant === "realtime"
         ? "50%"
         : variant === "scaled"
           ? "8px"
@@ -508,5 +483,60 @@ export function Cobe({
         </>
       )}
     </div>
+  );
+}
+
+// Export a wrapper component for realtime globe that handles data fetching
+export function RealtimeGlobe({
+  projectId,
+  className,
+  ...props
+}: {
+  projectId?: string;
+  className?: string;
+} & Omit<CobeProps, "variant" | "realtimeMarkers">) {
+  const [markers, setMarkers] = useState<RealtimeMarker[]>([]);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const url = projectId
+          ? `/api/analytics/${projectId}/locations`
+          : "/api/analytics/global/locations";
+
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          const newMarkers: RealtimeMarker[] = (data.locations || []).map(
+            (loc: { latitude: number; longitude: number; visitor_count: number }) => ({
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              // Size based on visitor count (min 0.03, max 0.15)
+              size: Math.min(0.15, Math.max(0.03, loc.visitor_count * 0.02)),
+              // Green color for active visitors
+              color: [0.2, 0.9, 0.4] as [number, number, number],
+            })
+          );
+          setMarkers(newMarkers);
+        }
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      }
+    };
+
+    fetchLocations();
+
+    // Poll every 15 seconds
+    const interval = setInterval(fetchLocations, 15000);
+    return () => clearInterval(interval);
+  }, [projectId]);
+
+  return (
+    <Cobe
+      variant="realtime"
+      realtimeMarkers={markers}
+      className={className}
+      {...props}
+    />
   );
 }

@@ -13,7 +13,7 @@ export default function IndeksProvider() {
         captureMouseWheel: false,
         captureClicks: true,
         captureNetworkStatus: true,
-        localOnly: true
+        localOnly: false
       }}
     >
       <IndeksDebugger  />

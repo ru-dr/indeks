@@ -5,7 +5,7 @@ export const collectRoutes = new Elysia({ prefix: "/v1/collect" })
   // Collect analytics events
   .post(
     "/",
-    async ({ body, headers, set }) => {
+    async ({ body, headers, set, request }) => {
       const apiKey = headers["x-api-key"];
 
       if (!apiKey) {
@@ -16,8 +16,17 @@ export const collectRoutes = new Elysia({ prefix: "/v1/collect" })
         };
       }
 
+      // Extract IP address from headers (works with proxies like Vercel, Cloudflare)
+      const forwardedFor = headers["x-forwarded-for"];
+      const realIp = headers["x-real-ip"];
+      const cfConnectingIp = headers["cf-connecting-ip"];
+      
+      let clientIp = cfConnectingIp || realIp || 
+        (forwardedFor ? forwardedFor.split(",")[0].trim() : null) ||
+        null;
+
       try {
-        const result = await collectController.collectEvents(apiKey, body);
+        const result = await collectController.collectEvents(apiKey, body, clientIp);
 
         return {
           success: true,

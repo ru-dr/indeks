@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-analytics?type=yesterday",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-analytics?type=today",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}

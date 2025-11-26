@@ -3,6 +3,7 @@ import { openapi } from "@elysiajs/openapi";
 import { auth } from "@/lib/auth";
 import { projectsRoutes } from "./routes/projects.routes";
 import { collectRoutes } from "./routes/collect.routes";
+import { analyticsRoutes } from "./routes/analytics.routes";
 import { initializeClickHouseTables } from "@/db/clickhouse";
 
 initializeClickHouseTables().catch((error) => {
@@ -21,4 +22,5 @@ export const app = new Elysia({ prefix: "/api" })
   }))
   .all("/auth/*", ({ request }) => auth.handler(request))
   .use(projectsRoutes)
-  .use(collectRoutes);
+  .use(collectRoutes)
+  .use(analyticsRoutes);

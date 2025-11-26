@@ -30,7 +30,7 @@ export const testClickHouseConnection = async () => {
 // Initialize ClickHouse tables
 export const initializeClickHouseTables = async () => {
   try {
-    // Create events table with proper nullable columns
+    // Create events table with proper nullable columns including geo data
     await clickhouse.command({
       query: `
         CREATE TABLE IF NOT EXISTS events (
@@ -42,6 +42,12 @@ export const initializeClickHouseTables = async () => {
           user_agent Nullable(String),
           referrer Nullable(String),
           metadata String, -- JSON string
+          -- Geo-location fields
+          country Nullable(String),
+          city Nullable(String),
+          latitude Nullable(Float64),
+          longitude Nullable(Float64),
+          ip_address Nullable(String),
           timestamp DateTime,
           created_at DateTime DEFAULT now()
         ) ENGINE = MergeTree()

@@ -1,165 +1,241 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
   TrendingUp,
   MousePointer,
-  ShoppingCart,
   Play,
   Calendar,
-  Filter,
+  Loader2,
+  FolderOpen,
+  Activity,
+  Eye,
+  MousePointerClick,
 } from "lucide-react";
 
+interface Project {
+  id: string;
+  title: string;
+  isActive: boolean;
+}
+
+interface EventBreakdown {
+  eventType: string;
+  totalCount: number;
+  totalUniqueUsers: number;
+}
+
+interface ClickedElement {
+  elementSelector: string;
+  elementText: string | null;
+  elementTag: string | null;
+  pageUrl: string | null;
+  totalClicks: number;
+  totalUniqueUsers: number;
+}
+
+interface RecentEvent {
+  event_type: string;
+  url: string | null;
+  timestamp: string;
+}
+
+interface AnalyticsSummary {
+  totalPageViews: number;
+  totalClicks: number;
+  totalErrors: number;
+  rageClicks: number;
+  deadClicks: number;
+}
+
 export default function EventsPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [events, setEvents] = useState<EventBreakdown[]>([]);
+  const [clicks, setClicks] = useState<ClickedElement[]>([]);
+  const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(30);
+
+  // Fetch projects
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch("/api/v1/projects");
+        const result = await response.json();
+        if (result.success && result.data.length > 0) {
+          setProjects(result.data);
+          setSelectedProject(result.data[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const getDateRange = useCallback(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    return {
+      startDate: start.toISOString().split("T")[0],
+      endDate: end.toISOString().split("T")[0],
+    };
+  }, [days]);
+
+  // Fetch event data
+  const fetchEventData = useCallback(async () => {
+    if (!selectedProject) return;
+
+    const { startDate, endDate } = getDateRange();
+    const query = `?startDate=${startDate}&endDate=${endDate}`;
+
+    try {
+      const [eventsRes, clicksRes, overviewRes, realtimeRes] = await Promise.all([
+        fetch(`/api/analytics/${selectedProject}/events${query}`),
+        fetch(`/api/analytics/${selectedProject}/clicks${query}`),
+        fetch(`/api/analytics/${selectedProject}/overview${query}`),
+        fetch(`/api/analytics/${selectedProject}/realtime`),
+      ]);
+
+      if (eventsRes.ok) {
+        const data = await eventsRes.json();
+        setEvents(data.events || []);
+      }
+
+      if (clicksRes.ok) {
+        const data = await clicksRes.json();
+        setClicks(data.clicks || []);
+      }
+
+      if (overviewRes.ok) {
+        const data = await overviewRes.json();
+        setSummary(data.summary);
+      }
+
+      if (realtimeRes.ok) {
+        const data = await realtimeRes.json();
+        setRecentEvents(data.recentEvents || []);
+      }
+    } catch (err) {
+      console.error("Error fetching event data:", err);
+    }
+  }, [selectedProject, getDateRange]);
+
+  useEffect(() => {
+    fetchEventData();
+  }, [fetchEventData]);
+
+  // Poll for realtime events
+  useEffect(() => {
+    if (!selectedProject) return;
+
+    const fetchRealtime = async () => {
+      try {
+        const response = await fetch(`/api/analytics/${selectedProject}/realtime`);
+        if (response.ok) {
+          const data = await response.json();
+          setRecentEvents(data.recentEvents || []);
+        }
+      } catch (err) {
+        console.error("Error fetching realtime:", err);
+      }
+    };
+
+    const interval = setInterval(fetchRealtime, 10000);
+    return () => clearInterval(interval);
+  }, [selectedProject]);
+
+  const formatNumber = (num: number | undefined | null) => {
+    if (!num) return "0";
+    return num.toLocaleString();
+  };
+
+  // Calculate totals
+  const totalEvents = events.reduce((sum, e) => sum + e.totalCount, 0);
+  const totalClicks = clicks.reduce((sum, c) => sum + c.totalClicks, 0);
+
+  // Group events by category
   const eventCategories = [
     {
       label: "Total Events",
-      value: "156,234",
-      change: "+18.5%",
+      value: formatNumber(totalEvents),
       icon: TrendingUp,
       color: "text-[var(--color-indeks-blue)]",
     },
     {
       label: "Click Events",
-      value: "89,456",
-      change: "+12.3%",
+      value: formatNumber(totalClicks),
       icon: MousePointer,
       color: "text-[var(--color-indeks-green)]",
     },
     {
-      label: "Conversion Events",
-      value: "12,345",
-      change: "+24.1%",
-      icon: ShoppingCart,
+      label: "Page Views",
+      value: formatNumber(summary?.totalPageViews),
+      icon: Eye,
       color: "text-[var(--color-indeks-yellow)]",
     },
     {
-      label: "Custom Events",
-      value: "54,433",
-      change: "+16.7%",
-      icon: Play,
+      label: "Errors",
+      value: formatNumber(summary?.totalErrors),
+      icon: Activity,
       color: "text-[var(--color-indeks-orange)]",
     },
   ];
 
-  const topEvents = [
-    {
-      event: "button_click",
-      count: 23456,
-      users: 12345,
-      avgPerUser: 1.9,
-      category: "Interaction",
-    },
-    {
-      event: "page_view",
-      count: 18234,
-      users: 8765,
-      avgPerUser: 2.1,
-      category: "Pageview",
-    },
-    {
-      event: "form_submit",
-      count: 15678,
-      users: 7890,
-      avgPerUser: 2.0,
-      category: "Conversion",
-    },
-    {
-      event: "video_play",
-      count: 12345,
-      users: 6543,
-      avgPerUser: 1.9,
-      category: "Media",
-    },
-    {
-      event: "download_pdf",
-      count: 9876,
-      users: 5432,
-      avgPerUser: 1.8,
-      category: "Download",
-    },
-    {
-      event: "search_query",
-      count: 8765,
-      users: 4321,
-      avgPerUser: 2.0,
-      category: "Search",
-    },
-  ];
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[600px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-  const recentEvents = [
-    {
-      event: "purchase_complete",
-      user: "user_12345",
-      page: "/checkout",
-      value: "$124.99",
-      time: "2 min ago",
-    },
-    {
-      event: "signup_success",
-      user: "user_67890",
-      page: "/auth/sign-up",
-      value: "-",
-      time: "5 min ago",
-    },
-    {
-      event: "download_report",
-      user: "user_34567",
-      page: "/reports",
-      value: "monthly.pdf",
-      time: "8 min ago",
-    },
-    {
-      event: "video_complete",
-      user: "user_89012",
-      page: "/tutorials",
-      value: "5:32",
-      time: "12 min ago",
-    },
-    {
-      event: "form_abandoned",
-      user: "user_45678",
-      page: "/contact",
-      value: "50%",
-      time: "15 min ago",
-    },
-  ];
-
-  const eventsByCategory = [
-    {
-      category: "User Interactions",
-      count: 45678,
-      percentage: 29,
-      color: "bg-[var(--color-indeks-blue)]",
-    },
-    {
-      category: "Page Navigation",
-      count: 38234,
-      percentage: 24,
-      color: "bg-[var(--color-indeks-green)]",
-    },
-    {
-      category: "Form Submissions",
-      count: 29876,
-      percentage: 19,
-      color: "bg-[var(--color-indeks-yellow)]",
-    },
-    {
-      category: "Media Engagement",
-      count: 24567,
-      percentage: 16,
-      color: "bg-[var(--color-indeks-orange)]",
-    },
-    {
-      category: "E-commerce",
-      count: 17879,
-      percentage: 12,
-      color: "bg-purple-500",
-    },
-  ];
+  if (projects.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Events</h1>
+            <p className="text-muted-foreground">
+              Track and analyze user interactions and custom events
+            </p>
+          </div>
+          <Card className="p-12">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FolderOpen />
+                </EmptyMedia>
+                <EmptyTitle>No projects yet</EmptyTitle>
+                <EmptyDescription>
+                  Create a project to start tracking events.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -173,13 +249,32 @@ export default function EventsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
+            {projects.length > 1 && (
+              <select
+                value={selectedProject || ""}
+                onChange={(e) => setSelectedProject(e.target.value)}
+                className="px-3 py-2 rounded-md border bg-background"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+              </select>
+            )}
+            <Button
+              variant={days === 7 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDays(7)}
+            >
+              7 days
             </Button>
-            <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90">
-              <Calendar className="h-4 w-4 mr-2" />
-              Date Range
+            <Button
+              variant={days === 30 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDays(30)}
+            >
+              30 days
             </Button>
           </div>
         </div>
@@ -196,9 +291,6 @@ export default function EventsPage() {
                       {stat.label}
                     </p>
                     <h3 className="text-2xl font-bold mt-2">{stat.value}</h3>
-                    <Badge variant="success" className="text-xs mt-1">
-                      {stat.change}
-                    </Badge>
                   </div>
                   <Icon className={`h-8 w-8 ${stat.color}`} />
                 </div>
@@ -207,105 +299,121 @@ export default function EventsPage() {
           })}
         </div>
 
-        {/* Top Events Table & Events by Category */}
+        {/* Top Events Table & Events by Type */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Top Events */}
           <Card className="p-6 lg:col-span-2">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                <h3 className="text-lg font-semibold">Top Events</h3>
+                <h3 className="text-lg font-semibold">Event Breakdown</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">
-                        Event Name
-                      </th>
-                      <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">
-                        Count
-                      </th>
-                      <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">
-                        Users
-                      </th>
-                      <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">
-                        Avg/User
-                      </th>
-                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">
-                        Category
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topEvents.map((event, index) => (
-                      <tr
-                        key={index}
-                        className="border-b last:border-0 hover:bg-accent/50"
-                      >
-                        <td className="py-3 px-2">
-                          <span className="text-sm font-mono">
-                            {event.event}
-                          </span>
-                        </td>
-                        <td className="text-right py-3 px-2">
-                          <span className="text-sm font-semibold">
-                            {event.count.toLocaleString()}
-                          </span>
-                        </td>
-                        <td className="text-right py-3 px-2">
-                          <span className="text-sm">
-                            {event.users.toLocaleString()}
-                          </span>
-                        </td>
-                        <td className="text-right py-3 px-2">
-                          <span className="text-sm">{event.avgPerUser}</span>
-                        </td>
-                        <td className="py-3 px-2">
-                          <Badge variant="outline" className="text-xs">
-                            {event.category}
-                          </Badge>
-                        </td>
+              {events.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">
+                          Event Type
+                        </th>
+                        <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">
+                          Count
+                        </th>
+                        <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">
+                          Unique Users
+                        </th>
+                        <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">
+                          Avg/User
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {events.map((event, index) => (
+                        <tr
+                          key={index}
+                          className="border-b last:border-0 hover:bg-accent/50"
+                        >
+                          <td className="py-3 px-2">
+                            <span className="text-sm font-mono">{event.eventType}</span>
+                          </td>
+                          <td className="text-right py-3 px-2">
+                            <span className="text-sm font-semibold">
+                              {formatNumber(event.totalCount)}
+                            </span>
+                          </td>
+                          <td className="text-right py-3 px-2">
+                            <span className="text-sm">
+                              {formatNumber(event.totalUniqueUsers)}
+                            </span>
+                          </td>
+                          <td className="text-right py-3 px-2">
+                            <span className="text-sm">
+                              {event.totalUniqueUsers > 0
+                                ? (event.totalCount / event.totalUniqueUsers).toFixed(1)
+                                : "0"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon"><TrendingUp /></EmptyMedia>
+                    <EmptyTitle>No event data</EmptyTitle>
+                    <EmptyDescription>Run sync to see event breakdown.</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
             </div>
           </Card>
 
-          {/* Events by Category */}
+          {/* Top Clicked Elements */}
           <Card className="p-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <MousePointer className="h-5 w-5 text-[var(--color-indeks-green)]" />
-                <h3 className="text-lg font-semibold">By Category</h3>
+                <MousePointerClick className="h-5 w-5 text-[var(--color-indeks-green)]" />
+                <h3 className="text-lg font-semibold">Top Clicked Elements</h3>
               </div>
-              <div className="space-y-3">
-                {eventsByCategory.map((item) => (
-                  <div key={item.category} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">
-                        {item.category}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.count.toLocaleString()}
-                      </span>
+              {clicks.length > 0 ? (
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {clicks.slice(0, 10).map((click, index) => (
+                    <div key={index} className="space-y-1 pb-3 border-b last:border-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono bg-secondary px-2 py-1 rounded truncate max-w-32">
+                          {click.elementSelector}
+                        </span>
+                        <span className="text-sm font-semibold">
+                          {formatNumber(click.totalClicks)}
+                        </span>
+                      </div>
+                      {click.elementText && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {click.elementText}
+                        </p>
+                      )}
+                      <div className="w-full bg-secondary rounded-full h-1.5">
+                        <div
+                          className="bg-[var(--color-indeks-green)] h-1.5 rounded-full"
+                          style={{
+                            width: `${Math.min(100, (click.totalClicks / (clicks[0]?.totalClicks || 1)) * 100)}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className={`${item.color} h-2 rounded-full transition-all`}
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-medium">
-                        {item.percentage}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon"><MousePointerClick /></EmptyMedia>
+                    <EmptyTitle>No click data</EmptyTitle>
+                    <EmptyDescription>Run sync to see clicked elements.</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
             </div>
           </Card>
         </div>
@@ -316,50 +424,43 @@ export default function EventsPage() {
             <div className="flex items-center gap-2">
               <Play className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
               <h3 className="text-lg font-semibold">Recent Events Stream</h3>
-              <Badge variant="success" className="ml-2">
-                Live
-              </Badge>
+              <Badge variant="success" className="ml-2">Live</Badge>
             </div>
-            <div className="space-y-2">
-              {recentEvents.map((event, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors border border-border/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-medium">
-                          {event.event}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {event.user}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-muted-foreground">
-                          {event.page}
-                        </span>
-                        {event.value !== "-" && (
-                          <>
-                            <span className="text-xs text-muted-foreground">
-                              •
-                            </span>
-                            <span className="text-xs font-medium">
-                              {event.value}
-                            </span>
-                          </>
-                        )}
+            {recentEvents.length > 0 ? (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {recentEvents.map((event, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors border border-border/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-medium">
+                            {event.event_type}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate max-w-64">
+                          {event.url || "—"}
+                        </p>
                       </div>
                     </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(event.timestamp).toLocaleTimeString()}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {event.time}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon"><Play /></EmptyMedia>
+                  <EmptyTitle>No recent events</EmptyTitle>
+                  <EmptyDescription>Events will appear here in real-time.</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
           </div>
         </Card>
       </div>
