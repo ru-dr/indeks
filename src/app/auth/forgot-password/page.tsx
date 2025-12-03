@@ -24,13 +24,20 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const { error } = await authClient.forgetPassword({
-        email,
-        redirectTo: "/auth/reset-password",
+      // Call the forget password API directly
+      const response = await fetch("/api/auth/forget-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          redirectTo: "/auth/reset-password",
+        }),
       });
 
-      if (error) {
-        setError(error.message || "Failed to send reset email");
+      const data = await response.json();
+      
+      if (!response.ok) {
+        setError(data.message || "Failed to send reset email");
         return;
       }
 

@@ -16,12 +16,20 @@ import {
   TrendingUp,
   MousePointer,
   Play,
-  Calendar,
   Loader2,
   FolderOpen,
   Activity,
   Eye,
   MousePointerClick,
+  AlertTriangle,
+  XCircle,
+  Zap,
+  FileText,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Globe,
+  ExternalLink,
 } from "lucide-react";
 
 interface Project {
@@ -36,19 +44,27 @@ interface EventBreakdown {
   totalUniqueUsers: number;
 }
 
-interface ClickedElement {
-  elementSelector: string;
-  elementText: string | null;
-  elementTag: string | null;
-  pageUrl: string | null;
-  totalClicks: number;
-  totalUniqueUsers: number;
-}
-
 interface RecentEvent {
   event_type: string;
   url: string | null;
   timestamp: string;
+  country: string | null;
+  city: string | null;
+  user_agent: string | null;
+  referrer: string | null;
+  session_id: string | null;
+}
+
+interface TopPage {
+  url: string;
+  totalPageViews: number;
+  totalUniqueVisitors: number;
+  avgTimeOnPage: number;
+}
+
+interface DeviceBreakdown {
+  deviceType: string;
+  totalVisits: number;
 }
 
 interface AnalyticsSummary {
@@ -63,8 +79,10 @@ export default function EventsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [events, setEvents] = useState<EventBreakdown[]>([]);
-  const [clicks, setClicks] = useState<ClickedElement[]>([]);
+
   const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
+  const [topPages, setTopPages] = useState<TopPage[]>([]);
+  const [devices, setDevices] = useState<DeviceBreakdown[]>([]);
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
@@ -107,21 +125,17 @@ export default function EventsPage() {
     const query = `?startDate=${startDate}&endDate=${endDate}`;
 
     try {
-      const [eventsRes, clicksRes, overviewRes, realtimeRes] = await Promise.all([
+      const [eventsRes, overviewRes, realtimeRes, pagesRes, devicesRes] = await Promise.all([
         fetch(`/api/analytics/${selectedProject}/events${query}`),
-        fetch(`/api/analytics/${selectedProject}/clicks${query}`),
         fetch(`/api/analytics/${selectedProject}/overview${query}`),
         fetch(`/api/analytics/${selectedProject}/realtime`),
+        fetch(`/api/analytics/${selectedProject}/pages${query}&limit=5`),
+        fetch(`/api/analytics/${selectedProject}/devices${query}`),
       ]);
 
       if (eventsRes.ok) {
         const data = await eventsRes.json();
         setEvents(data.events || []);
-      }
-
-      if (clicksRes.ok) {
-        const data = await clicksRes.json();
-        setClicks(data.clicks || []);
       }
 
       if (overviewRes.ok) {
@@ -132,6 +146,16 @@ export default function EventsPage() {
       if (realtimeRes.ok) {
         const data = await realtimeRes.json();
         setRecentEvents(data.recentEvents || []);
+      }
+
+      if (pagesRes.ok) {
+        const data = await pagesRes.json();
+        setTopPages(data.pages || []);
+      }
+
+      if (devicesRes.ok) {
+        const data = await devicesRes.json();
+        setDevices(data.deviceTypeBreakdown || []);
       }
     } catch (err) {
       console.error("Error fetching event data:", err);
@@ -163,13 +187,19 @@ export default function EventsPage() {
   }, [selectedProject]);
 
   const formatNumber = (num: number | undefined | null) => {
-    if (!num) return "0";
-    return num.toLocaleString();
+    if (num === null || num === undefined) return "0";
+    
+    // Use Intl.NumberFormat for compact notation (enterprise standard)
+    return new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      compactDisplay: "short",
+      maximumFractionDigits: 1,
+    }).format(num);
   };
 
   // Calculate totals
   const totalEvents = events.reduce((sum, e) => sum + e.totalCount, 0);
-  const totalClicks = clicks.reduce((sum, c) => sum + c.totalClicks, 0);
+  const totalClicks = summary?.totalClicks || 0;
 
   // Group events by category
   const eventCategories = [
@@ -284,24 +314,24 @@ export default function EventsPage() {
           {eventCategories.map((stat) => {
             const Icon = stat.icon;
             return (
-              <Card key={stat.label} className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+              <Card key={stat.label} className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-muted-foreground">
                       {stat.label}
                     </p>
-                    <h3 className="text-2xl font-bold mt-2">{stat.value}</h3>
+                    <h3 className="text-xl font-bold mt-1 truncate" title={stat.value}>{stat.value}</h3>
                   </div>
-                  <Icon className={`h-8 w-8 ${stat.color}`} />
+                  <Icon className={`h-6 w-6 shrink-0 ${stat.color}`} />
                 </div>
               </Card>
             );
           })}
         </div>
 
-        {/* Top Events Table & Events by Type */}
+        {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Top Events */}
+          {/* Event Breakdown - Left Column (2/3 width) */}
           <Card className="p-6 lg:col-span-2">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -370,55 +400,166 @@ export default function EventsPage() {
             </div>
           </Card>
 
-          {/* Top Clicked Elements */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <MousePointerClick className="h-5 w-5 text-[var(--color-indeks-green)]" />
-                <h3 className="text-lg font-semibold">Top Clicked Elements</h3>
-              </div>
-              {clicks.length > 0 ? (
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {clicks.slice(0, 10).map((click, index) => (
-                    <div key={index} className="space-y-1 pb-3 border-b last:border-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono bg-secondary px-2 py-1 rounded truncate max-w-32">
-                          {click.elementSelector}
-                        </span>
-                        <span className="text-sm font-semibold">
-                          {formatNumber(click.totalClicks)}
-                        </span>
-                      </div>
-                      {click.elementText && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {click.elementText}
-                        </p>
-                      )}
-                      <div className="w-full bg-secondary rounded-full h-1.5">
-                        <div
-                          className="bg-[var(--color-indeks-green)] h-1.5 rounded-full"
-                          style={{
-                            width: `${Math.min(100, (click.totalClicks / (clicks[0]?.totalClicks || 1)) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+          {/* Right Column - Stacked Cards */}
+          <div className="flex flex-col gap-6">
+            {/* Top Pages */}
+            <Card className="p-6 flex-1">
+              <div className="space-y-4 h-full flex flex-col">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-[var(--color-indeks-blue)]" />
+                  <h3 className="text-lg font-semibold">Top Pages</h3>
                 </div>
-              ) : (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon"><MousePointerClick /></EmptyMedia>
-                    <EmptyTitle>No click data</EmptyTitle>
-                    <EmptyDescription>Run sync to see clicked elements.</EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              )}
-            </div>
-          </Card>
+                {topPages.length > 0 ? (
+                  <div className="space-y-2 flex-1">
+                    {topPages.slice(0, 5).map((page, index) => {
+                      const maxViews = topPages[0]?.totalPageViews || 1;
+                      const percentage = Math.round((page.totalPageViews / maxViews) * 100);
+                      return (
+                        <div key={index} className="space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm truncate flex-1" title={page.url}>
+                              {(() => {
+                                try {
+                                  const url = new URL(page.url);
+                                  return url.pathname || "/";
+                                } catch {
+                                  return page.url;
+                                }
+                              })()}
+                            </span>
+                            <span className="text-sm font-semibold tabular-nums shrink-0">
+                              {formatNumber(page.totalPageViews)}
+                            </span>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-1">
+                            <div
+                              className="bg-[var(--color-indeks-blue)] h-1 rounded-full"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No page data yet</p>
+                )}
+              </div>
+            </Card>
+
+            {/* Device Breakdown */}
+            <Card className="p-6 flex-1">
+              <div className="space-y-4 h-full flex flex-col">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-5 w-5 text-[var(--color-indeks-green)]" />
+                  <h3 className="text-lg font-semibold">Devices</h3>
+                </div>
+                {devices.length > 0 ? (
+                  <div className="space-y-2 flex-1">
+                    {(() => {
+                      const totalVisits = devices.reduce((sum, d) => sum + d.totalVisits, 0);
+                      const getDeviceIcon = (type: string) => {
+                        switch (type?.toLowerCase()) {
+                          case "mobile": return Smartphone;
+                          case "tablet": return Tablet;
+                          default: return Monitor;
+                        }
+                      };
+                      const getDeviceColor = (type: string) => {
+                        switch (type?.toLowerCase()) {
+                          case "mobile": return "var(--color-indeks-blue)";
+                          case "tablet": return "var(--color-indeks-yellow)";
+                          default: return "var(--color-indeks-green)";
+                        }
+                      };
+                      return devices.map((device, index) => {
+                        const Icon = getDeviceIcon(device.deviceType);
+                        const color = getDeviceColor(device.deviceType);
+                        const percentage = totalVisits > 0 ? (device.totalVisits / totalVisits) * 100 : 0;
+                        return (
+                          <div key={index} className="flex items-center gap-3">
+                            <Icon className="h-4 w-4 shrink-0" style={{ color }} />
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm capitalize">{device.deviceType || "Unknown"}</span>
+                                <span className="text-sm font-semibold">{percentage.toFixed(0)}%</span>
+                              </div>
+                              <div className="w-full bg-secondary rounded-full h-1 mt-1">
+                                <div
+                                  className="h-1 rounded-full"
+                                  style={{ width: `${percentage}%`, backgroundColor: color }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No device data yet</p>
+                )}
+              </div>
+            </Card>
+
+            {/* Interaction Quality */}
+            <Card className="p-6 flex-1">
+              <div className="space-y-4 h-full flex flex-col">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
+                  <h3 className="text-lg font-semibold">Interaction Quality</h3>
+                </div>
+                <div className="space-y-2 flex-1">
+                  {/* Rage Clicks */}
+                  <div className="p-2 rounded-lg bg-secondary/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-[var(--color-indeks-orange)]" />
+                        <span className="text-sm">Rage Clicks</span>
+                      </div>
+                      <span className="text-sm font-bold">{formatNumber(summary?.rageClicks)}</span>
+                    </div>
+                  </div>
+
+                  {/* Dead Clicks */}
+                  <div className="p-2 rounded-lg bg-secondary/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <XCircle className="h-4 w-4 text-destructive" />
+                        <span className="text-sm">Dead Clicks</span>
+                      </div>
+                      <span className="text-sm font-bold">{formatNumber(summary?.deadClicks)}</span>
+                    </div>
+                  </div>
+
+                  {/* Total Clicks */}
+                  <div className="p-2 rounded-lg bg-secondary/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MousePointerClick className="h-4 w-4 text-[var(--color-indeks-green)]" />
+                        <span className="text-sm">Total Clicks</span>
+                      </div>
+                      <span className="text-sm font-bold">{formatNumber(summary?.totalClicks)}</span>
+                    </div>
+                  </div>
+
+                  {/* Errors */}
+                  <div className="p-2 rounded-lg bg-secondary/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-[var(--color-indeks-blue)]" />
+                        <span className="text-sm">JS Errors</span>
+                      </div>
+                      <span className="text-sm font-bold">{formatNumber(summary?.totalErrors)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
 
-        {/* Recent Events Stream */}
+        {/* Recent Events Stream - Full Width */}
         <Card className="p-6">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -427,30 +568,123 @@ export default function EventsPage() {
               <Badge variant="success" className="ml-2">Live</Badge>
             </div>
             {recentEvents.length > 0 ? (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {recentEvents.map((event, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors border border-border/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm font-medium">
-                            {event.event_type}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate max-w-64">
-                          {event.url || "—"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(event.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Event</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Page</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Location</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Device</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Source</th>
+                      <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentEvents.map((event, index) => {
+                      // Parse user agent for device info
+                      const getDeviceInfo = (ua: string | null) => {
+                        if (!ua) return { type: "Unknown", icon: Monitor };
+                        const lowerUA = ua.toLowerCase();
+                        if (lowerUA.includes("mobile") || lowerUA.includes("android") || lowerUA.includes("iphone")) {
+                          return { type: "Mobile", icon: Smartphone };
+                        }
+                        if (lowerUA.includes("tablet") || lowerUA.includes("ipad")) {
+                          return { type: "Tablet", icon: Tablet };
+                        }
+                        return { type: "Desktop", icon: Monitor };
+                      };
+                      const deviceInfo = getDeviceInfo(event.user_agent);
+                      const DeviceIcon = deviceInfo.icon;
+                      
+                      // Get browser from user agent
+                      const getBrowser = (ua: string | null) => {
+                        if (!ua) return null;
+                        if (ua.includes("Chrome") && !ua.includes("Edg")) return "Chrome";
+                        if (ua.includes("Firefox")) return "Firefox";
+                        if (ua.includes("Safari") && !ua.includes("Chrome")) return "Safari";
+                        if (ua.includes("Edg")) return "Edge";
+                        return null;
+                      };
+                      const browser = getBrowser(event.user_agent);
+
+                      // Parse referrer
+                      const getSource = (ref: string | null) => {
+                        if (!ref) return "Direct";
+                        try {
+                          const url = new URL(ref);
+                          return url.hostname.replace("www.", "");
+                        } catch {
+                          return ref.substring(0, 20);
+                        }
+                      };
+
+                      // Parse page path
+                      const getPagePath = (url: string | null) => {
+                        if (!url) return "/";
+                        try {
+                          const parsed = new URL(url);
+                          return parsed.pathname || "/";
+                        } catch {
+                          return url;
+                        }
+                      };
+
+                      return (
+                        <tr key={index} className="border-b last:border-0 hover:bg-accent/50">
+                          <td className="py-2 px-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse" />
+                              <span className="font-mono text-xs font-medium">{event.event_type}</span>
+                            </div>
+                          </td>
+                          <td className="py-2 px-2">
+                            <span className="text-xs text-muted-foreground truncate max-w-32 block" title={event.url || undefined}>
+                              {getPagePath(event.url)}
+                            </span>
+                          </td>
+                          <td className="py-2 px-2">
+                            {event.country ? (
+                              <div className="flex items-center gap-1">
+                                <Globe className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs">
+                                  {event.city ? `${event.city}, ` : ""}{event.country}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-2">
+                            <div className="flex items-center gap-1">
+                              <DeviceIcon className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs">
+                                {browser || deviceInfo.type}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-2 px-2">
+                            {event.referrer ? (
+                              <div className="flex items-center gap-1">
+                                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs truncate max-w-24 block" title={event.referrer}>
+                                  {getSource(event.referrer)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Direct</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <Empty>

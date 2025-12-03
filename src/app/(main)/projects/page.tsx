@@ -195,16 +195,16 @@ export default function ProjectsPage() {
               const stats = projectStats[project.id];
               return (
                 <Link key={project.id} href={`/projects/${project.id}`}>
-                  <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-start justify-between mb-4">
+                  <Card className="p-4 !gap-2 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-0.5">
                           <div
                             className={`h-2 w-2 rounded-full ${getStatusColor(
                               project.isActive
                             )}`}
                           />
-                          <h3 className="text-lg font-semibold">
+                          <h3 className="text-base font-semibold">
                             {project.title}
                           </h3>
                           <Badge
@@ -228,19 +228,19 @@ export default function ProjectsPage() {
                           })()}
                         </p>
                       </div>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="-mt-1 -mr-1">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </div>
 
                     {project.description && (
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                         {project.description}
                       </p>
                     )}
 
                     {project.category && (
-                      <div className="mb-4">
+                      <div className="mb-2">
                         <Badge variant="outline" className="text-xs">
                           {project.category}
                         </Badge>
@@ -248,9 +248,9 @@ export default function ProjectsPage() {
                     )}
 
                     {/* Project Stats */}
-                    <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-3 gap-2 mb-2">
                       <div>
-                        <div className="flex items-center gap-1 mb-1">
+                        <div className="flex items-center gap-1">
                           <Eye
                             className="h-3 w-3"
                             style={{ color: "var(--color-indeks-green)" }}
@@ -262,7 +262,7 @@ export default function ProjectsPage() {
                         </p>
                       </div>
                       <div>
-                        <div className="flex items-center gap-1 mb-1">
+                        <div className="flex items-center gap-1">
                           <Users
                             className="h-3 w-3"
                             style={{ color: "var(--color-indeks-blue)" }}
@@ -276,7 +276,7 @@ export default function ProjectsPage() {
                         </p>
                       </div>
                       <div>
-                        <div className="flex items-center gap-1 mb-1">
+                        <div className="flex items-center gap-1">
                           <Clock
                             className="h-3 w-3"
                             style={{ color: "var(--color-indeks-yellow)" }}
@@ -292,7 +292,7 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Last Active */}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
                       <Activity
                         className="h-3 w-3"
                         style={{ color: "var(--color-indeks-orange)" }}

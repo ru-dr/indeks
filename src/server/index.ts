@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { cors } from "@elysiajs/cors";
 import { openapi } from "@elysiajs/openapi";
 import { auth } from "@/lib/auth";
 import { projectsRoutes } from "./routes/projects.routes";
@@ -14,6 +15,27 @@ initializeClickHouseTables().catch((error) => {
 });
 
 export const app = new Elysia({ prefix: "/api" })
+  .use(
+    cors({
+      origin: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: [
+        "Content-Type",
+        "x-api-key",
+        "Authorization",
+        "User-Agent",
+        "Accept",
+        "Accept-Language",
+        "Accept-Encoding",
+        "Origin",
+        "Referer",
+        "X-Requested-With",
+      ],
+      exposeHeaders: ["*"],
+      credentials: true,
+      maxAge: 86400,
+    })
+  )
   .use(openapi())
   .get("/health", () => ({
     status: "ok",

@@ -20,10 +20,26 @@ export const collectRoutes = new Elysia({ prefix: "/v1/collect" })
       const forwardedFor = headers["x-forwarded-for"];
       const realIp = headers["x-real-ip"];
       const cfConnectingIp = headers["cf-connecting-ip"];
+      const vercelForwardedFor = headers["x-vercel-forwarded-for"];
+      const trueClientIp = headers["true-client-ip"];
       
-      let clientIp = cfConnectingIp || realIp || 
+      // Try multiple headers in order of reliability
+      let clientIp = cfConnectingIp || 
+        trueClientIp ||
+        vercelForwardedFor ||
+        realIp || 
         (forwardedFor ? forwardedFor.split(",")[0].trim() : null) ||
         null;
+
+      // Log IP extraction for debugging
+      console.log('🔍 IP Headers:', {
+        cfConnectingIp,
+        trueClientIp,
+        vercelForwardedFor,
+        realIp,
+        forwardedFor,
+        resolvedIp: clientIp,
+      });
 
       try {
         const result = await collectController.collectEvents(apiKey, body, clientIp);

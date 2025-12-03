@@ -455,7 +455,12 @@ export const analyticsRoutes = new Elysia({ prefix: "/analytics" })
             SELECT 
               event_type,
               url,
-              timestamp
+              timestamp,
+              country,
+              city,
+              user_agent,
+              referrer,
+              session_id
             FROM events 
             WHERE project_id = {projectId:UUID}
               AND timestamp >= {since:DateTime}
@@ -473,6 +478,11 @@ export const analyticsRoutes = new Elysia({ prefix: "/analytics" })
           event_type: string;
           url: string | null;
           timestamp: string;
+          country: string | null;
+          city: string | null;
+          user_agent: string | null;
+          referrer: string | null;
+          session_id: string | null;
         }[]>();
 
         return {
@@ -587,6 +597,100 @@ export const analyticsRoutes = new Elysia({ prefix: "/analytics" })
     {
       params: t.Object({
         projectId: t.String(),
+      }),
+    }
+  )
+
+  // Get monthly traffic trend for commit graph
+  .get(
+    "/:projectId/traffic-trend",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { months = "8" } = query;
+      const monthCount = parseInt(months);
+
+      try {
+        // Get daily event counts for the specified number of months
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - monthCount);
+        const startDateStr = startDate.toISOString().split("T")[0];
+
+        const dailyData = await db
+          .select({
+            date: analyticsDaily.date,
+            pageViews: analyticsDaily.pageViews,
+            sessions: analyticsDaily.sessions,
+            uniqueVisitors: analyticsDaily.uniqueVisitors,
+          })
+          .from(analyticsDaily)
+          .where(
+            and(
+              eq(analyticsDaily.projectId, projectId),
+              gte(analyticsDaily.date, startDateStr)
+            )
+          )
+          .orderBy(analyticsDaily.date);
+
+        return {
+          dailyData: dailyData.map((d) => ({
+            date: d.date,
+            count: (d.pageViews || 0) + (d.sessions || 0),
+          })),
+        };
+      } catch (error) {
+        console.error("Error fetching traffic trend:", error);
+        set.status = 500;
+        return { error: "Failed to fetch traffic trend" };
+      }
+    },
+    {
+      params: t.Object({
+        projectId: t.String(),
+      }),
+      query: t.Object({
+        months: t.Optional(t.String()),
+      }),
+    }
+  )
+
+  // Get aggregated traffic trend across all projects
+  .get(
+    "/global/traffic-trend",
+    async ({ query, set }) => {
+      const { months = "8" } = query;
+      const monthCount = parseInt(months);
+
+      try {
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - monthCount);
+        const startDateStr = startDate.toISOString().split("T")[0];
+
+        // Aggregate across all projects
+        const dailyData = await db
+          .select({
+            date: analyticsDaily.date,
+            totalCount: sql<number>`SUM(${analyticsDaily.pageViews}) + SUM(${analyticsDaily.sessions})`,
+          })
+          .from(analyticsDaily)
+          .where(gte(analyticsDaily.date, startDateStr))
+          .groupBy(analyticsDaily.date)
+          .orderBy(analyticsDaily.date);
+
+        return {
+          dailyData: dailyData.map((d) => ({
+            date: d.date,
+            count: d.totalCount || 0,
+          })),
+        };
+      } catch (error) {
+        console.error("Error fetching global traffic trend:", error);
+        set.status = 500;
+        return { error: "Failed to fetch global traffic trend" };
+      }
+    },
+    {
+      query: t.Object({
+        months: t.Optional(t.String()),
       }),
     }
   )

@@ -354,12 +354,12 @@ export default function Home() {
                 const stats = project.stats;
                 return (
                   <Link key={project.id} href={`/projects/${project.id}`}>
-                    <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                      <div className="flex items-start justify-between mb-4">
+                    <Card className="p-4 !gap-2 hover:shadow-lg transition-shadow cursor-pointer">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-0.5">
                             <div className={`h-2 w-2 rounded-full ${getStatusColor(project.isActive)}`} />
-                            <h3 className="text-lg font-semibold">{project.title}</h3>
+                            <h3 className="text-base font-semibold">{project.title}</h3>
                             <Badge
                               variant={project.isActive ? "success" : "error"}
                               className="text-xs"
@@ -381,48 +381,44 @@ export default function Home() {
                             })()}
                           </p>
                         </div>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="-mt-1 -mr-1">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </div>
 
                       {/* Project Stats */}
-                      <div className="space-y-4 mb-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-3 rounded-lg bg-secondary/50">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Eye className="h-4 w-4" style={{ color: "var(--color-indeks-green)" }} />
-                              <p className="text-xs text-muted-foreground">Views</p>
-                            </div>
-                            <p className="text-xl font-bold">
-                              {stats ? formatNumber(stats.totalPageViews) : "-"}
-                            </p>
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="p-2 rounded-lg bg-secondary/50">
+                          <div className="flex items-center gap-1.5">
+                            <Eye className="h-3.5 w-3.5" style={{ color: "var(--color-indeks-green)" }} />
+                            <p className="text-xs text-muted-foreground">Views</p>
                           </div>
-                          <div className="p-3 rounded-lg bg-secondary/50">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Users className="h-4 w-4" style={{ color: "var(--color-indeks-blue)" }} />
-                              <p className="text-xs text-muted-foreground">Visitors</p>
-                            </div>
-                            <p className="text-xl font-bold">
-                              {stats ? formatNumber(stats.totalUniqueVisitors) : "-"}
-                            </p>
-                          </div>
+                          <p className="text-lg font-bold">
+                            {stats ? formatNumber(stats.totalPageViews) : "-"}
+                          </p>
                         </div>
-
-                        {/* Quick Stats Bar */}
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <MousePointerClick
-                              className="h-3 w-3"
-                              style={{ color: "var(--color-indeks-yellow)" }}
-                            />
-                            <span>{stats ? formatNumber(stats.totalClicks) : "0"} clicks</span>
+                        <div className="p-2 rounded-lg bg-secondary/50">
+                          <div className="flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5" style={{ color: "var(--color-indeks-blue)" }} />
+                            <p className="text-xs text-muted-foreground">Visitors</p>
                           </div>
+                          <p className="text-lg font-bold">
+                            {stats ? formatNumber(stats.totalUniqueVisitors) : "-"}
+                          </p>
                         </div>
                       </div>
 
+                      {/* Quick Stats Bar */}
+                      <div className="flex items-center text-xs text-muted-foreground mb-2">
+                        <MousePointerClick
+                          className="h-3 w-3 mr-1"
+                          style={{ color: "var(--color-indeks-yellow)" }}
+                        />
+                        <span>{stats ? formatNumber(stats.totalClicks) : "0"} clicks</span>
+                      </div>
+
                       {/* Last Active */}
-                      <div className="flex items-center justify-between pt-3 border-t">
+                      <div className="flex items-center justify-between pt-2 border-t">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Activity className="h-3 w-3" />
                           <span>Created {formatTimeAgo(project.createdAt)}</span>

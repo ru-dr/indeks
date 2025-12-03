@@ -184,14 +184,22 @@ export function Cobe({
   }, [variant, locations, geocodeLocationList]);
 
   // Generate markers based on variant
-  const getMarkers = useCallback(() => {
-    if (variant === "realtime" && realtimeMarkers.length > 0) {
-      // Use realtime markers from props
-      return realtimeMarkers.map((marker) => ({
-        location: [marker.latitude, marker.longitude] as [number, number],
-        size: marker.size || markerSize,
-        color: marker.color,
-      }));
+  const getMarkers = useCallback((): Array<{
+    location: [number, number];
+    size: number;
+    color?: [number, number, number];
+  }> => {
+    if (variant === "realtime") {
+      // Only use realtime markers from props - no dummy data
+      if (realtimeMarkers.length > 0) {
+        return realtimeMarkers.map((marker) => ({
+          location: [marker.latitude, marker.longitude] as [number, number],
+          size: marker.size || markerSize,
+          color: marker.color,
+        }));
+      }
+      // Return empty array if no realtime data - no dummy markers
+      return [];
     }
 
     if (variant === "rotate-to-location") {
@@ -203,21 +211,21 @@ export function Cobe({
         }));
     }
 
-    // Default static markers for other variants
+    // Default static markers for demo/default variants (not realtime)
     return [
-      { location: [37.7595, -122.4367], size: markerSize },
-      { location: [40.7128, -74.006], size: markerSize, color: [1, 0, 0] },
-      { location: [35.6895, 139.6917], size: markerSize, color: [0, 0.5, 1] },
-      { location: [-33.8688, 151.2093], size: markerSize, color: [0, 1, 0] },
-      { location: [-22.9068, -43.1729], size: markerSize, color: [0.8, 0, 0.8] },
-      { location: [48.8566, 2.3522], size: markerSize, color: [1, 1, 0] },
-      { location: [41.1579, -8.6291], size: markerSize, color: [1, 0.5, 0] },
-      { location: [37.9838, 23.7275], size: markerSize, color: [1, 0.5, 1] },
-      { location: [41.9028, 12.4964], size: markerSize, color: [0.5, 0.3, 0] },
-      { location: [27.7172, 85.324], size: markerSize, color: [0, 0.5, 1] },
-      { location: [43.4643, -0.5167], size: markerSize, color: [0, 1, 0] },
-      { location: [12.6683, -8.0076], size: markerSize, color: [1, 1, 0] },
-      { location: [11.55, 43.1667], size: markerSize, color: [0.8, 0, 0.8] },
+      { location: [37.7595, -122.4367] as [number, number], size: markerSize },
+      { location: [40.7128, -74.006] as [number, number], size: markerSize, color: [1, 0, 0] as [number, number, number] },
+      { location: [35.6895, 139.6917] as [number, number], size: markerSize, color: [0, 0.5, 1] as [number, number, number] },
+      { location: [-33.8688, 151.2093] as [number, number], size: markerSize, color: [0, 1, 0] as [number, number, number] },
+      { location: [-22.9068, -43.1729] as [number, number], size: markerSize, color: [0.8, 0, 0.8] as [number, number, number] },
+      { location: [48.8566, 2.3522] as [number, number], size: markerSize, color: [1, 1, 0] as [number, number, number] },
+      { location: [41.1579, -8.6291] as [number, number], size: markerSize, color: [1, 0.5, 0] as [number, number, number] },
+      { location: [37.9838, 23.7275] as [number, number], size: markerSize, color: [1, 0.5, 1] as [number, number, number] },
+      { location: [41.9028, 12.4964] as [number, number], size: markerSize, color: [0.5, 0.3, 0] as [number, number, number] },
+      { location: [27.7172, 85.324] as [number, number], size: markerSize, color: [0, 0.5, 1] as [number, number, number] },
+      { location: [43.4643, -0.5167] as [number, number], size: markerSize, color: [0, 1, 0] as [number, number, number] },
+      { location: [12.6683, -8.0076] as [number, number], size: markerSize, color: [1, 1, 0] as [number, number, number] },
+      { location: [11.55, 43.1667] as [number, number], size: markerSize, color: [0.8, 0, 0.8] as [number, number, number] },
     ];
   }, [variant, realtimeMarkers, customLocations, markerSize]);
 
@@ -490,12 +498,16 @@ export function Cobe({
 export function RealtimeGlobe({
   projectId,
   className,
+  showEmptyMessage = true,
   ...props
 }: {
   projectId?: string;
   className?: string;
+  showEmptyMessage?: boolean;
 } & Omit<CobeProps, "variant" | "realtimeMarkers">) {
   const [markers, setMarkers] = useState<RealtimeMarker[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -507,20 +519,34 @@ export function RealtimeGlobe({
         const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
-          const newMarkers: RealtimeMarker[] = (data.locations || []).map(
+          const locations = data.locations || [];
+          
+          // Filter out locations without valid coordinates
+          const validLocations = locations.filter(
+            (loc: { latitude: number | null; longitude: number | null }) => 
+              loc.latitude !== null && 
+              loc.longitude !== null &&
+              typeof loc.latitude === 'number' &&
+              typeof loc.longitude === 'number'
+          );
+
+          const newMarkers: RealtimeMarker[] = validLocations.map(
             (loc: { latitude: number; longitude: number; visitor_count: number }) => ({
               latitude: loc.latitude,
               longitude: loc.longitude,
               // Size based on visitor count (min 0.03, max 0.15)
-              size: Math.min(0.15, Math.max(0.03, loc.visitor_count * 0.02)),
+              size: Math.min(0.15, Math.max(0.03, (loc.visitor_count || 1) * 0.02)),
               // Green color for active visitors
               color: [0.2, 0.9, 0.4] as [number, number, number],
             })
           );
           setMarkers(newMarkers);
+          setHasData(newMarkers.length > 0);
         }
       } catch (error) {
         console.error("Error fetching locations:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -532,11 +558,25 @@ export function RealtimeGlobe({
   }, [projectId]);
 
   return (
-    <Cobe
-      variant="realtime"
-      realtimeMarkers={markers}
-      className={className}
-      {...props}
-    />
+    <div className="relative">
+      <Cobe
+        variant="realtime"
+        realtimeMarkers={markers}
+        className={className}
+        {...props}
+      />
+      {!loading && !hasData && showEmptyMessage && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-full">
+          <div className="text-center p-4">
+            <p className="text-sm text-muted-foreground">
+              No location data yet
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Visitor locations will appear here
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

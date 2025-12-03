@@ -35,7 +35,7 @@ function generateKeyHash(publicKey: string): string {
   return createHash("sha256").update(publicKey).digest("hex");
 }
 
-// Lookup geo data from IP address using free ip-api.com service
+// Lookup geo data from IP address using multiple geo services for reliability
 async function getGeoFromIp(ip: string | null): Promise<GeoData> {
   const defaultGeo: GeoData = {
     country: null,
@@ -44,48 +44,89 @@ async function getGeoFromIp(ip: string | null): Promise<GeoData> {
     longitude: null,
   };
 
-  if (!ip || ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.")) {
+  if (!ip || ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) {
+    console.log(`🌍 Skipping geo lookup for local IP: ${ip}`);
     return defaultGeo;
   }
 
   // Check cache
   const cached = geoCache.get(ip);
   if (cached && Date.now() - cached.timestamp < GEO_CACHE_TTL) {
+    console.log(`🌍 Using cached geo data for IP: ${ip}`);
     return cached.data;
   }
 
-  try {
-    // Use ip-api.com (free, no API key required, 45 requests/minute limit)
-    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,lat,lon`, {
-      signal: AbortSignal.timeout(2000), // 2 second timeout
-    });
-
-    if (!response.ok) {
-      return defaultGeo;
-    }
-
-    const data = await response.json();
-
-    if (data.status === "success") {
-      const geoData: GeoData = {
+  // Try multiple geo services in order of preference
+  const geoServices = [
+    // ipapi.co - supports HTTPS, free tier 1000/day
+    async () => {
+      const response = await fetch(`https://ipapi.co/${ip}/json/`, {
+        signal: AbortSignal.timeout(3000),
+        headers: { 'User-Agent': 'indeks-analytics/1.0' },
+      });
+      if (!response.ok) throw new Error(`ipapi.co error: ${response.status}`);
+      const data = await response.json();
+      if (data.error) throw new Error(data.reason || 'ipapi.co error');
+      return {
+        country: data.country_name || null,
+        city: data.city || null,
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
+      };
+    },
+    // ip-api.com - HTTP only but very reliable, 45 req/min
+    async () => {
+      const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,city,lat,lon`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!response.ok) throw new Error(`ip-api.com error: ${response.status}`);
+      const data = await response.json();
+      if (data.status !== 'success') throw new Error(data.message || 'ip-api.com failed');
+      return {
         country: data.country || null,
         city: data.city || null,
         latitude: data.lat || null,
         longitude: data.lon || null,
       };
+    },
+    // ipwho.is - supports HTTPS, unlimited free
+    async () => {
+      const response = await fetch(`https://ipwho.is/${ip}`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!response.ok) throw new Error(`ipwho.is error: ${response.status}`);
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'ipwho.is failed');
+      return {
+        country: data.country || null,
+        city: data.city || null,
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
+      };
+    },
+  ];
 
-      // Cache the result
-      geoCache.set(ip, { data: geoData, timestamp: Date.now() });
-
-      return geoData;
+  for (const service of geoServices) {
+    try {
+      const geoData = await service();
+      
+      // Validate we got actual data
+      if (geoData.country || geoData.latitude) {
+        // Cache the result
+        geoCache.set(ip, { data: geoData, timestamp: Date.now() });
+        console.log(`🌍 Geo lookup success for IP ${ip}:`, geoData);
+        return geoData;
+      }
+    } catch (error) {
+      // Try next service
+      console.warn(`🌍 Geo service failed for IP ${ip}:`, error instanceof Error ? error.message : error);
+      continue;
     }
-
-    return defaultGeo;
-  } catch (error) {
-    // Don't fail event collection if geo lookup fails
-    console.warn(`Geo lookup failed for IP ${ip}:`, error);
-    return defaultGeo;
   }
+
+  // All services failed
+  console.warn(`🌍 All geo services failed for IP: ${ip}`);
+  return defaultGeo;
 }
 
 export const collectController = {
