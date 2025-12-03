@@ -8,7 +8,6 @@ import {
   Settings,
   FileText,
   Globe,
-  TrendingUp,
   FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,11 +41,6 @@ const navigationItems = [
     name: "Reports",
     href: "/reports",
     icon: FileText,
-  },
-  {
-    name: "Events",
-    href: "/events",
-    icon: TrendingUp,
   },
   {
     name: "Settings",

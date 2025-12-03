@@ -16,13 +16,15 @@ import {
   TrendingUp,
   Users,
   Eye,
-  Clock,
-  MousePointer,
   Smartphone,
   Monitor,
   Tablet,
   Loader2,
   FolderOpen,
+  Zap,
+  FileText,
+  Link2,
+  MapPin,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -37,6 +39,7 @@ interface Project {
 interface ProjectAnalytics {
   projectId: string;
   projectTitle: string;
+  projectLink: string;
   summary: {
     totalPageViews: number;
     totalUniqueVisitors: number;
@@ -44,18 +47,41 @@ interface ProjectAnalytics {
     totalClicks: number;
     avgBounceRate: number;
     avgSessionDuration: number;
+    totalRageClicks: number;
+    totalDeadClicks: number;
+    totalErrors: number;
   };
+  topPages: { url: string; totalPageViews: number; totalUniqueVisitors: number }[];
+  referrers: { referrerDomain: string | null; totalVisits: number }[];
+  devices: { deviceType: string; totalVisits: number }[];
 }
 
-interface DeviceBreakdown {
-  deviceType: string;
+interface CountryData {
+  country: string;
+  event_count: number;
+  visitor_count: number;
+  projectTitle?: string;
+}
+
+interface AggregatedPage {
+  url: string;
+  totalPageViews: number;
+  totalUniqueVisitors: number;
+  projectTitle: string;
+  projectId: string;
+}
+
+interface AggregatedReferrer {
+  domain: string;
   totalVisits: number;
+  projectTitle: string;
+  projectId: string;
 }
 
 export default function AnalyticsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectAnalytics, setProjectAnalytics] = useState<ProjectAnalytics[]>([]);
-  const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([]);
+  const [countries, setCountries] = useState<(CountryData & { projectTitle: string; projectId: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
 
@@ -69,7 +95,6 @@ export default function AnalyticsPage() {
     };
   }, [days]);
 
-  // Fetch all projects
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -82,11 +107,9 @@ export default function AnalyticsPage() {
         console.error("Error fetching projects:", err);
       }
     };
-
     fetchProjects();
   }, []);
 
-  // Fetch analytics for all projects
   const fetchAllAnalytics = useCallback(async () => {
     if (projects.length === 0) {
       setLoading(false);
@@ -99,56 +122,81 @@ export default function AnalyticsPage() {
 
     const analyticsPromises = projects.map(async (project) => {
       try {
-        const response = await fetch(`/api/analytics/${project.id}/overview${query}`);
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            projectId: project.id,
-            projectTitle: project.title,
-            summary: data.summary,
-          };
-        }
+        const [overviewRes, pagesRes, referrersRes, devicesRes] = await Promise.all([
+          fetch(`/api/analytics/${project.id}/overview${query}`),
+          fetch(`/api/analytics/${project.id}/pages${query}&limit=10`),
+          fetch(`/api/analytics/${project.id}/referrers${query}&limit=10`),
+          fetch(`/api/analytics/${project.id}/devices${query}`),
+        ]);
+
+        const overview = overviewRes.ok ? await overviewRes.json() : { summary: null };
+        const pages = pagesRes.ok ? await pagesRes.json() : { pages: [] };
+        const referrers = referrersRes.ok ? await referrersRes.json() : { referrers: [] };
+        const devices = devicesRes.ok ? await devicesRes.json() : { deviceTypeBreakdown: [] };
+
+        return {
+          projectId: project.id,
+          projectTitle: project.title,
+          projectLink: project.link,
+          summary: overview.summary,
+          topPages: pages.pages || [],
+          referrers: referrers.referrers || [],
+          devices: devices.deviceTypeBreakdown || [],
+        };
       } catch (err) {
         console.error(`Error fetching analytics for ${project.id}:`, err);
+        return null;
       }
-      return null;
     });
-
-    // Fetch device breakdown from first active project (as sample)
-    const activeProject = projects.find((p) => p.isActive);
-    if (activeProject) {
-      try {
-        const deviceRes = await fetch(`/api/analytics/${activeProject.id}/devices${query}`);
-        if (deviceRes.ok) {
-          const data = await deviceRes.json();
-          // Aggregate device types
-          const deviceMap = new Map<string, number>();
-          (data.deviceTypeBreakdown || []).forEach((d: DeviceBreakdown) => {
-            const current = deviceMap.get(d.deviceType) || 0;
-            deviceMap.set(d.deviceType, current + d.totalVisits);
-          });
-          setDeviceBreakdown(
-            Array.from(deviceMap.entries()).map(([deviceType, totalVisits]) => ({
-              deviceType,
-              totalVisits,
-            }))
-          );
-        }
-      } catch (err) {
-        console.error("Error fetching devices:", err);
-      }
-    }
 
     const results = await Promise.all(analyticsPromises);
     setProjectAnalytics(results.filter((r): r is ProjectAnalytics => r !== null));
     setLoading(false);
   }, [projects, getDateRange]);
 
+  const fetchCountries = useCallback(async () => {
+    if (projects.length === 0) return;
+
+    try {
+      const allCountries: (CountryData & { projectTitle: string; projectId: string })[] = [];
+
+      for (const project of projects) {
+        try {
+          const response = await fetch(`/api/analytics/${project.id}/locations`);
+          if (response.ok) {
+            const data = await response.json();
+            (data.countries || []).forEach((c: CountryData) => {
+              allCountries.push({
+                ...c,
+                projectTitle: project.title,
+                projectId: project.id,
+              });
+            });
+          }
+        } catch {
+          // Continue with other projects
+        }
+      }
+
+      allCountries.sort((a, b) => b.visitor_count - a.visitor_count);
+      setCountries(allCountries);
+    } catch (err) {
+      console.error("Error fetching countries:", err);
+    }
+  }, [projects]);
+
   useEffect(() => {
     fetchAllAnalytics();
   }, [fetchAllAnalytics]);
 
-  // Aggregate totals
+  useEffect(() => {
+    if (projects.length > 0) {
+      fetchCountries();
+      const interval = setInterval(fetchCountries, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [projects, fetchCountries]);
+
   const totals = projectAnalytics.reduce(
     (acc, pa) => ({
       pageViews: acc.pageViews + (pa.summary?.totalPageViews || 0),
@@ -162,35 +210,75 @@ export default function AnalyticsPage() {
     { pageViews: 0, visitors: 0, sessions: 0, clicks: 0, bounceRateSum: 0, sessionDurationSum: 0, count: 0 }
   );
 
+  const aggregatedDevices = projectAnalytics.reduce((acc, pa) => {
+    pa.devices.forEach((d) => {
+      const existing = acc.find((a) => a.deviceType === d.deviceType);
+      if (existing) existing.totalVisits += d.totalVisits;
+      else acc.push({ ...d });
+    });
+    return acc;
+  }, [] as { deviceType: string; totalVisits: number }[]);
+
+  const aggregatedReferrers: AggregatedReferrer[] = projectAnalytics.flatMap((pa) =>
+    pa.referrers.map((r) => ({
+      domain: r.referrerDomain || "Direct",
+      totalVisits: r.totalVisits,
+      projectTitle: pa.projectTitle,
+      projectId: pa.projectId,
+    }))
+  ).sort((a, b) => b.totalVisits - a.totalVisits).slice(0, 15);
+
+  const aggregatedPages: AggregatedPage[] = projectAnalytics.flatMap((pa) =>
+    pa.topPages.map((p) => ({
+      url: p.url,
+      totalPageViews: p.totalPageViews,
+      totalUniqueVisitors: p.totalUniqueVisitors,
+      projectTitle: pa.projectTitle,
+      projectId: pa.projectId,
+    }))
+  ).sort((a, b) => b.totalPageViews - a.totalPageViews).slice(0, 15);
+
   const avgBounceRate = totals.count > 0 ? totals.bounceRateSum / totals.count : 0;
   const avgSessionDuration = totals.count > 0 ? totals.sessionDurationSum / totals.count : 0;
+  const totalDeviceVisits = aggregatedDevices.reduce((sum, d) => sum + d.totalVisits, 0);
+  const totalCountryVisitors = countries.reduce((sum, c) => sum + c.visitor_count, 0);
 
   const formatDuration = (seconds: number) => {
-    if (!seconds || seconds === 0) return "0s";
+    if (!seconds) return "0s";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    if (mins === 0) return `${secs}s`;
-    return `${mins}m ${secs}s`;
+    return mins ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
   const formatNumber = (num: number) => num.toLocaleString();
 
-  // Calculate device percentages
-  const totalDeviceVisits = deviceBreakdown.reduce((sum, d) => sum + d.totalVisits, 0);
-  const deviceStats = deviceBreakdown.map((d) => ({
-    device: d.deviceType.charAt(0).toUpperCase() + d.deviceType.slice(1),
-    visits: d.totalVisits,
-    percentage: totalDeviceVisits > 0 ? Math.round((d.totalVisits / totalDeviceVisits) * 100) : 0,
-    icon: d.deviceType === "mobile" ? Smartphone : d.deviceType === "tablet" ? Tablet : Monitor,
-    color:
-      d.deviceType === "mobile"
-        ? "bg-[var(--color-indeks-green)]"
-        : d.deviceType === "tablet"
-        ? "bg-[var(--color-indeks-yellow)]"
-        : "bg-[var(--color-indeks-blue)]",
-  }));
+  const getDeviceIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case "mobile": return Smartphone;
+      case "tablet": return Tablet;
+      default: return Monitor;
+    }
+  };
+
+  const getDeviceColor = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case "mobile": return "bg-[var(--color-indeks-green)]";
+      case "tablet": return "bg-[var(--color-indeks-yellow)]";
+      default: return "bg-[var(--color-indeks-blue)]";
+    }
+  };
 
   const hasData = totals.pageViews > 0 || totals.sessions > 0;
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[600px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -200,33 +288,17 @@ export default function AnalyticsPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
             <p className="text-muted-foreground">
-              Aggregated analytics across all your projects
+              Aggregated analytics across all {projects.length} project{projects.length !== 1 ? "s" : ""}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Period:</span>
-            <Button
-              variant={days === 7 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(7)}
-            >
-              7 days
-            </Button>
-            <Button
-              variant={days === 30 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(30)}
-            >
-              30 days
-            </Button>
-            <Button
-              variant={days === 90 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(90)}
-            >
-              90 days
-            </Button>
-            {loading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+            {projects.length > 0 && (
+              <>
+                <Button variant={days === 7 ? "default" : "outline"} size="sm" onClick={() => setDays(7)}>7d</Button>
+                <Button variant={days === 30 ? "default" : "outline"} size="sm" onClick={() => setDays(30)}>30d</Button>
+                <Button variant={days === 90 ? "default" : "outline"} size="sm" onClick={() => setDays(90)}>90d</Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -234,263 +306,257 @@ export default function AnalyticsPage() {
           <Card className="p-12">
             <Empty>
               <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <FolderOpen />
-                </EmptyMedia>
+                <EmptyMedia variant="icon"><FolderOpen /></EmptyMedia>
                 <EmptyTitle>No projects yet</EmptyTitle>
-                <EmptyDescription>
-                  Create a project to start tracking analytics.
-                </EmptyDescription>
+                <EmptyDescription>Create a project to start tracking analytics.</EmptyDescription>
               </EmptyHeader>
             </Empty>
           </Card>
         ) : (
           <>
-            {/* Overview Stats */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Stats Cards */}
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
               <Card className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Total Visitors
-                    </p>
-                    <h3 className="text-2xl font-bold mt-2">
-                      {hasData ? formatNumber(totals.visitors) : "—"}
-                    </h3>
+                    <p className="text-sm font-medium text-muted-foreground">Visitors</p>
+                    <h3 className="text-2xl font-bold mt-2">{hasData ? formatNumber(totals.visitors) : "—"}</h3>
                   </div>
                   <Users className="h-8 w-8 text-[var(--color-indeks-blue)]" />
                 </div>
               </Card>
-
               <Card className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Page Views
-                    </p>
-                    <h3 className="text-2xl font-bold mt-2">
-                      {hasData ? formatNumber(totals.pageViews) : "—"}
-                    </h3>
+                    <p className="text-sm font-medium text-muted-foreground">Page Views</p>
+                    <h3 className="text-2xl font-bold mt-2">{hasData ? formatNumber(totals.pageViews) : "—"}</h3>
                   </div>
                   <Eye className="h-8 w-8 text-[var(--color-indeks-green)]" />
                 </div>
               </Card>
-
               <Card className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Avg. Session Duration
-                    </p>
-                    <h3 className="text-2xl font-bold mt-2">
-                      {hasData ? formatDuration(avgSessionDuration) : "—"}
-                    </h3>
+                    <p className="text-sm font-medium text-muted-foreground">Sessions</p>
+                    <h3 className="text-2xl font-bold mt-2">{hasData ? formatNumber(totals.sessions) : "—"}</h3>
                   </div>
-                  <Clock className="h-8 w-8 text-[var(--color-indeks-yellow)]" />
+                  <Zap className="h-8 w-8 text-[var(--color-indeks-yellow)]" />
                 </div>
               </Card>
-
               <Card className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Bounce Rate
-                    </p>
-                    <h3 className="text-2xl font-bold mt-2">
-                      {hasData ? `${avgBounceRate.toFixed(1)}%` : "—"}
-                    </h3>
+                    <p className="text-sm font-medium text-muted-foreground">Bounce Rate</p>
+                    <h3 className="text-2xl font-bold mt-2">{hasData ? `${avgBounceRate.toFixed(1)}%` : "—"}</h3>
                   </div>
-                  <MousePointer className="h-8 w-8 text-[var(--color-indeks-orange)]" />
+                  <TrendingUp className="h-8 w-8 text-[var(--color-indeks-orange)]" />
                 </div>
               </Card>
             </div>
 
-            {/* Device Stats & Project Breakdown */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Device Breakdown */}
-              <Card className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Smartphone className="h-5 w-5 text-[var(--color-indeks-green)]" />
-                    <h3 className="text-lg font-semibold">Device Breakdown</h3>
-                  </div>
-                  {deviceStats.length > 0 ? (
-                    <div className="space-y-4">
-                      {deviceStats.map((device) => {
-                        const DeviceIcon = device.icon;
-                        return (
-                          <div key={device.device} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <DeviceIcon className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">
-                                  {device.device}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">
-                                  {formatNumber(device.visits)} visits
-                                </span>
-                                <span className="text-sm font-semibold">
-                                  {device.percentage}%
-                                </span>
-                              </div>
-                            </div>
-                            <div className="w-full bg-secondary rounded-full h-2">
-                              <div
-                                className={`${device.color} h-2 rounded-full transition-all`}
-                                style={{ width: `${device.percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <Empty>
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <Smartphone />
-                        </EmptyMedia>
-                        <EmptyTitle>No device data</EmptyTitle>
-                        <EmptyDescription>
-                          Device breakdown will appear after syncing.
-                        </EmptyDescription>
-                      </EmptyHeader>
-                    </Empty>
-                  )}
-                </div>
-              </Card>
-
-              {/* Projects Performance */}
-              <Card className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                    <h3 className="text-lg font-semibold">Projects Performance</h3>
-                  </div>
-                  {projectAnalytics.length > 0 ? (
-                    <div className="space-y-3">
-                      {projectAnalytics
-                        .sort((a, b) => (b.summary?.totalPageViews || 0) - (a.summary?.totalPageViews || 0))
-                        .slice(0, 5)
-                        .map((pa) => (
-                          <Link
-                            key={pa.projectId}
-                            href={`/projects/${pa.projectId}`}
-                            className="flex items-center justify-between p-3 rounded-lg bg-accent/30 border border-border/50 hover:bg-accent/50 transition-colors"
-                          >
-                            <div>
-                              <p className="text-sm font-medium">{pa.projectTitle}</p>
-                            </div>
-                            <div className="flex items-center gap-4 text-right">
-                              <div>
-                                <p className="text-xs text-muted-foreground">Views</p>
-                                <p className="text-sm font-semibold">
-                                  {formatNumber(pa.summary?.totalPageViews || 0)}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Visitors</p>
-                                <p className="text-sm font-semibold">
-                                  {formatNumber(pa.summary?.totalUniqueVisitors || 0)}
-                                </p>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                    </div>
-                  ) : (
-                    <Empty>
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <BarChart3 />
-                        </EmptyMedia>
-                        <EmptyTitle>No analytics data</EmptyTitle>
-                        <EmptyDescription>
-                          Run sync on your projects to see performance data.
-                        </EmptyDescription>
-                      </EmptyHeader>
-                    </Empty>
-                  )}
-                </div>
-              </Card>
-            </div>
-
-            {/* All Projects Table */}
+            {/* Projects Table */}
             <Card className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-[var(--color-indeks-orange)]" />
-                  <h3 className="text-lg font-semibold">All Projects</h3>
-                </div>
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="h-5 w-5 text-[var(--color-indeks-blue)]" />
+                <h3 className="text-lg font-semibold">Projects Overview</h3>
+              </div>
+              {projectAnalytics.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                          Project
-                        </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                          Page Views
-                        </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                          Visitors
-                        </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                          Sessions
-                        </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                          Bounce Rate
-                        </th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Project</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Views</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Visitors</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Sessions</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Avg Duration</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Bounce</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {projects.map((project) => {
-                        const analytics = projectAnalytics.find(
-                          (pa) => pa.projectId === project.id
-                        );
-                        return (
-                          <tr
-                            key={project.id}
-                            className="border-b last:border-0 hover:bg-accent/50"
-                          >
-                            <td className="py-3 px-4">
-                              <Link
-                                href={`/projects/${project.id}`}
-                                className="text-sm font-medium hover:text-[var(--color-indeks-blue)] transition-colors"
-                              >
-                                {project.title}
-                              </Link>
-                            </td>
-                            <td className="text-right py-3 px-4">
-                              <span className="text-sm">
-                                {formatNumber(analytics?.summary?.totalPageViews || 0)}
-                              </span>
-                            </td>
-                            <td className="text-right py-3 px-4">
-                              <span className="text-sm">
-                                {formatNumber(analytics?.summary?.totalUniqueVisitors || 0)}
-                              </span>
-                            </td>
-                            <td className="text-right py-3 px-4">
-                              <span className="text-sm">
-                                {formatNumber(analytics?.summary?.totalSessions || 0)}
-                              </span>
-                            </td>
-                            <td className="text-right py-3 px-4">
-                              <Badge variant="outline" className="text-xs">
-                                {(analytics?.summary?.avgBounceRate || 0).toFixed(1)}%
-                              </Badge>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {projectAnalytics.sort((a, b) => (b.summary?.totalPageViews || 0) - (a.summary?.totalPageViews || 0)).map((pa) => (
+                        <tr key={pa.projectId} className="border-b last:border-0 hover:bg-muted/50">
+                          <td className="py-3 px-4">
+                            <Link href={`/projects/${pa.projectId}`} className="hover:text-[var(--color-indeks-blue)] transition-colors">
+                              <p className="text-sm font-medium">{pa.projectTitle}</p>
+                              <p className="text-xs text-muted-foreground truncate max-w-48">{pa.projectLink}</p>
+                            </Link>
+                          </td>
+                          <td className="text-right py-3 px-4 text-sm font-semibold">{formatNumber(pa.summary?.totalPageViews || 0)}</td>
+                          <td className="text-right py-3 px-4 text-sm">{formatNumber(pa.summary?.totalUniqueVisitors || 0)}</td>
+                          <td className="text-right py-3 px-4 text-sm">{formatNumber(pa.summary?.totalSessions || 0)}</td>
+                          <td className="text-right py-3 px-4 text-sm">{formatDuration(pa.summary?.avgSessionDuration || 0)}</td>
+                          <td className="text-right py-3 px-4">
+                            <Badge variant="outline" className="text-xs">{(pa.summary?.avgBounceRate || 0).toFixed(1)}%</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="bg-muted/50 font-semibold">
+                        <td className="py-3 px-4 text-sm">Total ({projects.length} projects)</td>
+                        <td className="text-right py-3 px-4 text-sm">{formatNumber(totals.pageViews)}</td>
+                        <td className="text-right py-3 px-4 text-sm">{formatNumber(totals.visitors)}</td>
+                        <td className="text-right py-3 px-4 text-sm">{formatNumber(totals.sessions)}</td>
+                        <td className="text-right py-3 px-4 text-sm">{formatDuration(avgSessionDuration)}</td>
+                        <td className="text-right py-3 px-4">
+                          <Badge variant="outline" className="text-xs">{avgBounceRate.toFixed(1)}%</Badge>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
-              </div>
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon"><BarChart3 /></EmptyMedia>
+                    <EmptyTitle>No analytics data</EmptyTitle>
+                  </EmptyHeader>
+                </Empty>
+              )}
             </Card>
+
+            {/* Devices & Countries */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Monitor className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
+                  <h3 className="text-lg font-semibold">Devices</h3>
+                </div>
+                {aggregatedDevices.length > 0 ? (
+                  <div className="space-y-4">
+                    {aggregatedDevices.map((device) => {
+                      const DeviceIcon = getDeviceIcon(device.deviceType);
+                      const percentage = totalDeviceVisits > 0 ? Math.round((device.totalVisits / totalDeviceVisits) * 100) : 0;
+                      return (
+                        <div key={device.deviceType} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <DeviceIcon className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm font-medium capitalize">{device.deviceType}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">{formatNumber(device.totalVisits)}</span>
+                              <span className="text-sm font-semibold">{percentage}%</span>
+                            </div>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-2">
+                            <div className={`${getDeviceColor(device.deviceType)} h-2 rounded-full transition-all`} style={{ width: `${percentage}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon"><Monitor /></EmptyMedia>
+                      <EmptyTitle>No device data</EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
+                )}
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="h-5 w-5 text-[var(--color-indeks-green)]" />
+                  <h3 className="text-lg font-semibold">Top Countries</h3>
+                  <Badge variant="outline" className="ml-auto text-xs">Last 30 min</Badge>
+                </div>
+                {countries.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {countries.slice(0, 10).map((country, i) => {
+                      const percentage = totalCountryVisitors > 0 ? Math.round((country.visitor_count / totalCountryVisitors) * 100) : 0;
+                      return (
+                        <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium">{country.country}</span>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">{country.projectTitle}</Badge>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-sm text-muted-foreground">{formatNumber(country.visitor_count)}</span>
+                            <span className="text-xs font-semibold w-8 text-right">{percentage}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon"><MapPin /></EmptyMedia>
+                      <EmptyTitle>No location data</EmptyTitle>
+                      <EmptyDescription>Country data appears from recent traffic.</EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                )}
+              </Card>
+            </div>
+
+            {/* Top Pages & Traffic Sources */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="h-5 w-5 text-[var(--color-indeks-green)]" />
+                  <h3 className="text-lg font-semibold">Top Pages</h3>
+                </div>
+                {aggregatedPages.length > 0 ? (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {aggregatedPages.map((page, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 text-sm gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">{page.projectTitle}</Badge>
+                          <span className="truncate text-muted-foreground">{page.url}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-medium">{formatNumber(page.totalPageViews)}</span>
+                          <span className="text-xs text-muted-foreground">views</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon"><FileText /></EmptyMedia>
+                      <EmptyTitle>No page data</EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
+                )}
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Link2 className="h-5 w-5 text-[var(--color-indeks-blue)]" />
+                  <h3 className="text-lg font-semibold">Traffic Sources</h3>
+                </div>
+                {aggregatedReferrers.length > 0 ? (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {aggregatedReferrers.map((ref, i) => {
+                      const totalReferrerVisits = aggregatedReferrers.reduce((s, r) => s + r.totalVisits, 0);
+                      const percentage = totalReferrerVisits > 0 ? Math.round((ref.totalVisits / totalReferrerVisits) * 100) : 0;
+                      return (
+                        <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 text-sm gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">{ref.projectTitle}</Badge>
+                            <span className="truncate font-medium">{ref.domain}</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-muted-foreground">{formatNumber(ref.totalVisits)}</span>
+                            <span className="text-xs font-semibold w-8 text-right">{percentage}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon"><Link2 /></EmptyMedia>
+                      <EmptyTitle>No referrer data</EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
+                )}
+              </Card>
+            </div>
           </>
         )}
       </div>

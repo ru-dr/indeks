@@ -238,7 +238,7 @@ export function Cobe({
 
     const onResize = () => {
       if (canvasRef.current) {
-        width = canvasRef.current.offsetWidth;
+        width = canvasRef.current.offsetWidth || 400; // Default to 400 if no width
       }
     };
 
@@ -246,6 +246,9 @@ export function Cobe({
     onResize();
 
     if (!canvasRef.current) return;
+    
+    // Ensure we have a minimum width
+    if (width === 0) width = 400;
 
     const markers = getMarkers();
 
@@ -424,8 +427,9 @@ export function Cobe({
 
   const containerStyle = {
     width: "100%",
-    maxWidth: variant === "scaled" ? 800 : 600,
+    maxWidth: variant === "scaled" ? 800 : 1200,
     aspectRatio: variant === "scaled" ? 2.5 : 1,
+    minHeight: variant === "scaled" ? 200 : 500,
     margin: "auto",
     position: "relative" as const,
     ...style,
@@ -498,18 +502,23 @@ export function Cobe({
 export function RealtimeGlobe({
   projectId,
   className,
-  showEmptyMessage = true,
   ...props
 }: {
   projectId?: string;
   className?: string;
-  showEmptyMessage?: boolean;
 } & Omit<CobeProps, "variant" | "realtimeMarkers">) {
   const [markers, setMarkers] = useState<RealtimeMarker[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasData, setHasData] = useState(false);
+  const [activeVisitors, setActiveVisitors] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted before rendering globe (for SSR)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+    
     const fetchLocations = async () => {
       try {
         const url = projectId
@@ -541,12 +550,10 @@ export function RealtimeGlobe({
             })
           );
           setMarkers(newMarkers);
-          setHasData(newMarkers.length > 0);
+          setActiveVisitors(validLocations.reduce((sum: number, loc: { visitor_count: number }) => sum + (loc.visitor_count || 0), 0));
         }
       } catch (error) {
         console.error("Error fetching locations:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -555,7 +562,16 @@ export function RealtimeGlobe({
     // Poll every 15 seconds
     const interval = setInterval(fetchLocations, 15000);
     return () => clearInterval(interval);
-  }, [projectId]);
+  }, [projectId, mounted]);
+
+  // Don't render until mounted (prevents SSR issues with canvas)
+  if (!mounted) {
+    return (
+      <div className={cn("flex items-center justify-center", className)} style={{ minHeight: 500 }}>
+        <div className="animate-pulse text-muted-foreground">Loading globe...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -565,16 +581,12 @@ export function RealtimeGlobe({
         className={className}
         {...props}
       />
-      {!loading && !hasData && showEmptyMessage && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-full">
-          <div className="text-center p-4">
-            <p className="text-sm text-muted-foreground">
-              No location data yet
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Visitor locations will appear here
-            </p>
-          </div>
+      {/* Small indicator showing active visitor count - only when there ARE visitors */}
+      {activeVisitors > 0 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center">
+          <p className="text-xs text-muted-foreground">
+            {activeVisitors} active visitor{activeVisitors !== 1 ? 's' : ''}
+          </p>
         </div>
       )}
     </div>
