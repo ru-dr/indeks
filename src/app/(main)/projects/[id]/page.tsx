@@ -38,8 +38,6 @@ import {
   Chrome,
   ExternalLink,
   Zap,
-  AlertTriangle,
-  Target,
   Link2,
   MapPin,
   Code,
@@ -545,8 +543,8 @@ export default function ProjectDetailPage() {
           {analyticsLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
         </div>
 
-        {/* Primary Stats */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        {/* Quick Stats */}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Eye className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
@@ -571,41 +569,9 @@ export default function ProjectDetailPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
               <TrendingUp className="h-5 w-5" style={{ color: "var(--color-indeks-orange)" }} />
-              <span className="text-xs text-muted-foreground">Bounce</span>
+              <span className="text-xs text-muted-foreground">Bounce Rate</span>
             </div>
             <p className="text-2xl font-bold">{(summary?.avgBounceRate || 0).toFixed(1)}%</p>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <MousePointerClick className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
-              <span className="text-xs text-muted-foreground">Clicks</span>
-            </div>
-            <p className="text-2xl font-bold">{formatNumber(summary?.totalClicks)}</p>
-          </Card>
-        </div>
-
-        {/* Secondary Stats */}
-        <div className="grid gap-4 grid-cols-3">
-          <Card className="p-4 flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Errors</p>
-              <p className="text-lg font-bold">{formatNumber(summary?.totalErrors)}</p>
-            </div>
-          </Card>
-          <Card className="p-4 flex items-center gap-3">
-            <Target className="h-5 w-5 text-orange-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Rage Clicks</p>
-              <p className="text-lg font-bold">{formatNumber(summary?.totalRageClicks)}</p>
-            </div>
-          </Card>
-          <Card className="p-4 flex items-center gap-3">
-            <MousePointerClick className="h-5 w-5 text-yellow-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Dead Clicks</p>
-              <p className="text-lg font-bold">{formatNumber(summary?.totalDeadClicks)}</p>
-            </div>
           </Card>
         </div>
 

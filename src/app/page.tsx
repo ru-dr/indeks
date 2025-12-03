@@ -219,7 +219,7 @@ export default function Home() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[600px]">
+        <div className="flex items-center justify-center min-h-[90vh]">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </DashboardLayout>
