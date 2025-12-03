@@ -9,15 +9,5 @@
         { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-api-key, Authorization, User-Agent, Origin, Referer, Accept-Language, Accept-Encoding" }
       ]
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/sync-analytics?type=yesterday",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/sync-analytics?type=today",
-      "schedule": "0 */12 * * *"
-    }
   ]
 }

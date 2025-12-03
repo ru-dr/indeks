@@ -1,0 +1,53 @@
+name: Sync Analytics
+
+on:
+  schedule:
+    # Yesterday's analytics - daily at 2 AM UTC
+    - cron: '0 2 * * *'
+    # Today's analytics - every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      sync_type:
+        description: 'Sync type (yesterday or today)'
+        required: true
+        default: 'today'
+        type: choice
+        options:
+          - yesterday
+          - today
+
+jobs:
+  sync-yesterday:
+    if: github.event.schedule == '0 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.sync_type == 'yesterday')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync yesterday's analytics
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X GET "${{ secrets.VERCEL_URL }}/api/cron/sync-analytics?type=yesterday" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "Response: $body"
+          echo "HTTP Status: $http_code"
+          if [ "$http_code" -ne 200 ]; then
+            echo "Request failed with status $http_code"
+            exit 1
+          fi
+
+  sync-today:
+    if: github.event.schedule == '0 */6 * * *' || (github.event_name == 'workflow_dispatch' && inputs.sync_type == 'today')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync today's analytics
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X GET "${{ secrets.VERCEL_URL }}/api/cron/sync-analytics?type=today" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "Response: $body"
+          echo "HTTP Status: $http_code"
+          if [ "$http_code" -ne 200 ]; then
+            echo "Request failed with status $http_code"
+            exit 1
+          fi
