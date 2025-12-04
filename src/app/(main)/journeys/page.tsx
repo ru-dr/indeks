@@ -30,8 +30,8 @@ export default function JourneysPage() {
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button asChild variant="outline">
-              <Link href="/">Back to Dashboard</Link>
+            <Button variant="outline" render={<Link href="/" />}>
+              Back to Dashboard
             </Button>
           </EmptyContent>
         </Empty>
