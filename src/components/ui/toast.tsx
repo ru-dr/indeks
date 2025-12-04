@@ -8,6 +8,7 @@ import {
   LoaderCircleIcon,
   TriangleAlertIcon,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -40,10 +41,16 @@ function ToastProvider({
   position = "bottom-right",
   ...props
 }: ToastProviderProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <Toast.Provider toastManager={toastManager} {...props}>
       {children}
-      <Toasts position={position} />
+      {mounted && <Toasts position={position} />}
     </Toast.Provider>
   );
 }
@@ -167,10 +174,16 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
 }
 
 function AnchoredToastProvider({ children, ...props }: Toast.Provider.Props) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <Toast.Provider toastManager={anchoredToastManager} {...props}>
       {children}
-      <AnchoredToasts />
+      {mounted && <AnchoredToasts />}
     </Toast.Provider>
   );
 }

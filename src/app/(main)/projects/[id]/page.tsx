@@ -350,7 +350,7 @@ export default function ProjectDetailPage() {
   };
 
   const getTotalDeviceVisits = () =>
-    deviceTypeBreakdown.reduce((acc, d) => acc + (d.totalVisits || 0), 0);
+    deviceTypeBreakdown.reduce((acc, d) => acc + Number(d.totalVisits || 0), 0);
 
   if (loading) {
     return (
@@ -670,11 +670,12 @@ export default function ProjectDetailPage() {
               <Monitor className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-yellow)" }} />
               <h3 className="font-semibold text-sm sm:text-base">Devices</h3>
             </div>
-            {deviceTypeBreakdown.length ? (
+            {deviceTypeBreakdown.length > 0 ? (
               <div className="space-y-4">
                 {deviceTypeBreakdown.map((device, i) => {
                   const total = getTotalDeviceVisits();
-                  const percent = total > 0 ? (device.totalVisits / total) * 100 : 0;
+                  const visits = Number(device.totalVisits || 0);
+                  const percent = total > 0 ? (visits / total) * 100 : 0;
                   return (
                     <div key={i} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
@@ -682,7 +683,10 @@ export default function ProjectDetailPage() {
                           {getDeviceIcon(device.deviceType)}
                           <span className="capitalize">{device.deviceType}</span>
                         </span>
-                        <span>{percent.toFixed(1)}%</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{formatNumber(visits)}</span>
+                          <span className="font-semibold">{percent.toFixed(1)}%</span>
+                        </div>
                       </div>
                       <Progress value={percent} className="h-2" />
                     </div>

@@ -10,6 +10,8 @@ import {
   Globe,
   FolderKanban,
   X,
+  BookUp2,
+  Route,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -43,7 +45,17 @@ const navigationItems = [
   {
     name: "Reports",
     href: "/reports",
+    icon: BookUp2,
+  },
+  {
+    name: "Documentation",
+    href: "/docs",
     icon: FileText,
+  },
+  {
+    name: "Journeys",
+    href: "/journeys",
+    icon: Route,
   },
   {
     name: "Settings",

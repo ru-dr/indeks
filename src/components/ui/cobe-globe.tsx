@@ -522,8 +522,8 @@ export function RealtimeGlobe({
     const fetchLocations = async () => {
       try {
         const url = projectId
-          ? `/api/analytics/${projectId}/locations`
-          : "/api/analytics/global/locations";
+          ? `/api/v1/analytics/${projectId}/locations`
+          : "/api/v1/analytics/global/locations";
 
         const response = await fetch(url);
         if (response.ok) {

@@ -133,10 +133,10 @@ export default function AnalyticsPage() {
     const analyticsPromises = projects.map(async (project) => {
       try {
         const [overviewRes, pagesRes, referrersRes, devicesRes] = await Promise.all([
-          fetch(`/api/analytics/${project.id}/overview${query}`),
-          fetch(`/api/analytics/${project.id}/pages${query}&limit=10`),
-          fetch(`/api/analytics/${project.id}/referrers${query}&limit=10`),
-          fetch(`/api/analytics/${project.id}/devices${query}`),
+          fetch(`/api/v1/analytics/${project.id}/overview${query}`),
+          fetch(`/api/v1/analytics/${project.id}/pages${query}&limit=10`),
+          fetch(`/api/v1/analytics/${project.id}/referrers${query}&limit=10`),
+          fetch(`/api/v1/analytics/${project.id}/devices${query}`),
         ]);
 
         const overview = overviewRes.ok ? await overviewRes.json() : { summary: null };
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
 
       for (const project of projects) {
         try {
-          const response = await fetch(`/api/analytics/${project.id}/locations`);
+          const response = await fetch(`/api/v1/analytics/${project.id}/locations`);
           if (response.ok) {
             const data = await response.json();
             (data.countries || []).forEach((c: CountryData) => {
@@ -224,9 +224,10 @@ export default function AnalyticsPage() {
 
   const aggregatedDevices = projectAnalytics.reduce((acc, pa) => {
     pa.devices.forEach((d) => {
+      const visits = Number(d.totalVisits || 0);
       const existing = acc.find((a) => a.deviceType === d.deviceType);
-      if (existing) existing.totalVisits += d.totalVisits;
-      else acc.push({ ...d });
+      if (existing) existing.totalVisits += visits;
+      else acc.push({ deviceType: d.deviceType, totalVisits: visits });
     });
     return acc;
   }, [] as { deviceType: string; totalVisits: number }[]);
@@ -252,7 +253,7 @@ export default function AnalyticsPage() {
 
   const avgBounceRate = totals.count > 0 ? totals.bounceRateSum / totals.count : 0;
   const avgSessionDuration = totals.count > 0 ? totals.sessionDurationSum / totals.count : 0;
-  const totalDeviceVisits = aggregatedDevices.reduce((sum, d) => sum + d.totalVisits, 0);
+  const totalDeviceVisits = aggregatedDevices.reduce((sum, d) => sum + Number(d.totalVisits || 0), 0);
   const totalCountryVisitors = countries.reduce((sum, c) => sum + c.visitor_count, 0);
 
   const formatDuration = (seconds: number) => {
@@ -457,7 +458,7 @@ export default function AnalyticsPage() {
                   <div className="space-y-4">
                     {aggregatedDevices.map((device) => {
                       const DeviceIcon = getDeviceIcon(device.deviceType);
-                      const percentage = totalDeviceVisits > 0 ? Math.round((device.totalVisits / totalDeviceVisits) * 100) : 0;
+                      const percentage = totalDeviceVisits > 0 ? (device.totalVisits / totalDeviceVisits) * 100 : 0;
                       return (
                         <div key={device.deviceType} className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -467,7 +468,7 @@ export default function AnalyticsPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-muted-foreground">{formatNumber(device.totalVisits)}</span>
-                              <span className="text-sm font-semibold">{percentage}%</span>
+                              <span className="text-sm font-semibold">{percentage.toFixed(1)}%</span>
                             </div>
                           </div>
                           <div className="w-full bg-secondary rounded-full h-2">

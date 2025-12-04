@@ -102,8 +102,8 @@ export default function RealtimeTrafficPage() {
 
     try {
       const [realtimeRes, locationsRes] = await Promise.all([
-        fetch(`/api/analytics/${selectedProject}/realtime`),
-        fetch(`/api/analytics/${selectedProject}/locations`),
+        fetch(`/api/v1/analytics/${selectedProject}/realtime`),
+        fetch(`/api/v1/analytics/${selectedProject}/locations`),
       ]);
 
       if (realtimeRes.ok) {

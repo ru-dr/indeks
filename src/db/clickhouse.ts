@@ -1,13 +1,14 @@
 import { createClient } from "@clickhouse/client";
 
-// ClickHouse client configuration for Azure ClickHouse
+// ClickHouse client configuration for ClickHouse Cloud
 export const clickhouse = createClient({
   url:
     process.env.CLICKHOUSE_URL ||
-    "https://y7sjjs61oi.eastus2.azure.clickhouse.cloud:8443",
+    "https://dj4oovjkh6.us-east-1.aws.clickhouse.cloud:8443",
   username: process.env.CLICKHOUSE_USERNAME || "default",
   password: process.env.CLICKHOUSE_PASSWORD || "",
   database: process.env.CLICKHOUSE_DATABASE || "indeks_analytics",
+  request_timeout: 30000,
 });
 
 // Test connection

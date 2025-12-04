@@ -39,7 +39,7 @@ export default function RootLayout({
             enableColorScheme
             defaultTheme="dark"
           >
-            <IndeksProvider />
+            {/* <IndeksProvider /> */}
             {children}
           </ThemeProvider>
         </ToastProvider>

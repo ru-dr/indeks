@@ -40,9 +40,9 @@ import {
   FileText,
   RefreshCw,
   MousePointerClick,
-  Timer,
   BarChart3,
   MapPin,
+  MoreVertical,
 } from "lucide-react";
 import { Frame } from "@/components/ui/frame";
 import {
@@ -161,7 +161,6 @@ export default function ProjectsPage() {
 
     for (const project of projects) {
       try {
-        // Fetch overview stats
         const overviewRes = await fetch(`/api/v1/analytics/${project.id}/overview${query}`);
         if (overviewRes.ok) {
           const data = await overviewRes.json();
@@ -180,25 +179,10 @@ export default function ProjectsPage() {
         console.error(`Error fetching overview for ${project.id}:`, err);
       }
 
-      try {
-        // Fetch devices - API returns deviceTypeBreakdown
-        const devicesRes = await fetch(`/api/v1/analytics/${project.id}/devices${query}`);
-        if (devicesRes.ok) {
-          const data = await devicesRes.json();
-          if (data && Array.isArray(data.deviceTypeBreakdown)) {
-            data.deviceTypeBreakdown.forEach((d: DeviceData) => {
-              if (d && d.deviceType) {
-                allDevices[d.deviceType] = (allDevices[d.deviceType] || 0) + (d.totalVisits || 0);
-              }
-            });
-          }
-        }
-      } catch (err) {
-        console.error(`Error fetching devices for ${project.id}:`, err);
-      }
+      // Device data is now fetched from realtime endpoint (ClickHouse) below
+      // This provides more accurate real-time data without needing sync
 
       try {
-        // Fetch referrers - API returns referrer and totalVisits
         const referrersRes = await fetch(`/api/v1/analytics/${project.id}/referrers${query}&limit=10`);
         if (referrersRes.ok) {
           const data = await referrersRes.json();
@@ -216,7 +200,6 @@ export default function ProjectsPage() {
       }
 
       try {
-        // Fetch top pages - API returns url and totalPageViews
         const pagesRes = await fetch(`/api/v1/analytics/${project.id}/pages${query}&limit=10`);
         if (pagesRes.ok) {
           const data = await pagesRes.json();
@@ -233,7 +216,6 @@ export default function ProjectsPage() {
       }
 
       try {
-        // Fetch events - API returns eventType and totalCount
         const eventsRes = await fetch(`/api/v1/analytics/${project.id}/events${query}&limit=10`);
         if (eventsRes.ok) {
           const data = await eventsRes.json();
@@ -250,7 +232,6 @@ export default function ProjectsPage() {
       }
 
       try {
-        // Fetch locations for countries
         const locationsRes = await fetch(`/api/v1/analytics/${project.id}/locations`);
         if (locationsRes.ok) {
           const data = await locationsRes.json();
@@ -267,12 +248,19 @@ export default function ProjectsPage() {
       }
 
       try {
-        // Fetch realtime
         const realtimeRes = await fetch(`/api/v1/analytics/${project.id}/realtime`);
         if (realtimeRes.ok) {
           const data = await realtimeRes.json();
           if (data && data.realtime) {
             realtimeMap[project.id] = data.realtime.active_users || 0;
+          }
+          // Use realtime device data from ClickHouse (more accurate than aggregated)
+          if (data && Array.isArray(data.devices)) {
+            data.devices.forEach((d: DeviceData) => {
+              if (d && d.deviceType) {
+                allDevices[d.deviceType] = (allDevices[d.deviceType] || 0) + (d.totalVisits || 0);
+              }
+            });
           }
         }
       } catch (err) {
@@ -283,7 +271,6 @@ export default function ProjectsPage() {
     setProjectStats(statsMap);
     setRealtimeCounts(realtimeMap);
 
-    // Process aggregated data
     setDeviceData(
       Object.entries(allDevices)
         .map(([deviceType, totalVisits]) => ({ deviceType, totalVisits }))
@@ -350,12 +337,6 @@ export default function ProjectsPage() {
   const totalVisitors = Object.values(projectStats).reduce((sum, s) => sum + (s?.totalUniqueVisitors || 0), 0);
   const totalSessions = Object.values(projectStats).reduce((sum, s) => sum + (s?.totalSessions || 0), 0);
   const totalClicks = Object.values(projectStats).reduce((sum, s) => sum + (s?.totalClicks || 0), 0);
-  const avgBounceRate = Object.values(projectStats).length > 0 
-    ? Object.values(projectStats).reduce((sum, s) => sum + (s?.bounceRate || 0), 0) / Object.values(projectStats).length 
-    : 0;
-  const avgSessionDuration = Object.values(projectStats).length > 0
-    ? Object.values(projectStats).reduce((sum, s) => sum + (s?.avgSessionDuration || 0), 0) / Object.values(projectStats).length
-    : 0;
   const activeProjects = projects.filter((p) => p?.isActive).length;
   const totalActiveVisitors = Object.values(realtimeCounts).reduce((sum, c) => sum + (c || 0), 0);
 
@@ -432,11 +413,6 @@ export default function ProjectsPage() {
     return `${mins}m ${secs}s`;
   };
 
-  const formatPercent = (num: number) => {
-    if (!num && num !== 0) return "-";
-    return `${Math.round(num)}%`;
-  };
-
   const getPerformanceIndicator = (views: number) => {
     if (views > 1000) return { icon: TrendingUp, color: "text-[var(--color-indeks-green)]", label: "High" };
     if (views > 100) return { icon: Minus, color: "text-[var(--color-indeks-yellow)]", label: "Medium" };
@@ -500,286 +476,151 @@ export default function ProjectsPage() {
           </Card>
         ) : (
           <>
-            {/* Stats Cards - Row 1 */}
-            <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-              <Card className="p-3 sm:p-4">
+            {/* Stats Cards */}
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Projects</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{projects.length}</h3>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Projects</p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{projects.length}</h3>
                   </div>
-                  <FolderKanban className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-blue)] shrink-0" />
+                  <FolderKanban className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
                 </div>
               </Card>
-              <Card className="p-3 sm:p-4">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Active</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{activeProjects}</h3>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active</p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{activeProjects}</h3>
                   </div>
-                  <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-green)] shrink-0" />
+                  <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
                 </div>
               </Card>
-              <Card className="p-3 sm:p-4">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Views</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{formatNumber(totalViews)}</h3>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Views</p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{formatNumber(totalViews)}</h3>
                   </div>
-                  <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-yellow)] shrink-0" />
+                  <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
                 </div>
               </Card>
-              <Card className="p-3 sm:p-4">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Visitors</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{formatNumber(totalVisitors)}</h3>
-                  </div>
-                  <Users className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-orange)] shrink-0" />
-                </div>
-              </Card>
-              <Card className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Sessions</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{formatNumber(totalSessions)}</h3>
-                  </div>
-                  <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-blue)] shrink-0" />
-                </div>
-              </Card>
-              <Card className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Live Now</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <h3 className="text-lg sm:text-xl font-bold">{totalActiveVisitors}</h3>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Live Now</p>
+                    <div className="flex items-center gap-2 mt-1 sm:mt-2">
+                      <h3 className="text-xl sm:text-2xl font-bold">{totalActiveVisitors}</h3>
                       {totalActiveVisitors > 0 && (
-                        <span className="relative flex h-2 w-2">
+                        <span className="relative flex h-2.5 w-2.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-indeks-green)] opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-indeks-green)]"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--color-indeks-green)]"></span>
                         </span>
                       )}
                     </div>
                   </div>
-                  <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-green)] shrink-0" />
+                  <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
                 </div>
               </Card>
             </div>
 
-            {/* Stats Cards - Row 2 */}
-            <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-              <Card className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Total Clicks</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{formatNumber(totalClicks)}</h3>
-                  </div>
-                  <MousePointerClick className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-yellow)] shrink-0" />
-                </div>
-              </Card>
-              <Card className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Avg. Duration</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{formatDuration(avgSessionDuration)}</h3>
-                  </div>
-                  <Timer className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-blue)] shrink-0" />
-                </div>
-              </Card>
-              <Card className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Bounce Rate</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{formatPercent(avgBounceRate)}</h3>
-                  </div>
-                  <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-orange)] shrink-0" />
-                </div>
-              </Card>
-              <Card className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground truncate">Countries</p>
-                    <h3 className="text-lg sm:text-xl font-bold mt-0.5">{topCountries.length}</h3>
-                  </div>
-                  <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-green)] shrink-0" />
-                </div>
-              </Card>
-            </div>
-
-            {/* Insights Row 1 */}
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-              {/* Top Performer */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap className="h-4 w-4 text-[var(--color-indeks-yellow)]" />
-                  <h3 className="text-sm font-semibold">Top Performer</h3>
-                  {topProject && <Badge variant="success" className="ml-auto text-[10px]">#1</Badge>}
-                </div>
-                {topProject && topProject.stats ? (
-                  <Link href={`/projects/${topProject.id}`}>
-                    <div className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(topProject.isActive)}`} />
-                        <p className="font-medium text-sm truncate">{topProject.title}</p>
-                        <ArrowUpRight className="h-3 w-3 text-muted-foreground shrink-0 ml-auto" />
-                      </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <span><strong>{formatNumber(topProject.stats.totalPageViews)}</strong> views</span>
-                        <span><strong>{formatNumber(topProject.stats.totalUniqueVisitors)}</strong> visitors</span>
-                      </div>
-                    </div>
-                  </Link>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No data available</p>
-                )}
-              </Card>
-
-              {/* Devices */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Monitor className="h-4 w-4 text-[var(--color-indeks-blue)]" />
-                  <h3 className="text-sm font-semibold">Devices</h3>
-                </div>
-                {deviceData.length > 0 ? (
-                  <div className="space-y-2">
-                    {deviceData.slice(0, 3).map((d, i) => {
-                      const Icon = getDeviceIcon(d.deviceType);
-                      const total = deviceData.reduce((s, x) => s + (x.totalVisits || 0), 0);
-                      const pct = total > 0 ? Math.round((d.totalVisits / total) * 100) : 0;
-                      return (
-                        <div key={i} className="flex items-center gap-2">
-                          <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <span className="text-xs truncate flex-1 capitalize">{d.deviceType || "Unknown"}</span>
-                          <span className="text-xs font-medium">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No device data yet</p>
-                )}
-              </Card>
-
-              {/* Top Referrers */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Link2 className="h-4 w-4 text-[var(--color-indeks-orange)]" />
-                  <h3 className="text-sm font-semibold">Top Referrers</h3>
-                </div>
-                {topReferrers.length > 0 ? (
-                  <div className="space-y-2">
-                    {topReferrers.slice(0, 3).map((r, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                        <span className="text-xs truncate flex-1">{r.referrer || "Direct"}</span>
-                        <span className="text-xs font-medium">{formatNumber(r.totalVisits)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No referrer data yet</p>
-                )}
-              </Card>
-
-              {/* Top Pages */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText className="h-4 w-4 text-[var(--color-indeks-green)]" />
-                  <h3 className="text-sm font-semibold">Top Pages</h3>
-                </div>
-                {topPages.length > 0 ? (
-                  <div className="space-y-2">
-                    {topPages.slice(0, 3).map((p, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                        <span className="text-xs truncate flex-1">{p.url || "/"}</span>
-                        <span className="text-xs font-medium">{formatNumber(p.totalPageViews)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No page data yet</p>
-                )}
-              </Card>
-            </div>
-
-            {/* Insights Row 2 */}
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-              {/* Top Events */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <MousePointerClick className="h-4 w-4 text-[var(--color-indeks-yellow)]" />
-                  <h3 className="text-sm font-semibold">Top Events</h3>
-                </div>
-                {topEvents.length > 0 ? (
-                  <div className="space-y-2">
-                    {topEvents.slice(0, 3).map((e, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                        <span className="text-xs truncate flex-1">{e.eventType}</span>
-                        <span className="text-xs font-medium">{formatNumber(e.totalCount)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No events yet</p>
-                )}
-              </Card>
-
-              {/* Top Countries */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin className="h-4 w-4 text-[var(--color-indeks-green)]" />
-                  <h3 className="text-sm font-semibold">Top Countries</h3>
-                </div>
-                {topCountries.length > 0 ? (
-                  <div className="space-y-2">
-                    {topCountries.slice(0, 3).map((c, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                        <span className="text-xs truncate flex-1">{c.country}</span>
-                        <span className="text-xs font-medium">{formatNumber(c.visitor_count)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No location data yet</p>
-                )}
-              </Card>
-
-              {/* Recently Updated - spans 2 columns */}
-              <Card className="p-4 sm:col-span-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <Clock className="h-4 w-4 text-[var(--color-indeks-blue)]" />
-                  <h3 className="text-sm font-semibold">Recently Updated</h3>
-                </div>
-                {recentlyUpdated.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {recentlyUpdated.map((project) => (
-                      <Link key={project.id} href={`/projects/${project.id}`}>
-                        <Badge variant="outline" className="hover:bg-muted cursor-pointer">
-                          <div className={`h-1.5 w-1.5 rounded-full mr-1.5 ${getStatusColor(project.isActive)}`} />
-                          {project.title}
-                          <span className="text-muted-foreground ml-1.5">{formatDate(project.updatedAt)}</span>
-                        </Badge>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No recent updates</p>
-                )}
-              </Card>
-            </div>
-
-            {/* All Projects Card */}
+            {/* Quick Insights */}
             <Card className="p-4 sm:p-6">
-              {/* Header */}
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
+                <h3 className="text-base sm:text-lg font-semibold">Quick Insights</h3>
+              </div>
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                {/* Top Performer */}
+                <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                  <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-green)] mb-2 sm:mb-3" />
+                  <h4 className="font-medium text-sm sm:text-base mb-1">Top Performer</h4>
+                  {topProject && topProject.stats ? (
+                    <Link href={`/projects/${topProject.id}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`h-2 w-2 rounded-full ${getStatusColor(topProject.isActive)}`} />
+                        <span className="text-sm truncate">{topProject.title}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {formatNumber(topProject.stats.totalPageViews)} views • {formatNumber(topProject.stats.totalUniqueVisitors)} visitors
+                      </p>
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No data available</p>
+                  )}
+                </div>
+
+                {/* Devices */}
+                <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+                  <Monitor className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-blue)] mb-2 sm:mb-3" />
+                  <h4 className="font-medium text-sm sm:text-base mb-1">Devices</h4>
+                  {deviceData.length > 0 ? (
+                    <div className="space-y-1">
+                      {deviceData.slice(0, 3).map((d, i) => {
+                        const Icon = getDeviceIcon(d.deviceType);
+                        const total = deviceData.reduce((s, x) => s + (x.totalVisits || 0), 0);
+                        const pct = total > 0 ? Math.round((d.totalVisits / total) * 100) : 0;
+                        return (
+                          <div key={i} className="flex items-center gap-2 text-xs">
+                            <Icon className="h-3 w-3 text-muted-foreground" />
+                            <span className="capitalize truncate flex-1">{d.deviceType}</span>
+                            <span className="font-medium">{pct}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No device data</p>
+                  )}
+                </div>
+
+                {/* Top Referrers */}
+                <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+                  <Link2 className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-orange)] mb-2 sm:mb-3" />
+                  <h4 className="font-medium text-sm sm:text-base mb-1">Top Referrers</h4>
+                  {topReferrers.length > 0 ? (
+                    <div className="space-y-1">
+                      {topReferrers.slice(0, 3).map((r, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <span className="text-muted-foreground">{i + 1}.</span>
+                          <span className="truncate flex-1">{r.referrer || "Direct"}</span>
+                          <span className="font-medium">{formatNumber(r.totalVisits)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No referrer data</p>
+                  )}
+                </div>
+
+                {/* Top Countries */}
+                <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+                  <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-green)] mb-2 sm:mb-3" />
+                  <h4 className="font-medium text-sm sm:text-base mb-1">Top Countries</h4>
+                  {topCountries.length > 0 ? (
+                    <div className="space-y-1">
+                      {topCountries.slice(0, 3).map((c, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <span className="text-muted-foreground">{i + 1}.</span>
+                          <span className="truncate flex-1">{c.country}</span>
+                          <span className="font-medium">{formatNumber(c.visitor_count)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No location data</p>
+                  )}
+                </div>
+              </div>
+            </Card>
+
+            {/* All Projects Table */}
+            <Card className="p-4 sm:p-6">
               <div className="flex flex-col gap-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FolderKanban className="h-5 w-5 text-[var(--color-indeks-blue)]" />
                     <h3 className="text-base sm:text-lg font-semibold">All Projects</h3>
-                    <Badge variant="secondary" className="text-xs">{filteredProjects.length}</Badge>
                   </div>
                   <div className="hidden md:flex items-center gap-1 border rounded-lg p-1">
                     <Button
@@ -843,7 +684,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              {/* Projects Content with Fixed Height and Scroll */}
+              {/* Projects Content */}
               {filteredProjects.length === 0 ? (
                 <div className="py-8">
                   <Empty>
@@ -856,74 +697,21 @@ export default function ProjectsPage() {
                 </div>
               ) : (
                 <>
-                  {/* Mobile: Card View with scroll */}
-                  <div className="md:hidden max-h-[400px] overflow-y-auto space-y-3 pr-1">
-                    {filteredProjects.map((project) => {
-                      const stats = projectStats[project.id];
-                      const perf = getPerformanceIndicator(stats?.totalPageViews || 0);
-                      const PerfIcon = perf.icon;
-                      const liveCount = realtimeCounts[project.id] || 0;
-                      return (
-                        <Link key={project.id} href={`/projects/${project.id}`}>
-                          <div className="p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
-                                  <h4 className="font-medium text-sm truncate">{project.title}</h4>
-                                  <PerfIcon className={cn("h-3 w-3 shrink-0", perf.color)} />
-                                </div>
-                                <p className="text-xs text-muted-foreground truncate mb-2">
-                                  {getHostname(project.link)}
-                                </p>
-                                <div className="flex items-center gap-3 text-xs">
-                                  <div className="flex items-center gap-1">
-                                    <Eye className="h-3 w-3 text-[var(--color-indeks-green)]" />
-                                    <span className="font-medium">{stats ? formatNumber(stats.totalPageViews) : "-"}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Users className="h-3 w-3 text-[var(--color-indeks-blue)]" />
-                                    <span className="font-medium">{stats ? formatNumber(stats.totalUniqueVisitors) : "-"}</span>
-                                  </div>
-                                  {liveCount > 0 && (
-                                    <div className="flex items-center gap-1">
-                                      <span className="relative flex h-1.5 w-1.5">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-indeks-green)] opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--color-indeks-green)]"></span>
-                                      </span>
-                                      <span className="font-medium">{liveCount}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end gap-1 shrink-0">
-                                <Badge variant={project.isActive ? "success" : "error"} className="text-[10px]">
-                                  {project.isActive ? "active" : "inactive"}
-                                </Badge>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground mt-auto" />
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-
-                  {/* Desktop: Table or Grid View with scroll */}
-                  <div className="hidden md:block max-h-[500px] overflow-y-auto">
+                  {/* Desktop: Table or Grid View */}
+                  <div className="hidden md:block">
                     {viewMode === "list" ? (
                       <Frame className="w-full">
                         <Table>
-                          <TableHeader className="sticky top-0 bg-background z-10">
+                          <TableHeader>
                             <TableRow>
                               <TableHead>Project</TableHead>
                               <TableHead className="text-center">Status</TableHead>
                               <TableHead className="text-center">Live</TableHead>
                               <TableHead className="text-right">Views</TableHead>
                               <TableHead className="text-right">Visitors</TableHead>
-                              <TableHead className="text-right hidden lg:table-cell">Sessions</TableHead>
-                              <TableHead className="text-right hidden xl:table-cell">Avg Time</TableHead>
-                              <TableHead className="text-center hidden xl:table-cell">Sync</TableHead>
+                              <TableHead className="text-right">Sessions</TableHead>
+                              <TableHead className="text-right">Avg Time</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -934,13 +722,11 @@ export default function ProjectsPage() {
                                 <TableRow key={project.id}>
                                   <TableCell>
                                     <Link href={`/projects/${project.id}`} className="hover:text-[var(--color-indeks-blue)] transition-colors">
-                                      <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-3">
                                         <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
                                         <div className="min-w-0">
-                                          <p className="text-sm font-medium truncate">{project.title}</p>
-                                          <p className="text-xs text-muted-foreground truncate max-w-48">
-                                            {getHostname(project.link)}
-                                          </p>
+                                          <p className="text-sm font-medium">{project.title}</p>
+                                          <p className="text-xs text-muted-foreground">{getHostname(project.link)}</p>
                                         </div>
                                       </div>
                                     </Link>
@@ -969,25 +755,29 @@ export default function ProjectsPage() {
                                   <TableCell className="text-right">
                                     {stats ? formatNumber(stats.totalUniqueVisitors) : "-"}
                                   </TableCell>
-                                  <TableCell className="text-right hidden lg:table-cell">
+                                  <TableCell className="text-right">
                                     {stats ? formatNumber(stats.totalSessions) : "-"}
                                   </TableCell>
-                                  <TableCell className="text-right hidden xl:table-cell">
+                                  <TableCell className="text-right">
                                     {stats ? formatDuration(stats.avgSessionDuration) : "-"}
                                   </TableCell>
-                                  <TableCell className="text-center hidden xl:table-cell">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        handleSync(project.id);
-                                      }}
-                                      disabled={syncing === project.id}
-                                    >
-                                      <RefreshCw className={cn("h-3.5 w-3.5", syncing === project.id && "animate-spin")} />
-                                    </Button>
+                                  <TableCell>
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handleSync(project.id);
+                                        }}
+                                        disabled={syncing === project.id}
+                                      >
+                                        <RefreshCw className={cn("h-4 w-4", syncing === project.id && "animate-spin")} />
+                                      </Button>
+                                      <Button size="sm" variant="ghost">
+                                        <MoreVertical className="h-4 w-4" />
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               );
@@ -996,7 +786,7 @@ export default function ProjectsPage() {
                         </Table>
                       </Frame>
                     ) : (
-                      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+                      <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                         {filteredProjects.map((project) => {
                           const stats = projectStats[project.id];
                           const perf = getPerformanceIndicator(stats?.totalPageViews || 0);
@@ -1059,7 +849,135 @@ export default function ProjectsPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Mobile: Card View */}
+                  <div className="md:hidden space-y-3">
+                    {filteredProjects.map((project) => {
+                      const stats = projectStats[project.id];
+                      const perf = getPerformanceIndicator(stats?.totalPageViews || 0);
+                      const PerfIcon = perf.icon;
+                      const liveCount = realtimeCounts[project.id] || 0;
+                      return (
+                        <Link key={project.id} href={`/projects/${project.id}`}>
+                          <div className="p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
+                                  <h4 className="font-medium text-sm truncate">{project.title}</h4>
+                                  <PerfIcon className={cn("h-3 w-3 shrink-0", perf.color)} />
+                                </div>
+                                <p className="text-xs text-muted-foreground truncate mb-2">
+                                  {getHostname(project.link)}
+                                </p>
+                                <div className="flex items-center gap-3 text-xs">
+                                  <div className="flex items-center gap-1">
+                                    <Eye className="h-3 w-3 text-[var(--color-indeks-green)]" />
+                                    <span className="font-medium">{stats ? formatNumber(stats.totalPageViews) : "-"}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Users className="h-3 w-3 text-[var(--color-indeks-blue)]" />
+                                    <span className="font-medium">{stats ? formatNumber(stats.totalUniqueVisitors) : "-"}</span>
+                                  </div>
+                                  {liveCount > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="relative flex h-1.5 w-1.5">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-indeks-green)] opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--color-indeks-green)]"></span>
+                                      </span>
+                                      <span className="font-medium">{liveCount}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                <Badge variant={project.isActive ? "success" : "error"} className="text-[10px]">
+                                  {project.isActive ? "active" : "inactive"}
+                                </Badge>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground mt-auto" />
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </>
+              )}
+            </Card>
+
+            {/* Additional Stats Row */}
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+              {/* Top Pages */}
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="h-5 w-5 text-[var(--color-indeks-green)]" />
+                  <h3 className="text-base sm:text-lg font-semibold">Top Pages</h3>
+                </div>
+                {topPages.length > 0 ? (
+                  <div className="space-y-3">
+                    {topPages.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-accent/30">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-sm text-muted-foreground w-5">{i + 1}.</span>
+                          <span className="text-sm truncate">{p.url || "/"}</span>
+                        </div>
+                        <span className="text-sm font-medium shrink-0 ml-2">{formatNumber(p.totalPageViews)} views</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No page data available</p>
+                )}
+              </Card>
+
+              {/* Recently Updated */}
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="h-5 w-5 text-[var(--color-indeks-blue)]" />
+                  <h3 className="text-base sm:text-lg font-semibold">Recently Updated</h3>
+                </div>
+                {recentlyUpdated.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentlyUpdated.map((project) => (
+                      <Link key={project.id} href={`/projects/${project.id}`}>
+                        <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className={`h-2 w-2 rounded-full ${getStatusColor(project.isActive)}`} />
+                            <span className="text-sm truncate">{project.title}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">{formatDate(project.updatedAt)}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No recent updates</p>
+                )}
+              </Card>
+            </div>
+
+            {/* Top Events */}
+            <Card className="p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <MousePointerClick className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
+                <h3 className="text-base sm:text-lg font-semibold">Top Events</h3>
+              </div>
+              {topEvents.length > 0 ? (
+                <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-5">
+                  {topEvents.map((e, i) => (
+                    <div key={i} className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge variant="outline" className="text-xs">{e.eventType}</Badge>
+                        <span className="text-xs text-muted-foreground">#{i + 1}</span>
+                      </div>
+                      <p className="text-xl sm:text-2xl font-bold">{formatNumber(e.totalCount)}</p>
+                      <p className="text-xs text-muted-foreground">total events</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No event data available</p>
               )}
             </Card>
           </>
