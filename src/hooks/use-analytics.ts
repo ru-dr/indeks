@@ -101,7 +101,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchOverview = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/analytics/${projectId}/overview${buildQuery()}`
+        `/api/v1/analytics/${projectId}/overview${buildQuery()}`
       );
       if (!response.ok) throw new Error("Failed to fetch overview");
       const data = await response.json();
@@ -115,7 +115,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchTopPages = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/analytics/${projectId}/pages${buildQuery()}`
+        `/api/v1/analytics/${projectId}/pages${buildQuery()}`
       );
       if (!response.ok) throw new Error("Failed to fetch top pages");
       const data = await response.json();
@@ -128,7 +128,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchReferrers = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/analytics/${projectId}/referrers${buildQuery()}`
+        `/api/v1/analytics/${projectId}/referrers${buildQuery()}`
       );
       if (!response.ok) throw new Error("Failed to fetch referrers");
       const data = await response.json();
@@ -141,7 +141,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchDevices = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/analytics/${projectId}/devices${buildQuery()}`
+        `/api/v1/analytics/${projectId}/devices${buildQuery()}`
       );
       if (!response.ok) throw new Error("Failed to fetch devices");
       const data = await response.json();
@@ -154,7 +154,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchEvents = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/analytics/${projectId}/events${buildQuery()}`
+        `/api/v1/analytics/${projectId}/events${buildQuery()}`
       );
       if (!response.ok) throw new Error("Failed to fetch events");
       const data = await response.json();
@@ -167,7 +167,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchClicks = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/analytics/${projectId}/clicks${buildQuery()}`
+        `/api/v1/analytics/${projectId}/clicks${buildQuery()}`
       );
       if (!response.ok) throw new Error("Failed to fetch clicks");
       const data = await response.json();
@@ -179,7 +179,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
 
   const fetchRealtime = useCallback(async () => {
     try {
-      const response = await fetch(`/api/analytics/${projectId}/realtime`);
+      const response = await fetch(`/api/v1/analytics/${projectId}/realtime`);
       if (!response.ok) throw new Error("Failed to fetch realtime data");
       const data = await response.json();
       setRealtime(data);
@@ -216,7 +216,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const triggerSync = useCallback(
     async (date?: string) => {
       try {
-        const response = await fetch(`/api/analytics/${projectId}/sync`, {
+        const response = await fetch(`/api/v1/analytics/${projectId}/sync`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ date }),

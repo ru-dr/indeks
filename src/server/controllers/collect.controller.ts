@@ -224,7 +224,7 @@ export const collectController = {
           user_id: event.userId || null,
           user_agent: event.userAgent || null,
           referrer: event.referrer || null,
-          metadata: metadataObj,
+          metadata: JSON.stringify(metadataObj), // Must be JSON string for ClickHouse
           country: event.country,
           city: event.city,
           latitude: event.latitude,

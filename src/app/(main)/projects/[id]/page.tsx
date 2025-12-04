@@ -209,12 +209,12 @@ export default function ProjectDetailPage() {
     try {
       const [overviewRes, pagesRes, referrersRes, devicesRes, eventsRes, clicksRes] =
         await Promise.all([
-          fetch(`/api/analytics/${projectId}/overview${query}`),
-          fetch(`/api/analytics/${projectId}/pages${query}`),
-          fetch(`/api/analytics/${projectId}/referrers${query}`),
-          fetch(`/api/analytics/${projectId}/devices${query}`),
-          fetch(`/api/analytics/${projectId}/events${query}`),
-          fetch(`/api/analytics/${projectId}/clicks${query}`),
+          fetch(`/api/v1/analytics/${projectId}/overview${query}`),
+          fetch(`/api/v1/analytics/${projectId}/pages${query}`),
+          fetch(`/api/v1/analytics/${projectId}/referrers${query}`),
+          fetch(`/api/v1/analytics/${projectId}/devices${query}`),
+          fetch(`/api/v1/analytics/${projectId}/events${query}`),
+          fetch(`/api/v1/analytics/${projectId}/clicks${query}`),
         ]);
 
       if (overviewRes.ok) {
@@ -253,8 +253,8 @@ export default function ProjectDetailPage() {
     if (!projectId) return;
     try {
       const [realtimeRes, locationsRes] = await Promise.all([
-        fetch(`/api/analytics/${projectId}/realtime`),
-        fetch(`/api/analytics/${projectId}/locations`),
+        fetch(`/api/v1/analytics/${projectId}/realtime`),
+        fetch(`/api/v1/analytics/${projectId}/locations`),
       ]);
       if (realtimeRes.ok) {
         const data = await realtimeRes.json();
@@ -294,7 +294,7 @@ export default function ProjectDetailPage() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      await fetch(`/api/analytics/${projectId}/sync`, {
+      await fetch(`/api/v1/analytics/${projectId}/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -399,29 +399,29 @@ export default function ProjectDetailPage() {
         </Button>
 
         {/* Project Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
               <div
-                className={`h-3 w-3 rounded-full ${project.isActive ? "bg-[var(--color-indeks-green)]" : "bg-muted-foreground"}`}
+                className={`h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full shrink-0 ${project.isActive ? "bg-[var(--color-indeks-green)]" : "bg-muted-foreground"}`}
               />
-              <h1 className="text-3xl font-bold tracking-tight">{project.title}</h1>
-              <Badge variant={project.isActive ? "success" : "error"}>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">{project.title}</h1>
+              <Badge variant={project.isActive ? "success" : "error"} className="shrink-0">
                 {project.isActive ? "active" : "inactive"}
               </Badge>
-              {project.category && <Badge variant="outline">{project.category}</Badge>}
+              {project.category && <Badge variant="outline" className="shrink-0">{project.category}</Badge>}
             </div>
             {project.description && (
-              <p className="text-muted-foreground mb-3 max-w-2xl">{project.description}</p>
+              <p className="text-sm sm:text-base text-muted-foreground mb-3 max-w-2xl">{project.description}</p>
             )}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <Link
                 href={project.link.startsWith("http") ? project.link : `https://${project.link}`}
                 target="_blank"
-                className="flex items-center gap-1 hover:text-foreground transition-colors"
+                className="flex items-center gap-1 hover:text-foreground transition-colors truncate max-w-[200px] sm:max-w-none"
               >
-                <Globe className="h-4 w-4" />
-                {(() => {
+                <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate">{(() => {
                   try {
                     return new URL(
                       project.link.startsWith("http") ? project.link : `https://${project.link}`
@@ -429,60 +429,61 @@ export default function ProjectDetailPage() {
                   } catch {
                     return project.link;
                   }
-                })()}
-                <ExternalLink className="h-3 w-3" />
+                })()}</span>
+                <ExternalLink className="h-3 w-3 shrink-0" />
               </Link>
-              <Separator orientation="vertical" className="h-4" />
+              <Separator orientation="vertical" className="h-4 hidden sm:block" />
               <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                Created {formatDate(project.createdAt)}
+                <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Created</span> {formatDate(project.createdAt)}
               </span>
-              <Separator orientation="vertical" className="h-4" />
+              <Separator orientation="vertical" className="h-4 hidden sm:block" />
               <span className="flex items-center gap-1">
-                <Activity className="h-4 w-4" />
-                Updated {getTimeAgo(project.updatedAt)}
+                <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Updated</span> {getTimeAgo(project.updatedAt)}
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSync} disabled={syncing}>
-              {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              {syncing ? "Syncing..." : "Sync"}
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" onClick={handleSync} disabled={syncing} className="flex-1 sm:flex-none">
+              {syncing ? <Loader2 className="sm:mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="sm:mr-2 h-4 w-4" />}
+              <span className="hidden sm:inline">{syncing ? "Syncing..." : "Sync"}</span>
             </Button>
-            <Button>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
+            <Button className="flex-1 sm:flex-none">
+              <Settings className="sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
             </Button>
           </div>
         </div>
 
         {/* API Key & Installation */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+          <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
               <Key className="h-4 w-4" style={{ color: "var(--color-indeks-blue)" }} />
-              <span className="text-sm font-medium">API Key</span>
+              <span className="text-xs sm:text-sm font-medium">API Key</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-sm font-mono bg-secondary px-3 py-2 rounded truncate">
+              <code className="flex-1 text-xs sm:text-sm font-mono bg-secondary px-2 sm:px-3 py-1.5 sm:py-2 rounded truncate">
                 {project.publicKey}
               </code>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => copyToClipboard(project.publicKey, "key")}
+                className="shrink-0"
               >
                 {copied === "key" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
               <Code className="h-4 w-4" style={{ color: "var(--color-indeks-green)" }} />
-              <span className="text-sm font-medium">Installation Script</span>
+              <span className="text-xs sm:text-sm font-medium">Installation Script</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs font-mono bg-secondary px-3 py-2 rounded truncate text-muted-foreground">
+              <code className="flex-1 text-[10px] sm:text-xs font-mono bg-secondary px-2 sm:px-3 py-1.5 sm:py-2 rounded truncate text-muted-foreground">
                 {`<script src="https://cdn.indeks.io/sdk.js" data-api-key="${project.publicKey}" async></script>`}
               </code>
               <Button
@@ -494,6 +495,7 @@ export default function ProjectDetailPage() {
                     "script"
                   )
                 }
+                className="shrink-0"
               >
                 {copied === "script" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
@@ -503,23 +505,23 @@ export default function ProjectDetailPage() {
 
         {/* Live Activity Banner */}
         {realtime && realtime.realtime.total_events > 0 && (
-          <Card className="p-4 border-green-500/30 bg-green-500/5">
-            <div className="flex items-center justify-between">
+          <Card className="p-3 sm:p-4 border-green-500/30 bg-green-500/5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center gap-3">
-                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-                <span className="font-semibold">Live</span>
+                <div className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-green-500 animate-pulse" />
+                <span className="font-semibold text-sm sm:text-base">Live</span>
               </div>
-              <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm flex-wrap">
                 <span>
-                  <Users className="h-4 w-4 inline mr-1" />
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-1" />
                   {realtime.realtime.active_users} users
                 </span>
                 <span>
-                  <Activity className="h-4 w-4 inline mr-1" />
+                  <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-1" />
                   {realtime.realtime.active_sessions} sessions
                 </span>
                 <span>
-                  <Zap className="h-4 w-4 inline mr-1" />
+                  <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 inline mr-1" />
                   {realtime.realtime.total_events} events
                 </span>
               </div>
@@ -544,43 +546,43 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Eye className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
-              <span className="text-xs text-muted-foreground">Page Views</span>
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">Page Views</span>
             </div>
-            <p className="text-2xl font-bold">{formatNumber(summary?.totalPageViews)}</p>
+            <p className="text-xl sm:text-2xl font-bold">{formatNumber(summary?.totalPageViews)}</p>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <span className="text-xs text-muted-foreground">Visitors</span>
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">Visitors</span>
             </div>
-            <p className="text-2xl font-bold">{formatNumber(summary?.totalUniqueVisitors)}</p>
+            <p className="text-xl sm:text-2xl font-bold">{formatNumber(summary?.totalUniqueVisitors)}</p>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Clock className="h-5 w-5" style={{ color: "var(--color-indeks-yellow)" }} />
-              <span className="text-xs text-muted-foreground">Avg Session</span>
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-yellow)" }} />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">Avg Session</span>
             </div>
-            <p className="text-2xl font-bold">{formatDuration(summary?.avgSessionDuration || 0)}</p>
+            <p className="text-xl sm:text-2xl font-bold">{formatDuration(summary?.avgSessionDuration || 0)}</p>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="h-5 w-5" style={{ color: "var(--color-indeks-orange)" }} />
-              <span className="text-xs text-muted-foreground">Bounce Rate</span>
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-orange)" }} />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">Bounce Rate</span>
             </div>
-            <p className="text-2xl font-bold">{(summary?.avgBounceRate || 0).toFixed(1)}%</p>
+            <p className="text-xl sm:text-2xl font-bold">{(summary?.avgBounceRate || 0).toFixed(1)}%</p>
           </Card>
         </div>
 
         {/* Recent Activity & Top Pages */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <h3 className="font-semibold">Recent Activity</h3>
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4 flex-wrap">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Recent Activity</h3>
               <span className="text-xs text-muted-foreground ml-auto">Live 30m</span>
               {realtimeLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             </div>
@@ -608,10 +610,10 @@ export default function ProjectDetailPage() {
             )}
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
-              <h3 className="font-semibold">Top Pages</h3>
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Top Pages</h3>
             </div>
             {topPages.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -636,11 +638,11 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Referrers & Devices */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Link2 className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <h3 className="font-semibold">Traffic Sources</h3>
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <Link2 className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Traffic Sources</h3>
             </div>
             {referrers.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -663,10 +665,10 @@ export default function ProjectDetailPage() {
             )}
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Monitor className="h-5 w-5" style={{ color: "var(--color-indeks-yellow)" }} />
-              <h3 className="font-semibold">Devices</h3>
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <Monitor className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-yellow)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Devices</h3>
             </div>
             {deviceTypeBreakdown.length ? (
               <div className="space-y-4">
@@ -699,11 +701,11 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Browsers & Events */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Chrome className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <h3 className="font-semibold">Browsers & OS</h3>
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <Chrome className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Browsers & OS</h3>
             </div>
             {devices.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -727,10 +729,10 @@ export default function ProjectDetailPage() {
             )}
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="h-5 w-5" style={{ color: "var(--color-indeks-orange)" }} />
-              <h3 className="font-semibold">Events</h3>
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-orange)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Events</h3>
             </div>
             {events.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -756,11 +758,11 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Clicked Elements & Locations */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <MousePointerClick className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
-              <h3 className="font-semibold">Top Clicked Elements</h3>
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Top Clicked Elements</h3>
             </div>
             {clicks.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -789,10 +791,10 @@ export default function ProjectDetailPage() {
             )}
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Globe className="h-5 w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <h3 className="font-semibold">Countries</h3>
+          <Card className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4 flex-wrap">
+              <Globe className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <h3 className="font-semibold text-sm sm:text-base">Countries</h3>
               <span className="text-xs text-muted-foreground ml-auto">Live 30m</span>
             </div>
             {locations?.countries?.length ? (
@@ -816,14 +818,14 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Cities */}
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <MapPin className="h-5 w-5" style={{ color: "var(--color-indeks-green)" }} />
-            <h3 className="font-semibold">Cities</h3>
+        <Card className="p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4 flex-wrap">
+            <MapPin className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
+            <h3 className="font-semibold text-sm sm:text-base">Cities</h3>
             <span className="text-xs text-muted-foreground ml-auto">Live 30m</span>
           </div>
           {locations?.locations?.length ? (
-            <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-h-64 overflow-y-auto">
+            <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 max-h-64 overflow-y-auto">
               {locations.locations.slice(0, 20).map((loc, i) => (
                 <div key={i} className="p-2 rounded bg-accent/30 text-sm">
                   <p className="font-medium truncate">{loc.city || "Unknown"}</p>

@@ -22,6 +22,15 @@ import {
   Users,
   Eye,
 } from "lucide-react";
+import { Frame } from "@/components/ui/frame";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function SettingsPage() {
   const apiKeys = [
@@ -63,64 +72,64 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Page Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your account settings and preferences
             </p>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          <Card className="p-6">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Team Members</p>
-                <h3 className="text-2xl font-bold mt-2">3</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Team Members</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">3</h3>
               </div>
-              <Users className="h-8 w-8 text-[var(--color-indeks-blue)]" />
+              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">API Keys</p>
-                <h3 className="text-2xl font-bold mt-2">2</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">API Keys</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">2</h3>
               </div>
-              <Key className="h-8 w-8 text-[var(--color-indeks-green)]" />
+              <Key className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Sessions</p>
-                <h3 className="text-2xl font-bold mt-2">3</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Sessions</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">3</h3>
               </div>
-              <Globe className="h-8 w-8 text-[var(--color-indeks-yellow)]" />
+              <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">2FA Status</p>
-                <h3 className="text-2xl font-bold mt-2">On</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">2FA Status</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">On</h3>
               </div>
-              <Shield className="h-8 w-8 text-[var(--color-indeks-orange)]" />
+              <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-orange)]" />
             </div>
           </Card>
         </div>
 
         {/* Profile Section */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <User className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-            <h3 className="text-lg font-semibold">Profile Information</h3>
+            <h3 className="text-base sm:text-lg font-semibold">Profile Information</h3>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Full Name</label>
               <Input defaultValue="John Doe" />
@@ -138,9 +147,9 @@ export default function SettingsPage() {
               <Input defaultValue="UTC-05:00 Eastern Time" />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t">
-            <Button variant="outline">Cancel</Button>
-            <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 mt-4 sm:mt-6 pt-4 border-t">
+            <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
+            <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)] w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -148,11 +157,11 @@ export default function SettingsPage() {
         </Card>
 
         {/* Security & Notifications */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="p-6">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="h-5 w-5 text-[var(--color-indeks-green)]" />
-              <h3 className="text-lg font-semibold">Security</h3>
+              <h3 className="text-base sm:text-lg font-semibold">Security</h3>
             </div>
             <div className="space-y-3">
               {securitySettings.map((setting, index) => {
@@ -174,10 +183,10 @@ export default function SettingsPage() {
             <Button variant="outline" className="w-full mt-4">Change Password</Button>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Bell className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-              <h3 className="text-lg font-semibold">Notifications</h3>
+              <h3 className="text-base sm:text-lg font-semibold">Notifications</h3>
             </div>
             <div className="space-y-4">
               {notificationSettings.map((setting, index) => (
@@ -194,44 +203,44 @@ export default function SettingsPage() {
         </div>
 
         {/* API Keys */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <Key className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-              <h3 className="text-lg font-semibold">API Keys</h3>
+              <h3 className="text-base sm:text-lg font-semibold">API Keys</h3>
             </div>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Key className="h-4 w-4 mr-2" />
               Create New Key
             </Button>
           </div>
           <div className="space-y-3">
             {apiKeys.map((api, index) => (
-              <div key={index} className="p-4 rounded-lg border hover:bg-muted/50">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium">{api.name}</h4>
+              <div key={index} className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h4 className="font-medium text-sm sm:text-base">{api.name}</h4>
                       <Badge variant="success" className="text-xs">{api.status}</Badge>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
-                      <code className="text-xs bg-muted px-3 py-1.5 rounded font-mono">{api.key}</code>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><Copy className="h-3 w-3" /></Button>
+                      <code className="text-xs bg-muted px-2 sm:px-3 py-1 sm:py-1.5 rounded font-mono truncate max-w-[200px] sm:max-w-none">{api.key}</code>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 shrink-0"><Copy className="h-3 w-3" /></Button>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground flex-wrap">
                       <span>{api.created}</span>
-                      <span>•</span>
+                      <span className="hidden sm:inline">•</span>
                       <span>{api.lastUsed}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline">
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Rotate
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button size="sm" variant="outline" className="flex-1 sm:flex-none">
+                      <RefreshCw className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Rotate</span>
                     </Button>
-                    <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Revoke
+                    <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 flex-1 sm:flex-none">
+                      <Trash2 className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Revoke</span>
                     </Button>
                   </div>
                 </div>
@@ -241,80 +250,84 @@ export default function SettingsPage() {
         </Card>
 
         {/* Team Members */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-[var(--color-indeks-orange)]" />
-              <h3 className="text-lg font-semibold">Team Members</h3>
+              <h3 className="text-base sm:text-lg font-semibold">Team Members</h3>
             </div>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Users className="h-4 w-4 mr-2" />
               Invite Member
             </Button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Member</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Role</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {teamMembers.map((member, index) => (
-                  <tr key={index} className="border-b last:border-0 hover:bg-muted/50">
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="text-sm font-medium">{member.name}</p>
-                        <p className="text-xs text-muted-foreground">{member.email}</p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className="text-xs">{member.role}</Badge>
-                    </td>
-                    <td className="text-center py-3 px-4">
-                      <Badge variant="success" className="text-xs">{member.status}</Badge>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button size="sm" variant="ghost">Edit</Button>
-                        {member.role !== "Owner" && (
-                          <Button size="sm" variant="ghost" className="text-destructive">Remove</Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="min-w-[500px] px-4 sm:px-0">
+              <Frame className="w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Member</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teamMembers.map((member, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{member.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">{member.role}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="success" className="text-xs">{member.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1 sm:gap-2">
+                            <Button size="sm" variant="ghost" className="h-8 px-2 sm:px-3">Edit</Button>
+                            {member.role !== "Owner" && (
+                              <Button size="sm" variant="ghost" className="text-destructive h-8 px-2 sm:px-3">Remove</Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Frame>
+            </div>
           </div>
         </Card>
 
         {/* Danger Zone */}
-        <Card className="p-6 border-destructive/50">
+        <Card className="p-4 sm:p-6 border-destructive/50">
           <div className="flex items-center gap-2 mb-4">
             <Trash2 className="h-5 w-5 text-destructive" />
-            <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-destructive">Danger Zone</h3>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
               <div>
                 <p className="text-sm font-medium">Export Account Data</p>
                 <p className="text-xs text-muted-foreground mt-1">Download all your data in JSON format</p>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
             </div>
-            <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
               <div>
                 <p className="text-sm font-medium text-destructive">Delete Account</p>
                 <p className="text-xs text-muted-foreground mt-1">Permanently delete your account and all data</p>
               </div>
-              <Button variant="destructive" size="sm">Delete</Button>
+              <Button variant="destructive" size="sm" className="w-full sm:w-auto">Delete</Button>
             </div>
           </div>
         </Card>

@@ -1,9 +1,19 @@
 "use client";
 
+import { Frame } from "@/components/ui/frame";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+} from "@/components/ui/table";
 import {
   Empty,
   EmptyDescription,
@@ -82,7 +92,8 @@ export default function AnalyticsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectAnalytics, setProjectAnalytics] = useState<ProjectAnalytics[]>([]);
   const [countries, setCountries] = useState<(CountryData & { projectTitle: string; projectId: string })[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [days, setDays] = useState(30);
 
   const getDateRange = useCallback(() => {
@@ -105,18 +116,17 @@ export default function AnalyticsPage() {
         }
       } catch (err) {
         console.error("Error fetching projects:", err);
+      } finally {
+        setInitialLoading(false);
       }
     };
     fetchProjects();
   }, []);
 
   const fetchAllAnalytics = useCallback(async () => {
-    if (projects.length === 0) {
-      setLoading(false);
-      return;
-    }
+    if (projects.length === 0) return;
 
-    setLoading(true);
+    setAnalyticsLoading(true);
     const { startDate, endDate } = getDateRange();
     const query = `?startDate=${startDate}&endDate=${endDate}`;
 
@@ -151,7 +161,7 @@ export default function AnalyticsPage() {
 
     const results = await Promise.all(analyticsPromises);
     setProjectAnalytics(results.filter((r): r is ProjectAnalytics => r !== null));
-    setLoading(false);
+    setAnalyticsLoading(false);
   }, [projects, getDateRange]);
 
   const fetchCountries = useCallback(async () => {
@@ -186,8 +196,10 @@ export default function AnalyticsPage() {
   }, [projects]);
 
   useEffect(() => {
-    fetchAllAnalytics();
-  }, [fetchAllAnalytics]);
+    if (projects.length > 0) {
+      fetchAllAnalytics();
+    }
+  }, [projects, fetchAllAnalytics]);
 
   useEffect(() => {
     if (projects.length > 0) {
@@ -270,10 +282,11 @@ export default function AnalyticsPage() {
 
   const hasData = totals.pageViews > 0 || totals.sessions > 0;
 
-  if (loading) {
+  // Show loading spinner during initial project fetch
+  if (initialLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[600px]">
+        <div className="flex items-center justify-center min-h-[90vh]">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </DashboardLayout>
@@ -284,14 +297,14 @@ export default function AnalyticsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Analytics</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Aggregated analytics across all {projects.length} project{projects.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {projects.length > 0 && (
               <>
                 <Button variant={days === 7 ? "default" : "outline"} size="sm" onClick={() => setDays(7)}>7d</Button>
@@ -315,94 +328,113 @@ export default function AnalyticsPage() {
         ) : (
           <>
             {/* Stats Cards */}
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-              <Card className="p-6">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Visitors</p>
-                    <h3 className="text-2xl font-bold mt-2">{hasData ? formatNumber(totals.visitors) : "—"}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Visitors</p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {analyticsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : hasData ? formatNumber(totals.visitors) : "—"}
+                    </h3>
                   </div>
-                  <Users className="h-8 w-8 text-[var(--color-indeks-blue)]" />
+                  <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
                 </div>
               </Card>
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Page Views</p>
-                    <h3 className="text-2xl font-bold mt-2">{hasData ? formatNumber(totals.pageViews) : "—"}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Page Views</p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {analyticsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : hasData ? formatNumber(totals.pageViews) : "—"}
+                    </h3>
                   </div>
-                  <Eye className="h-8 w-8 text-[var(--color-indeks-green)]" />
+                  <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
                 </div>
               </Card>
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Sessions</p>
-                    <h3 className="text-2xl font-bold mt-2">{hasData ? formatNumber(totals.sessions) : "—"}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Sessions</p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {analyticsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : hasData ? formatNumber(totals.sessions) : "—"}
+                    </h3>
                   </div>
-                  <Zap className="h-8 w-8 text-[var(--color-indeks-yellow)]" />
+                  <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
                 </div>
               </Card>
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Bounce Rate</p>
-                    <h3 className="text-2xl font-bold mt-2">{hasData ? `${avgBounceRate.toFixed(1)}%` : "—"}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Bounce Rate</p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {analyticsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : hasData ? `${avgBounceRate.toFixed(1)}%` : "—"}
+                    </h3>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-[var(--color-indeks-orange)]" />
+                  <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-orange)]" />
                 </div>
               </Card>
             </div>
 
             {/* Projects Table */}
-            <Card className="p-6">
+            <Card className="p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                <h3 className="text-lg font-semibold">Projects Overview</h3>
+                <h3 className="text-base sm:text-lg font-semibold">Projects Overview</h3>
+                {analyticsLoading && <Loader2 className="h-4 w-4 animate-spin ml-auto" />}
               </div>
               {projectAnalytics.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Project</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Views</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Visitors</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Sessions</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Avg Duration</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Bounce</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {projectAnalytics.sort((a, b) => (b.summary?.totalPageViews || 0) - (a.summary?.totalPageViews || 0)).map((pa) => (
-                        <tr key={pa.projectId} className="border-b last:border-0 hover:bg-muted/50">
-                          <td className="py-3 px-4">
-                            <Link href={`/projects/${pa.projectId}`} className="hover:text-[var(--color-indeks-blue)] transition-colors">
-                              <p className="text-sm font-medium">{pa.projectTitle}</p>
-                              <p className="text-xs text-muted-foreground truncate max-w-48">{pa.projectLink}</p>
-                            </Link>
-                          </td>
-                          <td className="text-right py-3 px-4 text-sm font-semibold">{formatNumber(pa.summary?.totalPageViews || 0)}</td>
-                          <td className="text-right py-3 px-4 text-sm">{formatNumber(pa.summary?.totalUniqueVisitors || 0)}</td>
-                          <td className="text-right py-3 px-4 text-sm">{formatNumber(pa.summary?.totalSessions || 0)}</td>
-                          <td className="text-right py-3 px-4 text-sm">{formatDuration(pa.summary?.avgSessionDuration || 0)}</td>
-                          <td className="text-right py-3 px-4">
-                            <Badge variant="outline" className="text-xs">{(pa.summary?.avgBounceRate || 0).toFixed(1)}%</Badge>
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="bg-muted/50 font-semibold">
-                        <td className="py-3 px-4 text-sm">Total ({projects.length} projects)</td>
-                        <td className="text-right py-3 px-4 text-sm">{formatNumber(totals.pageViews)}</td>
-                        <td className="text-right py-3 px-4 text-sm">{formatNumber(totals.visitors)}</td>
-                        <td className="text-right py-3 px-4 text-sm">{formatNumber(totals.sessions)}</td>
-                        <td className="text-right py-3 px-4 text-sm">{formatDuration(avgSessionDuration)}</td>
-                        <td className="text-right py-3 px-4">
-                          <Badge variant="outline" className="text-xs">{avgBounceRate.toFixed(1)}%</Badge>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="min-w-[600px] px-4 sm:px-0">
+                    <Frame className="w-full">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Project</TableHead>
+                            <TableHead className="text-right">Views</TableHead>
+                            <TableHead className="text-right">Visitors</TableHead>
+                            <TableHead className="text-right hidden sm:table-cell">Sessions</TableHead>
+                            <TableHead className="text-right hidden md:table-cell">Avg Duration</TableHead>
+                            <TableHead className="text-right">Bounce</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {projectAnalytics.sort((a, b) => (b.summary?.totalPageViews || 0) - (a.summary?.totalPageViews || 0)).map((pa) => (
+                            <TableRow key={pa.projectId}>
+                              <TableCell>
+                                <Link href={`/projects/${pa.projectId}`} className="hover:text-[var(--color-indeks-blue)] transition-colors">
+                                  <p className="text-sm font-medium truncate">{pa.projectTitle}</p>
+                                  <p className="text-xs text-muted-foreground truncate max-w-32 sm:max-w-48">{pa.projectLink}</p>
+                                </Link>
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">{formatNumber(pa.summary?.totalPageViews || 0)}</TableCell>
+                              <TableCell className="text-right">{formatNumber(pa.summary?.totalUniqueVisitors || 0)}</TableCell>
+                              <TableCell className="text-right hidden sm:table-cell">{formatNumber(pa.summary?.totalSessions || 0)}</TableCell>
+                              <TableCell className="text-right hidden md:table-cell">{formatDuration(pa.summary?.avgSessionDuration || 0)}</TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant="outline" className="text-xs">{(pa.summary?.avgBounceRate || 0).toFixed(1)}%</Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                        <TableFooter>
+                          <TableRow>
+                            <TableCell className="font-semibold">Total ({projects.length} projects)</TableCell>
+                            <TableCell className="text-right font-semibold">{formatNumber(totals.pageViews)}</TableCell>
+                            <TableCell className="text-right font-semibold">{formatNumber(totals.visitors)}</TableCell>
+                            <TableCell className="text-right font-semibold hidden sm:table-cell">{formatNumber(totals.sessions)}</TableCell>
+                            <TableCell className="text-right font-semibold hidden md:table-cell">{formatDuration(avgSessionDuration)}</TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant="outline" className="text-xs">{avgBounceRate.toFixed(1)}%</Badge>
+                            </TableCell>
+                          </TableRow>
+                        </TableFooter>
+                      </Table>
+                    </Frame>
+                  </div>
+                </div>
+              ) : analyticsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
               ) : (
                 <Empty>
@@ -415,11 +447,11 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Devices & Countries */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="p-6">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Monitor className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-                  <h3 className="text-lg font-semibold">Devices</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">Devices</h3>
                 </div>
                 {aggregatedDevices.length > 0 ? (
                   <div className="space-y-4">
@@ -455,10 +487,10 @@ export default function AnalyticsPage() {
                 )}
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center gap-2 mb-4">
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
                   <MapPin className="h-5 w-5 text-[var(--color-indeks-green)]" />
-                  <h3 className="text-lg font-semibold">Top Countries</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">Top Countries</h3>
                   <Badge variant="outline" className="ml-auto text-xs">Last 30 min</Badge>
                 </div>
                 {countries.length > 0 ? (
@@ -492,11 +524,11 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Top Pages & Traffic Sources */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="p-6">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="h-5 w-5 text-[var(--color-indeks-green)]" />
-                  <h3 className="text-lg font-semibold">Top Pages</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">Top Pages</h3>
                 </div>
                 {aggregatedPages.length > 0 ? (
                   <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -523,10 +555,10 @@ export default function AnalyticsPage() {
                 )}
               </Card>
 
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Link2 className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                  <h3 className="text-lg font-semibold">Traffic Sources</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">Traffic Sources</h3>
                 </div>
                 {aggregatedReferrers.length > 0 ? (
                   <div className="space-y-2 max-h-80 overflow-y-auto">

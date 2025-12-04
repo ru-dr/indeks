@@ -15,44 +15,59 @@ interface TrafficDataResponse {
 }
 
 interface CommitGraphProps {
-  projectId?: string; // If provided, show data for specific project, otherwise global
+  projectId?: string;
 }
 
 export function CommitGraph({ projectId }: CommitGraphProps) {
   const [activityData, setActivityData] = useState<ActivityDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [maxCount, setMaxCount] = useState(0);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  // Check for mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
+    // Wait until we know if it's mobile or not
+    if (isMobile === null) return;
+
     const fetchTrafficData = async () => {
       setLoading(true);
       try {
+        const months = isMobile ? 3 : 8;
+        const days = isMobile ? 90 : 240;
+
         const url = projectId
-          ? `/api/analytics/${projectId}/traffic-trend?months=8`
-          : "/api/analytics/global/traffic-trend?months=8";
+          ? `/api/v1/analytics/${projectId}/traffic-trend?months=${months}`
+          : `/api/v1/analytics/global/traffic-trend?months=${months}`;
 
         const response = await fetch(url);
         if (response.ok) {
           const data: TrafficDataResponse = await response.json();
-          
-          // Process the data into activity days
+
           const dataMap = new Map<string, number>();
           (data.dailyData || []).forEach((d) => {
             dataMap.set(d.date, d.count);
           });
 
-          // Generate all days for the last 8 months
           const today = new Date();
           const activityDays: ActivityDay[] = [];
           let max = 0;
 
-          for (let i = 240; i >= 0; i--) {
+          for (let i = days; i >= 0; i--) {
             const date = new Date(today);
             date.setDate(date.getDate() - i);
             const dateStr = date.toISOString().split("T")[0];
             const count = dataMap.get(dateStr) || 0;
             if (count > max) max = count;
-            
+
             activityDays.push({
               date: dateStr,
               count,
@@ -63,7 +78,6 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
           setActivityData(activityDays);
           setMaxCount(max);
         } else {
-          // Fallback to empty data
           generateEmptyData();
         }
       } catch (error) {
@@ -77,8 +91,9 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
     const generateEmptyData = () => {
       const data: ActivityDay[] = [];
       const today = new Date();
+      const days = isMobile ? 90 : 240;
 
-      for (let i = 240; i >= 0; i--) {
+      for (let i = days; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         data.push({
@@ -92,12 +107,12 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
     };
 
     fetchTrafficData();
-  }, [projectId]);
+  }, [projectId, isMobile]);
 
   const getActivityColor = (count: number) => {
     if (count === 0) return "bg-secondary";
     if (maxCount === 0) return "bg-secondary";
-    
+
     const percentage = count / maxCount;
     if (percentage < 0.2) return "bg-[var(--color-indeks-green)]/20";
     if (percentage < 0.4) return "bg-[var(--color-indeks-green)]/40";
@@ -106,6 +121,97 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
     return "bg-[var(--color-indeks-green)]";
   };
 
+  // Show loading while determining mobile state or fetching data
+  if (loading || isMobile === null) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const hasData = maxCount > 0;
+
+  // Mobile: Show simplified bar chart view
+  if (isMobile) {
+    // Aggregate by week for mobile view
+    const weeklyData: { week: string; count: number }[] = [];
+    const weeksToShow = 12;
+    const today = new Date();
+
+    for (let i = 0; i < weeksToShow; i++) {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - (weeksToShow - 1 - i) * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      let weekCount = 0;
+      activityData.forEach((day) => {
+        const dayDate = new Date(day.date);
+        if (dayDate >= weekStart && dayDate <= weekEnd) {
+          weekCount += day.count;
+        }
+      });
+
+      weeklyData.push({
+        week: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`,
+        count: weekCount,
+      });
+    }
+
+    const maxWeekCount = Math.max(...weeklyData.map((w) => w.count), 1);
+
+    return (
+      <div className="space-y-2">
+        {/* Mobile: Weekly bar chart */}
+        <div className="flex items-end gap-1" style={{ height: "100px" }}>
+          {weeklyData.map((week, index) => {
+            const heightPx = week.count > 0 
+              ? Math.max((week.count / maxWeekCount) * 92, 8) 
+              : 4;
+            return (
+              <div
+                key={index}
+                className="flex-1 flex flex-col justify-end"
+              >
+                <div
+                  className={cn(
+                    "w-full rounded-t-sm",
+                    week.count > 0
+                      ? "bg-[var(--color-indeks-green)]"
+                      : "bg-secondary"
+                  )}
+                  style={{ height: `${heightPx}px` }}
+                  title={`Week of ${week.week}: ${week.count} events`}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Week labels - show every 3rd */}
+        <div className="flex gap-1">
+          {weeklyData.map((week, index) => (
+            <div
+              key={index}
+              className="flex-1 text-center text-[9px] text-muted-foreground"
+            >
+              {index % 3 === 0 ? week.week : ""}
+            </div>
+          ))}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+          <span>Last 12 weeks</span>
+          {!hasData && <span>No data yet</span>}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: Full commit graph
+  // Process data into months
   const monthsData: {
     month: string;
     year: number;
@@ -127,18 +233,8 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
   daysByMonth.forEach((monthDays, monthKey) => {
     const [year, month] = monthKey.split("-").map(Number);
     const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
 
     const firstDay = new Date(year, month, 1);
@@ -189,16 +285,6 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
     });
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  const hasData = maxCount > 0;
-
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto">
@@ -234,7 +320,7 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
                             "h-[12px] w-[12px] rounded transition-all cursor-pointer",
                             day
                               ? `${getActivityColor(day.count)} hover:ring-2 hover:ring-[var(--color-indeks-green)]/50`
-                              : "bg-transparent",
+                              : "bg-transparent"
                           )}
                           title={day ? `${day.date}: ${day.count} events` : ""}
                         />

@@ -16,6 +16,15 @@ import {
   Plus,
   Share2,
 } from "lucide-react";
+import { Frame } from "@/components/ui/frame";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function ReportsPage() {
   const recentReports = [
@@ -134,75 +143,75 @@ export default function ReportsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Page Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Reports</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Generate, schedule, and manage analytics reports
             </p>
           </div>
-          <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]">
+          <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)] w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             New Report
           </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          <Card className="p-6">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Reports</p>
-                <h3 className="text-2xl font-bold mt-2">248</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Reports</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">248</h3>
               </div>
-              <FileText className="h-8 w-8 text-[var(--color-indeks-blue)]" />
+              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
-                <h3 className="text-2xl font-bold mt-2">18</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Scheduled</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">18</h3>
               </div>
-              <Clock className="h-8 w-8 text-[var(--color-indeks-green)]" />
+              <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-                <h3 className="text-2xl font-bold mt-2">1,456</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Downloads</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">1,456</h3>
               </div>
-              <Download className="h-8 w-8 text-[var(--color-indeks-yellow)]" />
+              <Download className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Shared</p>
-                <h3 className="text-2xl font-bold mt-2">89</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Shared</p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">89</h3>
               </div>
-              <Share2 className="h-8 w-8 text-[var(--color-indeks-orange)]" />
+              <Share2 className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-orange)]" />
             </div>
           </Card>
         </div>
 
         {/* Report Templates */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <FileText className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-            <h3 className="text-lg font-semibold">Report Templates</h3>
+            <h3 className="text-base sm:text-lg font-semibold">Report Templates</h3>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {reportTemplates.map((template) => {
               const Icon = template.icon;
               return (
-                <div key={template.title} className="p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                  <Icon className={`h-6 w-6 ${template.color} mb-3`} />
-                  <h4 className="font-medium mb-1">{template.title}</h4>
-                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{template.description}</p>
+                <div key={template.title} className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                  <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${template.color} mb-2 sm:mb-3`} />
+                  <h4 className="font-medium text-sm sm:text-base mb-1">{template.title}</h4>
+                  <p className="text-xs text-muted-foreground mb-2 sm:mb-3 line-clamp-2">{template.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">{template.reports} reports</span>
                     <Button variant="ghost" size="sm">Generate</Button>
@@ -214,28 +223,28 @@ export default function ReportsPage() {
         </Card>
 
         {/* Recent Reports Table */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="h-5 w-5 text-[var(--color-indeks-green)]" />
-            <h3 className="text-lg font-semibold">Recent Reports</h3>
+            <h3 className="text-base sm:text-lg font-semibold">Recent Reports</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Report Name</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Type</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Generated</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Size</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Downloads</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Frame className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Report Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Generated</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Downloads</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {recentReports.map((report, index) => (
-                  <tr key={index} className="border-b last:border-0 hover:bg-muted/50">
-                    <td className="py-3 px-4">
+                  <TableRow key={index}>
+                    <TableCell>
                       <div className="flex items-center gap-3">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <div>
@@ -243,64 +252,64 @@ export default function ReportsPage() {
                           <p className="text-xs text-muted-foreground">{report.author}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-3 px-4">
+                    </TableCell>
+                    <TableCell>
                       <Badge variant="outline" className="text-xs">{report.type}</Badge>
-                    </td>
-                    <td className="py-3 px-4 text-sm">{report.date}</td>
-                    <td className="py-3 px-4 text-sm text-muted-foreground">{report.size}</td>
-                    <td className="py-3 px-4 text-sm">{report.downloads}</td>
-                    <td className="text-center py-3 px-4">
+                    </TableCell>
+                    <TableCell>{report.date}</TableCell>
+                    <TableCell className="text-muted-foreground">{report.size}</TableCell>
+                    <TableCell>{report.downloads}</TableCell>
+                    <TableCell className="text-center">
                       <Badge variant={report.status === "Ready" ? "success" : "outline"} className="text-xs">
                         {report.status}
                       </Badge>
-                    </td>
-                    <td className="py-3 px-4">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center justify-end gap-2">
                         {report.status === "Ready" && (
                           <Button size="sm" variant="ghost"><Download className="h-4 w-4" /></Button>
                         )}
                         <Button size="sm" variant="ghost"><MoreVertical className="h-4 w-4" /></Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Frame>
         </Card>
 
         {/* Scheduled Reports */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-            <h3 className="text-lg font-semibold">Scheduled Reports</h3>
+            <h3 className="text-base sm:text-lg font-semibold">Scheduled Reports</h3>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             {scheduledReports.map((schedule, index) => (
-              <div key={index} className="p-4 rounded-lg border hover:bg-muted/50">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="font-medium mb-1">{schedule.name}</h4>
-                    <div className="flex items-center gap-2">
+              <div key={index} className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium text-sm sm:text-base mb-1 truncate">{schedule.name}</h4>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-xs">{schedule.frequency}</Badge>
                       <Badge variant="success" className="text-xs">{schedule.status}</Badge>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost"><MoreVertical className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" className="shrink-0"><MoreVertical className="h-4 w-4" /></Button>
                 </div>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1 sm:space-y-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Next run:</span>
-                    <span className="font-medium">{schedule.nextRun}</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">Next run:</span>
+                    <span className="font-medium text-xs sm:text-sm">{schedule.nextRun}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Last run:</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">Last run:</span>
                     <span className="text-muted-foreground text-xs">{schedule.lastRun}</span>
                   </div>
                   <div className="flex items-center justify-between pt-2 border-t">
-                    <span className="text-muted-foreground">Recipients:</span>
-                    <span className="font-medium">{schedule.recipients} users</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">Recipients:</span>
+                    <span className="font-medium text-xs sm:text-sm">{schedule.recipients} users</span>
                   </div>
                 </div>
               </div>

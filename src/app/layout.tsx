@@ -29,9 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ToastProvider>
           <ThemeProvider
@@ -39,7 +39,7 @@ export default function RootLayout({
             enableColorScheme
             defaultTheme="dark"
           >
-            {/* <IndeksProvider /> */}
+            <IndeksProvider />
             {children}
           </ThemeProvider>
         </ToastProvider>

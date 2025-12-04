@@ -106,7 +106,7 @@ export default function Home() {
       projects.map(async (project) => {
         try {
           // Fetch overview
-          const overviewRes = await fetch(`/api/analytics/${project.id}/overview${query}`);
+          const overviewRes = await fetch(`/api/v1/analytics/${project.id}/overview${query}`);
           if (overviewRes.ok) {
             const data = await overviewRes.json();
             const stats = {
@@ -122,7 +122,7 @@ export default function Home() {
           }
 
           // Fetch realtime events
-          const realtimeRes = await fetch(`/api/analytics/${project.id}/realtime`);
+          const realtimeRes = await fetch(`/api/v1/analytics/${project.id}/realtime`);
           if (realtimeRes.ok) {
             const data = await realtimeRes.json();
             (data.recentEvents || []).slice(0, 3).forEach((event: RecentEvent) => {
@@ -164,7 +164,7 @@ export default function Home() {
       await Promise.all(
         projects.slice(0, 5).map(async (project) => {
           try {
-            const realtimeRes = await fetch(`/api/analytics/${project.id}/realtime`);
+            const realtimeRes = await fetch(`/api/v1/analytics/${project.id}/realtime`);
             if (realtimeRes.ok) {
               const data = await realtimeRes.json();
               (data.recentEvents || []).slice(0, 3).forEach((event: RecentEvent) => {
@@ -228,16 +228,16 @@ export default function Home() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* General Overview Section */}
         <div>
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight">General Overview</h1>
-            <p className="text-muted-foreground">Analytics across all your projects</p>
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">General Overview</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Analytics across all your projects</p>
           </div>
 
           {/* Global Stats Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
             <StatsCard
               title="Total Views"
               value={formatNumber(aggregatedStats.totalViews)}
@@ -272,48 +272,55 @@ export default function Home() {
             />
           </div>
 
-          {/* General Charts */}
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4 p-6">
+          {/* General Charts - Stack on mobile, side by side on desktop */}
+          <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-7">
+            {/* Traffic Trend Card */}
+            <Card className="lg:col-span-4 p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold">Overall Traffic Trend</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Activity over the last 8 months
+                  <h3 className="text-base sm:text-lg font-semibold">Overall Traffic Trend</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    <span className="hidden sm:inline">Activity over the last 8 months</span>
+                    <span className="sm:hidden">Weekly activity</span>
                   </p>
                 </div>
-                <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
               <div className="mt-4">
                 <CommitGraph />
               </div>
             </Card>
 
-            <Card className="col-span-3 p-6">
+            {/* Top Projects Card */}
+            <Card className="lg:col-span-3 p-4 sm:p-6">
               <div className="mb-4">
-                <h3 className="text-lg font-semibold">Top Projects</h3>
-                <p className="text-sm text-muted-foreground">By total views (30 days)</p>
+                <h3 className="text-base sm:text-lg font-semibold">Top Projects</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">By total views (30 days)</p>
               </div>
               {sortedProjects.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {sortedProjects.slice(0, 5).map((project) => {
                     const views = project.stats?.totalPageViews || 0;
                     const maxViews = sortedProjects[0]?.stats?.totalPageViews || 1;
                     const percentage = Math.round((views / maxViews) * 100);
                     return (
-                      <div key={project.id} className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{project.title}</p>
-                          <div className="mt-1 h-2 w-full rounded-full bg-secondary">
-                            <div
-                              className="h-full rounded-full bg-primary"
-                              style={{ width: `${percentage}%` }}
-                            />
+                      <div key={project.id} className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium truncate flex-1 min-w-0">
+                            {project.title}
+                          </p>
+                          <div className="text-right shrink-0">
+                            <span className="text-sm font-medium">{formatNumber(views)}</span>
+                            <span className="text-xs text-muted-foreground ml-1 hidden sm:inline">
+                              ({percentage}%)
+                            </span>
                           </div>
                         </div>
-                        <div className="ml-4 text-right">
-                          <p className="text-sm font-medium">{formatNumber(views)}</p>
-                          <p className="text-xs text-muted-foreground">{percentage}%</p>
+                        <div className="h-2 w-full rounded-full bg-secondary">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-300"
+                            style={{ width: `${percentage}%` }}
+                          />
                         </div>
                       </div>
                     );
@@ -334,13 +341,13 @@ export default function Home() {
 
         {/* Projects Section */}
         <div>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight">Top Projects</h2>
-              <p className="text-muted-foreground">Your most active projects</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Top Projects</h2>
+              <p className="text-sm text-muted-foreground">Your most active projects</p>
             </div>
             <Link href="/projects">
-              <Button variant="outline">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 View All Projects
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -349,25 +356,25 @@ export default function Home() {
 
           {/* Projects Grid */}
           {sortedProjects.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
               {sortedProjects.slice(0, 6).map((project) => {
                 const stats = project.stats;
                 return (
                   <Link key={project.id} href={`/projects/${project.id}`}>
-                    <Card className="p-4 !gap-2 hover:shadow-lg transition-shadow cursor-pointer">
+                    <Card className="p-3 sm:p-4 !gap-2 hover:shadow-lg transition-shadow cursor-pointer h-full">
                       <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <div className={`h-2 w-2 rounded-full ${getStatusColor(project.isActive)}`} />
-                            <h3 className="text-base font-semibold">{project.title}</h3>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
+                            <h3 className="text-sm sm:text-base font-semibold truncate">{project.title}</h3>
                             <Badge
                               variant={project.isActive ? "success" : "error"}
-                              className="text-xs"
+                              className="text-xs shrink-0"
                             >
                               {project.isActive ? "active" : "inactive"}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate">
                             {(() => {
                               try {
                                 return new URL(
@@ -381,7 +388,7 @@ export default function Home() {
                             })()}
                           </p>
                         </div>
-                        <Button variant="ghost" size="icon" className="-mt-1 -mr-1">
+                        <Button variant="ghost" size="icon" className="-mt-1 -mr-1 shrink-0 h-8 w-8">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </div>
@@ -390,19 +397,19 @@ export default function Home() {
                       <div className="grid grid-cols-2 gap-2 mb-2">
                         <div className="p-2 rounded-lg bg-secondary/50">
                           <div className="flex items-center gap-1.5">
-                            <Eye className="h-3.5 w-3.5" style={{ color: "var(--color-indeks-green)" }} />
+                            <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "var(--color-indeks-green)" }} />
                             <p className="text-xs text-muted-foreground">Views</p>
                           </div>
-                          <p className="text-lg font-bold">
+                          <p className="text-base sm:text-lg font-bold">
                             {stats ? formatNumber(stats.totalPageViews) : "-"}
                           </p>
                         </div>
                         <div className="p-2 rounded-lg bg-secondary/50">
                           <div className="flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5" style={{ color: "var(--color-indeks-blue)" }} />
+                            <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "var(--color-indeks-blue)" }} />
                             <p className="text-xs text-muted-foreground">Visitors</p>
                           </div>
-                          <p className="text-lg font-bold">
+                          <p className="text-base sm:text-lg font-bold">
                             {stats ? formatNumber(stats.totalUniqueVisitors) : "-"}
                           </p>
                         </div>
@@ -421,9 +428,9 @@ export default function Home() {
                       <div className="flex items-center justify-between pt-2 border-t">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Activity className="h-3 w-3" />
-                          <span>Created {formatTimeAgo(project.createdAt)}</span>
+                          <span className="truncate">Created {formatTimeAgo(project.createdAt)}</span>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
                       </div>
                     </Card>
                   </Link>
@@ -431,7 +438,7 @@ export default function Home() {
               })}
             </div>
           ) : (
-            <Card className="p-12">
+            <Card className="p-8 sm:p-12">
               <Empty>
                 <EmptyHeader>
                   <EmptyMedia variant="icon"><FolderKanban /></EmptyMedia>
@@ -447,35 +454,34 @@ export default function Home() {
 
         {/* Recent Activity Section */}
         <div>
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold tracking-tight">Recent Activity</h2>
-            <p className="text-muted-foreground">Latest events across all projects</p>
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Recent Activity</h2>
+            <p className="text-sm text-muted-foreground">Latest events across all projects</p>
           </div>
 
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             {recentEvents.length > 0 ? (
               <div className="space-y-3">
                 {recentEvents.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between border-b pb-3 last:border-0"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 last:border-0 last:pb-0"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse" />
-                      <div>
+                    <div className="flex items-start sm:items-center gap-3 min-w-0">
+                      <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0 mt-1.5 sm:mt-0" />
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">{item.event.event_type}</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-muted-foreground truncate max-w-48">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs text-muted-foreground truncate max-w-[180px] sm:max-w-[300px]">
                             {item.event.url || "—"}
                           </p>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs shrink-0">
                             {item.projectTitle}
                           </Badge>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 ml-5 sm:ml-0">
                       <Calendar className="h-3 w-3" style={{ color: "var(--color-indeks-yellow)" }} />
                       <span>{formatTimeAgo(item.event.timestamp)}</span>
                     </div>

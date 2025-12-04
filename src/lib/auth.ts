@@ -32,4 +32,14 @@ export const auth = betterAuth({
   plugins: [username()],
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL!,
+  trustedOrigins: ["http://localhost:3000", "http://10.0.0.126:3000"],
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: false,
+    },
+    defaultCookieAttributes: {
+      sameSite: "lax",
+      secure: false, // Set to true in production with HTTPS
+    },
+  },
 });

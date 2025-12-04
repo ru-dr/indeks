@@ -6,7 +6,7 @@ function Frame({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "relative flex flex-col rounded-2xl bg-muted p-1",
+        "relative flex flex-col rounded-2xl border border-border bg-muted/30 p-1",
         className,
       )}
       data-slot="frame"

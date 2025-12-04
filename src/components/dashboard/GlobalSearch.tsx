@@ -348,11 +348,11 @@ export function GlobalSearch() {
       {/* Search Trigger Button */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground w-full"
+        className="flex items-center gap-2 rounded-lg border bg-background px-2 sm:px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground w-full"
       >
-        <Search className="h-4 w-4" />
-        <span className="flex-1 text-left">Search...</span>
-        <div className="flex items-center gap-1">
+        <Search className="h-4 w-4 shrink-0" />
+        <span className="flex-1 text-left truncate">Search...</span>
+        <div className="hidden sm:flex items-center gap-1">
           <Kbd>Ctrl</Kbd>
           <Kbd>K</Kbd>
         </div>
@@ -361,24 +361,24 @@ export function GlobalSearch() {
       {/* Search Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogPopup
-          className="max-w-2xl p-0 overflow-hidden"
+          className="max-w-[calc(100vw-2rem)] sm:max-w-2xl p-0 overflow-hidden mx-4 sm:mx-auto"
           showCloseButton={false}
         >
           <div className="border-b">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <Search className="h-5 w-5 text-muted-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3">
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search for pages, projects, or actions..."
-                className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
+                placeholder="Search..."
+                className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-sm sm:text-base"
                 autoFocus
               />
-              <Kbd>ESC</Kbd>
+              <Kbd className="hidden sm:inline-flex">ESC</Kbd>
             </div>
           </div>
 
-          <div className="max-h-[400px] overflow-y-auto p-2">
+          <div className="max-h-[60vh] sm:max-h-[400px] overflow-y-auto p-2">
             {showCreateProject ? (
               <div className="p-2">
                 <button
@@ -472,8 +472,8 @@ export function GlobalSearch() {
           </div>
 
           {/* Footer */}
-          <div className="border-t bg-muted/50 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-4">
+          <div className="border-t bg-muted/50 px-3 sm:px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Kbd>↑</Kbd>
                 <Kbd>↓</Kbd>
@@ -487,6 +487,9 @@ export function GlobalSearch() {
                 <Kbd>ESC</Kbd>
                 <span>Close</span>
               </div>
+            </div>
+            <div className="sm:hidden text-muted-foreground">
+              Tap to select
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[10px]">

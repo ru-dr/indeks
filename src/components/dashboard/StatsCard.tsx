@@ -20,15 +20,15 @@ export function StatsCard({
   iconColor = "text-primary",
 }: StatsCardProps) {
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <h3 className="mt-2 text-3xl font-bold">{value}</h3>
+    <Card className="p-4 sm:p-6">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{title}</p>
+          <h3 className="mt-1 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-bold truncate">{value}</h3>
           {change && (
             <p
               className={cn(
-                "mt-2 text-sm font-medium",
+                "mt-1 sm:mt-2 text-xs sm:text-sm font-medium truncate",
                 changeType === "positive" && "text-green-500",
                 changeType === "negative" && "text-red-500",
                 changeType === "neutral" && "text-muted-foreground",
@@ -38,8 +38,8 @@ export function StatsCard({
             </p>
           )}
         </div>
-        <div className={cn("rounded-lg bg-primary/10 p-3", iconColor)}>
-          <Icon className="h-6 w-6" />
+        <div className={cn("rounded-lg bg-primary/10 p-2 sm:p-3 shrink-0", iconColor)}>
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
       </div>
     </Card>

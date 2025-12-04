@@ -42,6 +42,12 @@ export const app = new Elysia({ prefix: "/api" })
     message: "INDEKS is running",
     timestamp: Date.now(),
   }))
+  .get("/v1/health", () => ({
+    status: "ok",
+    message: "INDEKS API v1 is running",
+    timestamp: Date.now(),
+  }))
+  // Better Auth routes - keep at /api/auth for compatibility with better-auth client
   .all("/auth/*", ({ request }) => auth.handler(request))
   .use(projectsRoutes)
   .use(collectRoutes)
