@@ -2,6 +2,7 @@ import Plunk from "@plunk/node";
 import { render } from "@react-email/render";
 import VerificationEmail from "@/components/email/VerificationEmail";
 import ResetPasswordEmail from "@/components/email/ResetPasswordEmail";
+import TeamInvitationEmail from "@/components/email/TeamInvitationEmail";
 
 const plunk = new Plunk(process.env.PLUNK_API_KEY!);
 
@@ -9,6 +10,15 @@ interface User {
   id: string;
   email: string;
   name: string;
+}
+
+interface TeamInvitationData {
+  email: string;
+  inviterName: string;
+  inviterEmail: string;
+  teamName: string;
+  inviteLink: string;
+  role: string;
 }
 
 export const emailService = {
@@ -49,6 +59,24 @@ export const emailService = {
     emailService.sendEmail({
       to: user.email,
       subject: "Reset your INDEKS password",
+      html,
+    });
+    return html;
+  },
+  sendTeamInvitationEmail: async (
+    data: TeamInvitationData,
+  ): Promise<string> => {
+    const html = await render(
+      TeamInvitationEmail({
+        inviterName: data.inviterName,
+        teamName: data.teamName,
+        inviteLink: data.inviteLink,
+        role: data.role,
+      }),
+    );
+    emailService.sendEmail({
+      to: data.email,
+      subject: `You've been invited to join ${data.teamName} on INDEKS`,
       html,
     });
     return html;

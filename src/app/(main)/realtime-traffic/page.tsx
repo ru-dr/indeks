@@ -331,10 +331,18 @@ export default function RealtimeTrafficPage() {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Location</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-right">Visitors</TableHead>
-                                <TableHead className="text-right">Events</TableHead>
-                                <TableHead className="text-right">Coordinates</TableHead>
+                                <TableHead className="text-center">
+                                  Status
+                                </TableHead>
+                                <TableHead className="text-right">
+                                  Visitors
+                                </TableHead>
+                                <TableHead className="text-right">
+                                  Events
+                                </TableHead>
+                                <TableHead className="text-right">
+                                  Coordinates
+                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -344,13 +352,22 @@ export default function RealtimeTrafficPage() {
                                     <div className="flex items-center gap-3">
                                       <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
                                       <div className="min-w-0">
-                                        <p className="text-sm font-medium">{loc.city || "Unknown"}</p>
-                                        <p className="text-xs text-muted-foreground">{loc.country}</p>
+                                        <p className="text-sm font-medium">
+                                          {loc.city || "Unknown"}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {loc.country}
+                                        </p>
                                       </div>
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    <Badge variant="success" className="text-xs">Live</Badge>
+                                    <Badge
+                                      variant="success"
+                                      className="text-xs"
+                                    >
+                                      Live
+                                    </Badge>
                                   </TableCell>
                                   <TableCell className="text-right font-semibold">
                                     {loc.visitor_count}
@@ -360,7 +377,8 @@ export default function RealtimeTrafficPage() {
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <span className="font-mono text-xs text-muted-foreground">
-                                      {loc.latitude?.toFixed(2)}°, {loc.longitude?.toFixed(2)}°
+                                      {loc.latitude?.toFixed(2)}°,{" "}
+                                      {loc.longitude?.toFixed(2)}°
                                     </span>
                                   </TableCell>
                                 </TableRow>
@@ -368,55 +386,98 @@ export default function RealtimeTrafficPage() {
                             </TableBody>
                           </Table>
                         </Frame>
-                        
+
                         {/* Summary below table */}
                         <div className="mt-4 grid grid-cols-3 gap-4">
                           <div className="p-3 rounded-lg bg-muted/30 text-center">
                             <p className="text-lg font-bold">{cities.length}</p>
-                            <p className="text-xs text-muted-foreground">Active Locations</p>
+                            <p className="text-xs text-muted-foreground">
+                              Active Locations
+                            </p>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/30 text-center">
-                            <p className="text-lg font-bold">{countries.length}</p>
-                            <p className="text-xs text-muted-foreground">Countries</p>
+                            <p className="text-lg font-bold">
+                              {countries.length}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Countries
+                            </p>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/30 text-center">
-                            <p className="text-lg font-bold">{formatNumber(cities.reduce((sum, c) => sum + c.visitor_count, 0))}</p>
-                            <p className="text-xs text-muted-foreground">Total Visitors</p>
+                            <p className="text-lg font-bold">
+                              {formatNumber(
+                                cities.reduce(
+                                  (sum, c) => sum + c.visitor_count,
+                                  0,
+                                ),
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Total Visitors
+                            </p>
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Mobile: Card View */}
                       <div className="md:hidden space-y-3">
                         {cities.slice(0, 8).map((loc, i) => (
-                          <div key={i} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                          <div
+                            key={i}
+                            className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                          >
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                               <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
                               <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{loc.city || "Unknown"}</p>
-                                <p className="text-xs text-muted-foreground truncate">{loc.country}</p>
+                                <p className="text-sm font-medium truncate">
+                                  {loc.city || "Unknown"}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {loc.country}
+                                </p>
                               </div>
                             </div>
                             <div className="text-right shrink-0 ml-3">
-                              <p className="text-sm font-bold">{loc.visitor_count}</p>
-                              <p className="text-[10px] text-muted-foreground">visitors</p>
+                              <p className="text-sm font-bold">
+                                {loc.visitor_count}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                visitors
+                              </p>
                             </div>
                           </div>
                         ))}
-                        
+
                         {/* Mobile Summary */}
                         <div className="grid grid-cols-3 gap-2 pt-2">
                           <div className="p-2 rounded-lg bg-muted/30 text-center">
-                            <p className="text-base font-bold">{cities.length}</p>
-                            <p className="text-[10px] text-muted-foreground">Locations</p>
+                            <p className="text-base font-bold">
+                              {cities.length}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Locations
+                            </p>
                           </div>
                           <div className="p-2 rounded-lg bg-muted/30 text-center">
-                            <p className="text-base font-bold">{countries.length}</p>
-                            <p className="text-[10px] text-muted-foreground">Countries</p>
+                            <p className="text-base font-bold">
+                              {countries.length}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Countries
+                            </p>
                           </div>
                           <div className="p-2 rounded-lg bg-muted/30 text-center">
-                            <p className="text-base font-bold">{formatNumber(cities.reduce((sum, c) => sum + c.visitor_count, 0))}</p>
-                            <p className="text-[10px] text-muted-foreground">Visitors</p>
+                            <p className="text-base font-bold">
+                              {formatNumber(
+                                cities.reduce(
+                                  (sum, c) => sum + c.visitor_count,
+                                  0,
+                                ),
+                              )}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Visitors
+                            </p>
                           </div>
                         </div>
                       </div>

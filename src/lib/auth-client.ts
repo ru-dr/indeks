@@ -1,5 +1,10 @@
 import { createAuthClient } from "better-auth/react";
-import { usernameClient, adminClient } from "better-auth/client/plugins";
+import {
+  usernameClient,
+  adminClient,
+  organizationClient,
+} from "better-auth/client/plugins";
+import { ac, roles } from "@/lib/permissions";
 
 const getBaseURL = () => {
   if (typeof window !== "undefined") {
@@ -10,5 +15,39 @@ const getBaseURL = () => {
 
 export const authClient = createAuthClient({
   baseURL: getBaseURL(),
-  plugins: [usernameClient(), adminClient()],
+  plugins: [
+    usernameClient(),
+    adminClient({
+      ac,
+      roles: {
+        viewer: roles.viewer,
+        member: roles.member,
+        admin: roles.admin,
+        owner: roles.owner,
+      },
+    }),
+    organizationClient({
+      ac,
+      roles: {
+        owner: roles.owner,
+        admin: roles.admin,
+        member: roles.member,
+        viewer: roles.viewer,
+      },
+    }),
+  ],
 });
+
+// Export useful types
+export type Session = typeof authClient.$Infer.Session;
+export type User = typeof authClient.$Infer.Session.user;
+
+// Re-export hooks from authClient for convenience
+export const useSession = authClient.useSession;
+export const signIn = authClient.signIn;
+export const signUp = authClient.signUp;
+export const signOut = authClient.signOut;
+
+// Organization/Team hooks
+export const useActiveOrganization = authClient.useActiveOrganization;
+export const useListOrganizations = authClient.useListOrganizations;

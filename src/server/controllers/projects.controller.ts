@@ -1,6 +1,6 @@
 import { db } from "@/db/connect";
-import { projects } from "@/db/schema/schema";
-import { eq, and } from "drizzle-orm";
+import { projects, member } from "@/db/schema/schema";
+import { eq, and, or, inArray, isNull } from "drizzle-orm";
 import { createHash, randomBytes } from "crypto";
 
 interface CreateProjectDto {
@@ -8,6 +8,7 @@ interface CreateProjectDto {
   description?: string;
   category?: string;
   link: string;
+  organizationId?: string;
 }
 
 interface UpdateProjectDto {
@@ -27,6 +28,18 @@ function generateKeyHash(publicKey: string): string {
   return createHash("sha256").update(publicKey).digest("hex");
 }
 
+/**
+ * Get all organization IDs that a user is a member of
+ */
+async function getUserOrganizationIds(userId: string): Promise<string[]> {
+  const memberships = await db
+    .select({ organizationId: member.organizationId })
+    .from(member)
+    .where(eq(member.userId, userId));
+
+  return memberships.map((m) => m.organizationId);
+}
+
 export const projectsController = {
   async createProject(userId: string, data: CreateProjectDto) {
     const publicKey = generatePublicKey();
@@ -36,6 +49,7 @@ export const projectsController = {
       .insert(projects)
       .values({
         userId,
+        organizationId: data.organizationId || null,
         title: data.title,
         description: data.description,
         category: data.category,
@@ -51,7 +65,14 @@ export const projectsController = {
     };
   },
 
+  /**
+   * Get projects for a user
+   * - Personal projects (no organizationId, owned by user)
+   * - Organization projects (user is a member of the organization)
+   */
   async getUserProjects(userId: string) {
+    const orgIds = await getUserOrganizationIds(userId);
+
     const userProjects = await db
       .select({
         id: projects.id,
@@ -63,15 +84,57 @@ export const projectsController = {
         isActive: projects.isActive,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
+        organizationId: projects.organizationId,
+        userId: projects.userId,
       })
       .from(projects)
-      .where(eq(projects.userId, userId))
+      .where(
+        or(
+          // Personal projects (owned by user, no org)
+          and(eq(projects.userId, userId), isNull(projects.organizationId)),
+          // Organization projects (user is a member)
+          orgIds.length > 0
+            ? inArray(projects.organizationId, orgIds)
+            : undefined,
+        ),
+      )
       .orderBy(projects.createdAt);
 
     return userProjects;
   },
 
+  /**
+   * Get projects for a specific organization
+   */
+  async getOrganizationProjects(organizationId: string) {
+    const orgProjects = await db
+      .select({
+        id: projects.id,
+        title: projects.title,
+        description: projects.description,
+        category: projects.category,
+        link: projects.link,
+        publicKey: projects.publicKey,
+        isActive: projects.isActive,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+        organizationId: projects.organizationId,
+        userId: projects.userId,
+      })
+      .from(projects)
+      .where(eq(projects.organizationId, organizationId))
+      .orderBy(projects.createdAt);
+
+    return orgProjects;
+  },
+
+  /**
+   * Get a single project
+   * User must either own it personally or be a member of its organization
+   */
   async getProject(userId: string, projectId: string) {
+    const orgIds = await getUserOrganizationIds(userId);
+
     const [project] = await db
       .select({
         id: projects.id,
@@ -83,12 +146,34 @@ export const projectsController = {
         isActive: projects.isActive,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
+        organizationId: projects.organizationId,
+        userId: projects.userId,
       })
       .from(projects)
-      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+      .where(
+        and(
+          eq(projects.id, projectId),
+          or(
+            // Personal project owned by user
+            and(eq(projects.userId, userId), isNull(projects.organizationId)),
+            // Organization project (user is a member)
+            orgIds.length > 0
+              ? inArray(projects.organizationId, orgIds)
+              : undefined,
+          ),
+        ),
+      )
       .limit(1);
 
     return project;
+  },
+
+  /**
+   * Check if user has access to a project
+   */
+  async hasProjectAccess(userId: string, projectId: string): Promise<boolean> {
+    const project = await this.getProject(userId, projectId);
+    return !!project;
   },
 
   async updateProject(
@@ -96,28 +181,46 @@ export const projectsController = {
     projectId: string,
     data: UpdateProjectDto,
   ) {
+    // First verify access
+    const hasAccess = await this.hasProjectAccess(userId, projectId);
+    if (!hasAccess) {
+      return null;
+    }
+
     const [updated] = await db
       .update(projects)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+      .where(eq(projects.id, projectId))
       .returning();
 
     return updated;
   },
 
   async deleteProject(userId: string, projectId: string) {
+    // First verify access
+    const hasAccess = await this.hasProjectAccess(userId, projectId);
+    if (!hasAccess) {
+      return null;
+    }
+
     const [deleted] = await db
       .delete(projects)
-      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+      .where(eq(projects.id, projectId))
       .returning();
 
     return deleted;
   },
 
   async regenerateApiKey(userId: string, projectId: string) {
+    // First verify access
+    const hasAccess = await this.hasProjectAccess(userId, projectId);
+    if (!hasAccess) {
+      return null;
+    }
+
     const publicKey = generatePublicKey();
     const keyHash = generateKeyHash(publicKey);
 
@@ -128,7 +231,7 @@ export const projectsController = {
         keyHash,
         updatedAt: new Date(),
       })
-      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+      .where(eq(projects.id, projectId))
       .returning();
 
     return {

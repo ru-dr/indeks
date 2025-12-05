@@ -19,7 +19,10 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       try {
         const project = await projectsController.createProject(
           session.user.id,
-          body,
+          {
+            ...body,
+            organizationId: body.organizationId || undefined,
+          },
         );
 
         return {
@@ -40,11 +43,12 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         description: t.Optional(t.String()),
         category: t.Optional(t.String()),
         link: t.String({ minLength: 1 }),
+        organizationId: t.Optional(t.String()),
       }),
     },
   )
 
-  .get("/", async ({ request }) => {
+  .get("/", async ({ request, query }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
@@ -55,13 +59,20 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
 
     try {
-      const userProjects = await projectsController.getUserProjects(
-        session.user.id,
-      );
+      // If organizationId is provided, filter by that org
+      // Otherwise get all projects user has access to
+      let projects;
+      if (query?.organizationId) {
+        projects = await projectsController.getOrganizationProjects(
+          query.organizationId as string,
+        );
+      } else {
+        projects = await projectsController.getUserProjects(session.user.id);
+      }
 
       return {
         success: true,
-        data: userProjects,
+        data: projects,
       };
     } catch (error) {
       console.error("Error fetching projects:", error);

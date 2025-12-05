@@ -97,7 +97,7 @@ export function Cobe({
   const [customLocations, setCustomLocations] = useState<Location[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const globeRef = useRef<ReturnType<typeof createGlobe> | null>(null);
-  // Preserve rotation state across re-renders for realtime variant
+
   const persistedPhiRef = useRef<number>(0);
 
   const [{ r }, api] = useSpring<{ r: number }>(() => ({
@@ -277,7 +277,6 @@ export function Cobe({
   }, [variant, realtimeMarkers, customLocations, markerSize]);
 
   useEffect(() => {
-    // For realtime variant, start from persisted rotation
     let phiValue = variant === "realtime" ? persistedPhiRef.current : 0;
     let width = 0;
     let currentPhi = 0;
@@ -326,7 +325,7 @@ export function Cobe({
           case "realtime":
             state.phi = phiValue + r.get();
             phiValue += 0.005;
-            // Persist rotation for realtime variant
+
             persistedPhiRef.current = phiValue;
             break;
           case "draggable":
@@ -550,10 +549,7 @@ export function Cobe({
   );
 }
 
-// Memoized globe component that only re-renders when key props change
 const MemoizedCobe = React.memo(Cobe, (prevProps, nextProps) => {
-  // Only re-render if non-marker props change
-  // For realtime variant, we allow marker updates without full re-render
   if (prevProps.variant !== nextProps.variant) return false;
   if (prevProps.className !== nextProps.className) return false;
   if (prevProps.markerColor !== nextProps.markerColor) return false;
@@ -561,14 +557,12 @@ const MemoizedCobe = React.memo(Cobe, (prevProps, nextProps) => {
   if (prevProps.opacity !== nextProps.opacity) return false;
   if (prevProps.mapBrightness !== nextProps.mapBrightness) return false;
 
-  // For realtime markers, compare by content, not reference
   if (prevProps.variant === "realtime") {
     const prevMarkers = prevProps.realtimeMarkers || [];
     const nextMarkers = nextProps.realtimeMarkers || [];
 
     if (prevMarkers.length !== nextMarkers.length) return false;
 
-    // Deep compare markers
     for (let i = 0; i < prevMarkers.length; i++) {
       if (
         prevMarkers[i].latitude !== nextMarkers[i].latitude ||
@@ -637,7 +631,6 @@ function RealtimeGlobeInner({
             }),
           );
 
-          // Only update state if markers actually changed
           const markersChanged =
             newMarkers.length !== markersRef.current.length ||
             newMarkers.some(
@@ -704,5 +697,4 @@ function RealtimeGlobeInner({
   );
 }
 
-// Memoize RealtimeGlobe to prevent re-renders from parent page state updates
 export const RealtimeGlobe = React.memo(RealtimeGlobeInner);

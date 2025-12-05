@@ -7,6 +7,18 @@ import {
   analyticsDevices,
   analyticsEvents,
   analyticsClickedElements,
+  analyticsTrafficSources,
+  analyticsFormEvents,
+  analyticsEngagement,
+  analyticsPerformance,
+  analyticsScrollDepth,
+  analyticsErrors,
+  analyticsMedia,
+  analyticsOutbound,
+  analyticsSearch,
+  analyticsCustomEvents,
+  analyticsSessions,
+  analyticsVisitors,
 } from "@/db/schema/schema";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
 import { analyticsSyncService } from "@/services/analytics-sync.service";
@@ -553,5 +565,382 @@ export const analyticsController = {
     return {
       locations: locations || [],
     };
+  },
+
+  // ==================== NEW ENHANCED ANALYTICS ENDPOINTS ====================
+
+  async getTrafficSources(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "20" } = query;
+
+    const sources = await db
+      .select({
+        trafficSource: analyticsTrafficSources.trafficSource,
+        utmSource: analyticsTrafficSources.utmSource,
+        utmMedium: analyticsTrafficSources.utmMedium,
+        utmCampaign: analyticsTrafficSources.utmCampaign,
+        totalSessions: sql<number>`SUM(${analyticsTrafficSources.sessions})`,
+        totalVisitors: sql<number>`SUM(${analyticsTrafficSources.uniqueVisitors})`,
+        totalConversions: sql<number>`SUM(${analyticsTrafficSources.conversions})`,
+      })
+      .from(analyticsTrafficSources)
+      .where(
+        and(
+          eq(analyticsTrafficSources.projectId, projectId),
+          startDate ? gte(analyticsTrafficSources.date, startDate) : undefined,
+          endDate ? lte(analyticsTrafficSources.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(
+        analyticsTrafficSources.trafficSource,
+        analyticsTrafficSources.utmSource,
+        analyticsTrafficSources.utmMedium,
+        analyticsTrafficSources.utmCampaign,
+      )
+      .orderBy(desc(sql`SUM(${analyticsTrafficSources.sessions})`))
+      .limit(parseInt(limit));
+
+    return { sources };
+  },
+
+  async getFormAnalytics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "20" } = query;
+
+    const forms = await db
+      .select({
+        formId: analyticsFormEvents.formId,
+        pageUrl: analyticsFormEvents.pageUrl,
+        totalSubmissions: sql<number>`SUM(${analyticsFormEvents.submissions})`,
+        totalAbandonments: sql<number>`SUM(${analyticsFormEvents.abandonments})`,
+        totalErrors: sql<number>`SUM(${analyticsFormEvents.errors})`,
+        avgTimeToComplete: sql<number>`AVG(${analyticsFormEvents.avgTimeToComplete})`,
+        avgFieldsCompleted: sql<number>`AVG(${analyticsFormEvents.avgFieldsCompleted})`,
+        totalUsers: sql<number>`SUM(${analyticsFormEvents.uniqueUsers})`,
+      })
+      .from(analyticsFormEvents)
+      .where(
+        and(
+          eq(analyticsFormEvents.projectId, projectId),
+          startDate ? gte(analyticsFormEvents.date, startDate) : undefined,
+          endDate ? lte(analyticsFormEvents.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(analyticsFormEvents.formId, analyticsFormEvents.pageUrl)
+      .orderBy(desc(sql`SUM(${analyticsFormEvents.submissions})`))
+      .limit(parseInt(limit));
+
+    return { forms };
+  },
+
+  async getEngagementIssues(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "50" } = query;
+
+    const issues = await db
+      .select({
+        eventType: analyticsEngagement.eventType,
+        elementSelector: analyticsEngagement.elementSelector,
+        pageUrl: analyticsEngagement.pageUrl,
+        reason: analyticsEngagement.reason,
+        totalCount: sql<number>`SUM(${analyticsEngagement.count})`,
+        totalUsers: sql<number>`SUM(${analyticsEngagement.uniqueUsers})`,
+      })
+      .from(analyticsEngagement)
+      .where(
+        and(
+          eq(analyticsEngagement.projectId, projectId),
+          startDate ? gte(analyticsEngagement.date, startDate) : undefined,
+          endDate ? lte(analyticsEngagement.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(
+        analyticsEngagement.eventType,
+        analyticsEngagement.elementSelector,
+        analyticsEngagement.pageUrl,
+        analyticsEngagement.reason,
+      )
+      .orderBy(desc(sql`SUM(${analyticsEngagement.count})`))
+      .limit(parseInt(limit));
+
+    return { issues };
+  },
+
+  async getPerformanceMetrics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "20" } = query;
+
+    const performance = await db
+      .select({
+        pageUrl: analyticsPerformance.pageUrl,
+        avgLoadTime: sql<number>`AVG(${analyticsPerformance.avgLoadTime})`,
+        avgFcp: sql<number>`AVG(${analyticsPerformance.avgFcp})`,
+        avgLcp: sql<number>`AVG(${analyticsPerformance.avgLcp})`,
+        avgFid: sql<number>`AVG(${analyticsPerformance.avgFid})`,
+        avgCls: sql<number>`AVG(${analyticsPerformance.avgCls})`,
+        avgTtfb: sql<number>`AVG(${analyticsPerformance.avgTtfb})`,
+        totalSamples: sql<number>`SUM(${analyticsPerformance.sampleCount})`,
+      })
+      .from(analyticsPerformance)
+      .where(
+        and(
+          eq(analyticsPerformance.projectId, projectId),
+          startDate ? gte(analyticsPerformance.date, startDate) : undefined,
+          endDate ? lte(analyticsPerformance.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(analyticsPerformance.pageUrl)
+      .orderBy(desc(sql`SUM(${analyticsPerformance.sampleCount})`))
+      .limit(parseInt(limit));
+
+    return { performance };
+  },
+
+  async getScrollDepthAnalytics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "20" } = query;
+
+    const scrollData = await db
+      .select({
+        pageUrl: analyticsScrollDepth.pageUrl,
+        reached25: sql<number>`SUM(${analyticsScrollDepth.reached25})`,
+        reached50: sql<number>`SUM(${analyticsScrollDepth.reached50})`,
+        reached75: sql<number>`SUM(${analyticsScrollDepth.reached75})`,
+        reached100: sql<number>`SUM(${analyticsScrollDepth.reached100})`,
+        avgScrollDepth: sql<number>`AVG(${analyticsScrollDepth.avgScrollDepth})`,
+        totalUsers: sql<number>`SUM(${analyticsScrollDepth.uniqueUsers})`,
+      })
+      .from(analyticsScrollDepth)
+      .where(
+        and(
+          eq(analyticsScrollDepth.projectId, projectId),
+          startDate ? gte(analyticsScrollDepth.date, startDate) : undefined,
+          endDate ? lte(analyticsScrollDepth.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(analyticsScrollDepth.pageUrl)
+      .orderBy(desc(sql`SUM(${analyticsScrollDepth.uniqueUsers})`))
+      .limit(parseInt(limit));
+
+    return { scrollData };
+  },
+
+  async getErrorAnalytics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "50" } = query;
+
+    const errors = await db
+      .select({
+        errorMessage: analyticsErrors.errorMessage,
+        errorType: analyticsErrors.errorType,
+        filename: analyticsErrors.filename,
+        pageUrl: analyticsErrors.pageUrl,
+        totalCount: sql<number>`SUM(${analyticsErrors.count})`,
+        totalUsers: sql<number>`SUM(${analyticsErrors.uniqueUsers})`,
+      })
+      .from(analyticsErrors)
+      .where(
+        and(
+          eq(analyticsErrors.projectId, projectId),
+          startDate ? gte(analyticsErrors.date, startDate) : undefined,
+          endDate ? lte(analyticsErrors.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(
+        analyticsErrors.errorMessage,
+        analyticsErrors.errorType,
+        analyticsErrors.filename,
+        analyticsErrors.pageUrl,
+      )
+      .orderBy(desc(sql`SUM(${analyticsErrors.count})`))
+      .limit(parseInt(limit));
+
+    return { errors };
+  },
+
+  async getMediaAnalytics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "20" } = query;
+
+    const media = await db
+      .select({
+        mediaUrl: analyticsMedia.mediaUrl,
+        mediaType: analyticsMedia.mediaType,
+        pageUrl: analyticsMedia.pageUrl,
+        totalPlays: sql<number>`SUM(${analyticsMedia.plays})`,
+        totalCompletions: sql<number>`SUM(${analyticsMedia.completions})`,
+        avgWatchTime: sql<number>`AVG(${analyticsMedia.avgWatchTime})`,
+        reached25: sql<number>`SUM(${analyticsMedia.reached25})`,
+        reached50: sql<number>`SUM(${analyticsMedia.reached50})`,
+        reached75: sql<number>`SUM(${analyticsMedia.reached75})`,
+        reached100: sql<number>`SUM(${analyticsMedia.reached100})`,
+        totalUsers: sql<number>`SUM(${analyticsMedia.uniqueUsers})`,
+      })
+      .from(analyticsMedia)
+      .where(
+        and(
+          eq(analyticsMedia.projectId, projectId),
+          startDate ? gte(analyticsMedia.date, startDate) : undefined,
+          endDate ? lte(analyticsMedia.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(
+        analyticsMedia.mediaUrl,
+        analyticsMedia.mediaType,
+        analyticsMedia.pageUrl,
+      )
+      .orderBy(desc(sql`SUM(${analyticsMedia.plays})`))
+      .limit(parseInt(limit));
+
+    return { media };
+  },
+
+  async getOutboundAnalytics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "50" } = query;
+
+    const outbound = await db
+      .select({
+        eventType: analyticsOutbound.eventType,
+        url: analyticsOutbound.url,
+        linkText: analyticsOutbound.linkText,
+        domain: analyticsOutbound.domain,
+        fileType: analyticsOutbound.fileType,
+        pageUrl: analyticsOutbound.pageUrl,
+        totalClicks: sql<number>`SUM(${analyticsOutbound.clicks})`,
+        totalUsers: sql<number>`SUM(${analyticsOutbound.uniqueUsers})`,
+      })
+      .from(analyticsOutbound)
+      .where(
+        and(
+          eq(analyticsOutbound.projectId, projectId),
+          startDate ? gte(analyticsOutbound.date, startDate) : undefined,
+          endDate ? lte(analyticsOutbound.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(
+        analyticsOutbound.eventType,
+        analyticsOutbound.url,
+        analyticsOutbound.linkText,
+        analyticsOutbound.domain,
+        analyticsOutbound.fileType,
+        analyticsOutbound.pageUrl,
+      )
+      .orderBy(desc(sql`SUM(${analyticsOutbound.clicks})`))
+      .limit(parseInt(limit));
+
+    return { outbound };
+  },
+
+  async getSearchAnalytics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "50" } = query;
+
+    const searches = await db
+      .select({
+        query: analyticsSearch.query,
+        searchLocation: analyticsSearch.searchLocation,
+        totalSearches: sql<number>`SUM(${analyticsSearch.totalSearches})`,
+        avgResultsCount: sql<number>`AVG(${analyticsSearch.avgResultsCount})`,
+        avgResultsClicked: sql<number>`AVG(${analyticsSearch.avgResultsClicked})`,
+        zeroResultsCount: sql<number>`SUM(${analyticsSearch.zeroResultsCount})`,
+        totalUsers: sql<number>`SUM(${analyticsSearch.uniqueUsers})`,
+      })
+      .from(analyticsSearch)
+      .where(
+        and(
+          eq(analyticsSearch.projectId, projectId),
+          startDate ? gte(analyticsSearch.date, startDate) : undefined,
+          endDate ? lte(analyticsSearch.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(analyticsSearch.query, analyticsSearch.searchLocation)
+      .orderBy(desc(sql`SUM(${analyticsSearch.totalSearches})`))
+      .limit(parseInt(limit));
+
+    return { searches };
+  },
+
+  async getCustomEvents(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "50" } = query;
+
+    const customEvents = await db
+      .select({
+        eventName: analyticsCustomEvents.eventName,
+        category: analyticsCustomEvents.category,
+        label: analyticsCustomEvents.label,
+        pageUrl: analyticsCustomEvents.pageUrl,
+        totalCount: sql<number>`SUM(${analyticsCustomEvents.count})`,
+        totalValue: sql<number>`SUM(${analyticsCustomEvents.totalValue})`,
+        totalUsers: sql<number>`SUM(${analyticsCustomEvents.uniqueUsers})`,
+      })
+      .from(analyticsCustomEvents)
+      .where(
+        and(
+          eq(analyticsCustomEvents.projectId, projectId),
+          startDate ? gte(analyticsCustomEvents.date, startDate) : undefined,
+          endDate ? lte(analyticsCustomEvents.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(
+        analyticsCustomEvents.eventName,
+        analyticsCustomEvents.category,
+        analyticsCustomEvents.label,
+        analyticsCustomEvents.pageUrl,
+      )
+      .orderBy(desc(sql`SUM(${analyticsCustomEvents.count})`))
+      .limit(parseInt(limit));
+
+    return { customEvents };
+  },
+
+  async getSessionAnalytics(projectId: string, query: PaginatedQuery) {
+    const { startDate, endDate, limit = "20" } = query;
+
+    const sessions = await db
+      .select({
+        landingPage: analyticsSessions.landingPage,
+        exitPage: analyticsSessions.exitPage,
+        totalSessions: sql<number>`SUM(${analyticsSessions.totalSessions})`,
+        avgPagesPerSession: sql<number>`AVG(${analyticsSessions.avgPagesPerSession})`,
+        avgDuration: sql<number>`AVG(${analyticsSessions.avgDuration})`,
+        totalBounces: sql<number>`SUM(${analyticsSessions.bounces})`,
+        totalConversions: sql<number>`SUM(${analyticsSessions.conversions})`,
+      })
+      .from(analyticsSessions)
+      .where(
+        and(
+          eq(analyticsSessions.projectId, projectId),
+          startDate ? gte(analyticsSessions.date, startDate) : undefined,
+          endDate ? lte(analyticsSessions.date, endDate) : undefined,
+        ),
+      )
+      .groupBy(analyticsSessions.landingPage, analyticsSessions.exitPage)
+      .orderBy(desc(sql`SUM(${analyticsSessions.totalSessions})`))
+      .limit(parseInt(limit));
+
+    return { sessions };
+  },
+
+  async getVisitorAnalytics(projectId: string, query: DateRangeQuery) {
+    const { startDate, endDate } = query;
+
+    const visitors = await db
+      .select({
+        date: analyticsVisitors.date,
+        newVisitors: analyticsVisitors.newVisitors,
+        returningVisitors: analyticsVisitors.returningVisitors,
+        avgDaysSinceLastVisit: analyticsVisitors.avgDaysSinceLastVisit,
+      })
+      .from(analyticsVisitors)
+      .where(
+        and(
+          eq(analyticsVisitors.projectId, projectId),
+          startDate ? gte(analyticsVisitors.date, startDate) : undefined,
+          endDate ? lte(analyticsVisitors.date, endDate) : undefined,
+        ),
+      )
+      .orderBy(analyticsVisitors.date);
+
+    const totals = visitors.reduce(
+      (acc, v) => ({
+        newVisitors: acc.newVisitors + (v.newVisitors || 0),
+        returningVisitors: acc.returningVisitors + (v.returningVisitors || 0),
+      }),
+      { newVisitors: 0, returningVisitors: 0 },
+    );
+
+    return { visitors, totals };
   },
 };

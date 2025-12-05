@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   BarChart3,
   Settings,
   FileText,
@@ -12,19 +11,19 @@ import {
   X,
   BookUp2,
   Route,
+  MonitorCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { GlobalSearch } from "@/components/dashboard/GlobalSearch";
 
 const navigationItems = [
   {
     name: "Dashboard",
     href: "/",
-    icon: LayoutDashboard,
+    icon: MonitorCog,
   },
   {
     name: "Projects",

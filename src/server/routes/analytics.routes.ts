@@ -309,4 +309,328 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       set.status = 500;
       return { error: "Failed to fetch global visitor locations" };
     }
-  });
+  })
+
+  // ==================== NEW ENHANCED ANALYTICS ROUTES ====================
+
+  .get(
+    "/:projectId/traffic-sources",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getTrafficSources(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching traffic sources:", error);
+        set.status = 500;
+        return { error: "Failed to fetch traffic sources" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/forms",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getFormAnalytics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching form analytics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch form analytics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/engagement",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getEngagementIssues(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching engagement issues:", error);
+        set.status = 500;
+        return { error: "Failed to fetch engagement issues" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/performance",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getPerformanceMetrics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching performance metrics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch performance metrics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/scroll-depth",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getScrollDepthAnalytics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching scroll depth:", error);
+        set.status = 500;
+        return { error: "Failed to fetch scroll depth data" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/errors",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getErrorAnalytics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching error analytics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch error analytics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/media",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getMediaAnalytics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching media analytics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch media analytics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/outbound",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getOutboundAnalytics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching outbound analytics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch outbound analytics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/search",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getSearchAnalytics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching search analytics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch search analytics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/custom-events",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getCustomEvents(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching custom events:", error);
+        set.status = 500;
+        return { error: "Failed to fetch custom events" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/sessions",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate, limit } = query;
+      try {
+        return await analyticsController.getSessionAnalytics(projectId, {
+          startDate,
+          endDate,
+          limit,
+        });
+      } catch (error) {
+        console.error("Error fetching session analytics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch session analytics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  .get(
+    "/:projectId/visitors",
+    async ({ params, query, set }) => {
+      const { projectId } = params;
+      const { startDate, endDate } = query;
+      try {
+        return await analyticsController.getVisitorAnalytics(projectId, {
+          startDate,
+          endDate,
+        });
+      } catch (error) {
+        console.error("Error fetching visitor analytics:", error);
+        set.status = 500;
+        return { error: "Failed to fetch visitor analytics" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        startDate: t.Optional(t.String()),
+        endDate: t.Optional(t.String()),
+      }),
+    },
+  );

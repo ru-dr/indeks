@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { AuthLayout } from "@/components/auth";
 
 export default async function MainLayout({
   children,
@@ -19,5 +20,5 @@ export default async function MainLayout({
     redirect("/auth/sign-in?error=email-not-verified");
   }
 
-  return <>{children}</>;
+  return <AuthLayout>{children}</AuthLayout>;
 }

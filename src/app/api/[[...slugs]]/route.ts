@@ -1,7 +1,6 @@
 import { app } from "@/server";
 import { NextRequest, NextResponse } from "next/server";
 
-// Helper to handle Elysia responses
 async function handleRequest(request: NextRequest) {
   try {
     const response = await app.handle(request);
@@ -15,7 +14,6 @@ async function handleRequest(request: NextRequest) {
   }
 }
 
-// Handle CORS preflight
 function handleOptions() {
   return new NextResponse(null, {
     status: 204,
