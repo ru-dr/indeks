@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Frame } from "@/components/ui/frame";
 import { RealtimeGlobe } from "@/components/ui/cobe-globe";
 import {
   Empty,
@@ -71,7 +72,9 @@ interface DeviceData {
 export default function RealtimeTrafficPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [realtimeStats, setRealtimeStats] = useState<RealtimeStats | null>(null);
+  const [realtimeStats, setRealtimeStats] = useState<RealtimeStats | null>(
+    null,
+  );
   const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
   const [countries, setCountries] = useState<CountryData[]>([]);
   const [cities, setCities] = useState<LocationData[]>([]);
@@ -142,17 +145,23 @@ export default function RealtimeTrafficPage() {
 
   const getDeviceIcon = (type: string) => {
     switch (type?.toLowerCase()) {
-      case "mobile": return Smartphone;
-      case "tablet": return Tablet;
-      default: return Monitor;
+      case "mobile":
+        return Smartphone;
+      case "tablet":
+        return Tablet;
+      default:
+        return Monitor;
     }
   };
 
   const getDeviceColor = (type: string) => {
     switch (type?.toLowerCase()) {
-      case "mobile": return "bg-[var(--color-indeks-green)]";
-      case "tablet": return "bg-[var(--color-indeks-yellow)]";
-      default: return "bg-[var(--color-indeks-blue)]";
+      case "mobile":
+        return "bg-[var(--color-indeks-green)]";
+      case "tablet":
+        return "bg-[var(--color-indeks-yellow)]";
+      default:
+        return "bg-[var(--color-indeks-blue)]";
     }
   };
 
@@ -170,11 +179,13 @@ export default function RealtimeTrafficPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Realtime Traffic</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Realtime Traffic
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
               Monitor live traffic and user activity
             </p>
@@ -184,7 +195,7 @@ export default function RealtimeTrafficPage() {
               <select
                 value={selectedProject || ""}
                 onChange={(e) => setSelectedProject(e.target.value)}
-                className="px-3 py-2 rounded-md border bg-background text-sm flex-1 sm:flex-none"
+                className="px-3 py-2 rounded-md border bg-background text-sm flex-1 sm:flex-none min-w-0"
               >
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -201,142 +212,228 @@ export default function RealtimeTrafficPage() {
         </div>
 
         {projects.length === 0 ? (
-          <Card className="p-12">
+          <Card className="p-8 sm:p-12">
             <Empty>
               <EmptyHeader>
-                <EmptyMedia variant="icon"><FolderOpen /></EmptyMedia>
+                <EmptyMedia variant="icon">
+                  <FolderOpen />
+                </EmptyMedia>
                 <EmptyTitle>No projects yet</EmptyTitle>
-                <EmptyDescription>Create a project to start tracking realtime traffic.</EmptyDescription>
+                <EmptyDescription>
+                  Create a project to start tracking realtime traffic.
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           </Card>
         ) : (
           <>
             {/* Stats Cards */}
-            <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
               <Card className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Users</p>
-                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{formatNumber(realtimeStats?.active_users)}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                      Active Users
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {formatNumber(realtimeStats?.active_users)}
+                    </h3>
                   </div>
-                  <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
+                  <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)] shrink-0" />
                 </div>
               </Card>
               <Card className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Page Views (30m)</p>
-                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{formatNumber(realtimeStats?.page_views)}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                      Page Views
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {formatNumber(realtimeStats?.page_views)}
+                    </h3>
                   </div>
-                  <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
+                  <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)] shrink-0" />
                 </div>
               </Card>
               <Card className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Sessions</p>
-                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{formatNumber(realtimeStats?.active_sessions)}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                      Sessions
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {formatNumber(realtimeStats?.active_sessions)}
+                    </h3>
                   </div>
-                  <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
+                  <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)] shrink-0" />
                 </div>
               </Card>
               <Card className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Events (30m)</p>
-                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{formatNumber(realtimeStats?.total_events)}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                      Events
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {formatNumber(realtimeStats?.total_events)}
+                    </h3>
                   </div>
-                  <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-orange)]" />
+                  <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-orange)] shrink-0" />
                 </div>
               </Card>
             </div>
 
             {/* Globe Card with Details */}
             <Card className="p-4 sm:p-6">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
                 <Globe className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                <h3 className="text-base sm:text-lg font-semibold">Global Traffic Map</h3>
-                <Badge variant="outline" className="ml-auto text-xs">{cities.length} active locations</Badge>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Global Traffic Map
+                </h3>
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {cities.length} locations
+                </Badge>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Globe on the left */}
-                <div className="flex items-center justify-center">
-                  <RealtimeGlobe
-                    projectId={selectedProject || undefined}
-                    markerColor="#22c55e"
-                    baseColor="#fff5e1"
-                    opacity={1.0}
-                    mapBrightness={5}
-                  />
-                </div>
-                
-                {/* Location Details on the right */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-muted-foreground">Active Visitor Locations</h4>
-                    <span className="text-xs text-muted-foreground">Last 30 min</span>
+
+              {/* Mobile: Stack vertically, Desktop: Side by side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                {/* Globe */}
+                <div className="flex items-center justify-center order-1 lg:order-1">
+                  <div className="w-full max-w-[280px] sm:max-w-[500px] lg:max-w-[700px] aspect-square">
+                    <RealtimeGlobe
+                      projectId={selectedProject || undefined}
+                      markerColor="#22c55e"
+                      baseColor="#fff5e1"
+                      opacity={1.0}
+                      mapBrightness={5}
+                      className="!min-h-0"
+                      style={{ minHeight: "auto" }}
+                    />
                   </div>
-                  
+                </div>
+
+                {/* Location Details */}
+                <div className="order-2 lg:order-2 h-full">
                   {cities.length > 0 ? (
-                    <div className="space-y-2 max-h-[340px] overflow-y-auto pr-2">
-                      {cities.slice(0, 15).map((loc, i) => (
-                        <div key={i} className="p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
-                                <p className="text-sm font-medium truncate">{loc.city || "Unknown City"}</p>
+                    <Frame className="h-full flex flex-col">
+                      <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/20">
+                        <h4 className="text-sm font-semibold">
+                          Active Locations
+                        </h4>
+                        <span className="text-xs text-muted-foreground">
+                          Last 30 min
+                        </span>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[200px] max-h-[300px]">
+                        {cities.slice(0, 15).map((loc, i) => (
+                          <div
+                            key={i}
+                            className="p-2.5 sm:p-3 rounded-lg bg-card border shadow-sm hover:bg-accent/50 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
+                                  <p className="text-sm font-medium truncate">
+                                    {loc.city || "Unknown City"}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate">
+                                  {loc.country}
+                                </p>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1">{loc.country}</p>
+                              <div className="text-right shrink-0">
+                                <p className="text-sm font-bold">
+                                  {loc.visitor_count}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                  visitors
+                                </p>
+                              </div>
                             </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-sm font-bold">{loc.visitor_count}</p>
-                              <p className="text-xs text-muted-foreground">visitors</p>
+                            {/* Collapse details on mobile, show on larger screens */}
+                            <div className="hidden sm:block mt-2 pt-2 border-t border-dashed">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">
+                                  Coordinates
+                                </span>
+                                <span className="font-mono text-muted-foreground">
+                                  {loc.latitude?.toFixed(2)}°,{" "}
+                                  {loc.longitude?.toFixed(2)}°
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs mt-1">
+                                <span className="text-muted-foreground">
+                                  Events
+                                </span>
+                                <span className="font-medium">
+                                  {formatNumber(loc.event_count)}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <div className="mt-2 pt-2 border-t border-dashed">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">Coordinates</span>
-                              <span className="font-mono text-muted-foreground">
-                                {loc.latitude?.toFixed(4)}°, {loc.longitude?.toFixed(4)}°
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs mt-1">
-                              <span className="text-muted-foreground">Events</span>
-                              <span className="font-medium">{formatNumber(loc.event_count)}</span>
-                            </div>
+                        ))}
+                      </div>
+
+                      {/* Summary Stats */}
+                      <div className="p-3 border-t bg-muted/20 mt-auto">
+                        <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+                          <div>
+                            <p className="text-base sm:text-lg font-bold">
+                              {cities.length}
+                            </p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">
+                              Locations
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-base sm:text-lg font-bold">
+                              {countries.length}
+                            </p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">
+                              Countries
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-base sm:text-lg font-bold">
+                              {formatNumber(
+                                cities.reduce(
+                                  (sum, c) => sum + c.visitor_count,
+                                  0,
+                                ),
+                              )}
+                            </p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">
+                              Visitors
+                            </p>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    </Frame>
                   ) : (
-                    <div className="flex items-center justify-center h-[300px]">
-                      <Empty>
-                        <EmptyHeader>
-                          <EmptyMedia variant="icon"><MapPin /></EmptyMedia>
-                          <EmptyTitle>No active locations</EmptyTitle>
-                          <EmptyDescription>Location data will appear once visitors are tracked.</EmptyDescription>
-                        </EmptyHeader>
-                      </Empty>
-                    </div>
-                  )}
-                  
-                  {cities.length > 0 && (
-                    <div className="pt-3 border-t">
-                      <div className="grid grid-cols-3 gap-3 text-center">
-                        <div>
-                          <p className="text-lg font-bold">{cities.length}</p>
-                          <p className="text-xs text-muted-foreground">Locations</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold">{countries.length}</p>
-                          <p className="text-xs text-muted-foreground">Countries</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold">{formatNumber(cities.reduce((sum, c) => sum + c.visitor_count, 0))}</p>
-                          <p className="text-xs text-muted-foreground">Total Visitors</p>
-                        </div>
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold text-muted-foreground">
+                          Active Locations
+                        </h4>
+                        <span className="text-xs text-muted-foreground">
+                          Last 30 min
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-center h-[200px] sm:h-[300px]">
+                        <Empty>
+                          <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                              <MapPin />
+                            </EmptyMedia>
+                            <EmptyTitle>No active locations</EmptyTitle>
+                            <EmptyDescription className="text-xs sm:text-sm">
+                              Location data will appear once visitors are
+                              tracked.
+                            </EmptyDescription>
+                          </EmptyHeader>
+                        </Empty>
                       </div>
                     </div>
                   )}
@@ -346,27 +443,49 @@ export default function RealtimeTrafficPage() {
 
             {/* Live Activity & Devices */}
             <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+              {/* Live Activity */}
               <Card className="p-4 sm:p-6">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
                   <Activity className="h-5 w-5 text-[var(--color-indeks-green)]" />
-                  <h3 className="text-base sm:text-lg font-semibold">Live Activity</h3>
-                  <span className="ml-auto text-xs text-muted-foreground">Refresh in {nextRefresh}s</span>
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    Live Activity
+                  </h3>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    Refresh in {nextRefresh}s
+                  </span>
                 </div>
                 {recentEvents.length > 0 ? (
-                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                  <div className="space-y-1.5 sm:space-y-2 max-h-64 sm:max-h-80 overflow-y-auto">
                     {recentEvents.map((event, i) => (
-                      <div key={i} className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg hover:bg-muted/50">
-                        <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between gap-2 py-2 px-2 sm:px-3 rounded-lg hover:bg-muted/50"
+                      >
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                           <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
-                          <div className="min-w-0">
-                            <Badge variant="outline" className="text-xs">{event.event_type}</Badge>
-                            <p className="text-xs text-muted-foreground truncate max-w-40 mt-1">{event.url || "—"}</p>
+                          <div className="min-w-0 flex-1">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] sm:text-xs"
+                            >
+                              {event.event_type}
+                            </Badge>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate mt-0.5 sm:mt-1">
+                              {event.url || "—"}
+                            </p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="text-xs text-muted-foreground">{new Date(event.timestamp).toLocaleTimeString()}</span>
+                          <span className="text-[10px] sm:text-xs text-muted-foreground block">
+                            {new Date(event.timestamp).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
                           {event.country && (
-                            <p className="text-xs text-muted-foreground truncate">{event.city ? `${event.city}, ` : ""}{event.country}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-[80px] sm:max-w-[120px]">
+                              {event.city ? `${event.city}` : event.country}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -375,38 +494,59 @@ export default function RealtimeTrafficPage() {
                 ) : (
                   <Empty>
                     <EmptyHeader>
-                      <EmptyMedia variant="icon"><Activity /></EmptyMedia>
+                      <EmptyMedia variant="icon">
+                        <Activity />
+                      </EmptyMedia>
                       <EmptyTitle>No recent activity</EmptyTitle>
-                      <EmptyDescription>Events will appear here in real-time.</EmptyDescription>
+                      <EmptyDescription className="text-xs sm:text-sm">
+                        Events will appear here in real-time.
+                      </EmptyDescription>
                     </EmptyHeader>
                   </Empty>
                 )}
               </Card>
 
+              {/* Device Breakdown */}
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Monitor className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-                  <h3 className="text-base sm:text-lg font-semibold">Device Breakdown</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    Device Breakdown
+                  </h3>
                 </div>
                 {devices.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {devices.map((device, i) => {
                       const DeviceIcon = getDeviceIcon(device.deviceType);
-                      const percentage = totalDeviceVisits > 0 ? Math.round((device.totalVisits / totalDeviceVisits) * 100) : 0;
+                      const percentage =
+                        totalDeviceVisits > 0
+                          ? Math.round(
+                              (device.totalVisits / totalDeviceVisits) * 100,
+                            )
+                          : 0;
                       return (
                         <div key={i} className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <DeviceIcon className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm font-medium capitalize">{device.deviceType}</span>
+                              <span className="text-sm font-medium capitalize">
+                                {device.deviceType}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">{formatNumber(device.totalVisits)}</span>
-                              <span className="text-sm font-semibold">{percentage}%</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground">
+                                {formatNumber(device.totalVisits)}
+                              </span>
+                              <span className="text-xs sm:text-sm font-semibold w-10 text-right">
+                                {percentage}%
+                              </span>
                             </div>
                           </div>
                           <div className="w-full bg-secondary rounded-full h-2">
-                            <div className={`${getDeviceColor(device.deviceType)} h-2 rounded-full transition-all`} style={{ width: `${percentage}%` }} />
+                            <div
+                              className={`${getDeviceColor(device.deviceType)} h-2 rounded-full transition-all`}
+                              style={{ width: `${percentage}%` }}
+                            />
                           </div>
                         </div>
                       );
@@ -415,9 +555,13 @@ export default function RealtimeTrafficPage() {
                 ) : (
                   <Empty>
                     <EmptyHeader>
-                      <EmptyMedia variant="icon"><Monitor /></EmptyMedia>
+                      <EmptyMedia variant="icon">
+                        <Monitor />
+                      </EmptyMedia>
                       <EmptyTitle>No device data</EmptyTitle>
-                      <EmptyDescription>Device breakdown will appear after syncing.</EmptyDescription>
+                      <EmptyDescription className="text-xs sm:text-sm">
+                        Device breakdown will appear after syncing.
+                      </EmptyDescription>
                     </EmptyHeader>
                   </Empty>
                 )}
@@ -426,24 +570,37 @@ export default function RealtimeTrafficPage() {
 
             {/* Top Countries */}
             <Card className="p-4 sm:p-6">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
                 <MapPin className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                <h3 className="text-base sm:text-lg font-semibold">Top Countries</h3>
-                <Badge variant="outline" className="ml-auto text-xs">Last 30 min</Badge>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Top Countries
+                </h3>
+                <Badge variant="outline" className="ml-auto text-xs">
+                  Last 30 min
+                </Badge>
               </div>
               {countries.length > 0 ? (
-                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                   {countries.slice(0, 8).map((country, i) => {
                     const maxVisitors = countries[0]?.visitor_count || 1;
-                    const percentage = Math.round((country.visitor_count / maxVisitors) * 100);
+                    const percentage = Math.round(
+                      (country.visitor_count / maxVisitors) * 100,
+                    );
                     return (
                       <div key={i} className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{country.country}</span>
-                          <span className="text-sm text-muted-foreground">{formatNumber(country.visitor_count)}</span>
+                          <span className="text-sm font-medium truncate">
+                            {country.country}
+                          </span>
+                          <span className="text-sm text-muted-foreground shrink-0 ml-2">
+                            {formatNumber(country.visitor_count)}
+                          </span>
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
-                          <div className="bg-[var(--color-indeks-blue)] h-2 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                          <div
+                            className="bg-[var(--color-indeks-blue)] h-2 rounded-full transition-all"
+                            style={{ width: `${percentage}%` }}
+                          />
                         </div>
                       </div>
                     );
@@ -452,9 +609,13 @@ export default function RealtimeTrafficPage() {
               ) : (
                 <Empty>
                   <EmptyHeader>
-                    <EmptyMedia variant="icon"><MapPin /></EmptyMedia>
+                    <EmptyMedia variant="icon">
+                      <MapPin />
+                    </EmptyMedia>
                     <EmptyTitle>No location data</EmptyTitle>
-                    <EmptyDescription>Location data will appear once visitors are tracked.</EmptyDescription>
+                    <EmptyDescription className="text-xs sm:text-sm">
+                      Location data will appear once visitors are tracked.
+                    </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
               )}

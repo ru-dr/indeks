@@ -106,20 +106,23 @@ type FilterStatus = "all" | "active" | "inactive";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectStats, setProjectStats] = useState<Record<string, ProjectStats>>({});
+  const [projectStats, setProjectStats] = useState<
+    Record<string, ProjectStats>
+  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
 
-  // Data states
   const [deviceData, setDeviceData] = useState<DeviceData[]>([]);
   const [topReferrers, setTopReferrers] = useState<ReferrerData[]>([]);
   const [topPages, setTopPages] = useState<TopPageData[]>([]);
   const [topEvents, setTopEvents] = useState<EventData[]>([]);
   const [topCountries, setTopCountries] = useState<LocationData[]>([]);
-  const [realtimeCounts, setRealtimeCounts] = useState<Record<string, number>>({});
+  const [realtimeCounts, setRealtimeCounts] = useState<Record<string, number>>(
+    {},
+  );
   const [syncing, setSyncing] = useState<string | null>(null);
 
   const fetchProjects = async () => {
@@ -161,7 +164,9 @@ export default function ProjectsPage() {
 
     for (const project of projects) {
       try {
-        const overviewRes = await fetch(`/api/v1/analytics/${project.id}/overview${query}`);
+        const overviewRes = await fetch(
+          `/api/v1/analytics/${project.id}/overview${query}`,
+        );
         if (overviewRes.ok) {
           const data = await overviewRes.json();
           if (data && data.summary) {
@@ -179,18 +184,18 @@ export default function ProjectsPage() {
         console.error(`Error fetching overview for ${project.id}:`, err);
       }
 
-      // Device data is now fetched from realtime endpoint (ClickHouse) below
-      // This provides more accurate real-time data without needing sync
-
       try {
-        const referrersRes = await fetch(`/api/v1/analytics/${project.id}/referrers${query}&limit=10`);
+        const referrersRes = await fetch(
+          `/api/v1/analytics/${project.id}/referrers${query}&limit=10`,
+        );
         if (referrersRes.ok) {
           const data = await referrersRes.json();
           if (data && Array.isArray(data.referrers)) {
             data.referrers.forEach((r: ReferrerData) => {
               if (r) {
                 const key = r.referrer || "Direct";
-                allReferrers[key] = (allReferrers[key] || 0) + (r.totalVisits || 0);
+                allReferrers[key] =
+                  (allReferrers[key] || 0) + (r.totalVisits || 0);
               }
             });
           }
@@ -200,13 +205,16 @@ export default function ProjectsPage() {
       }
 
       try {
-        const pagesRes = await fetch(`/api/v1/analytics/${project.id}/pages${query}&limit=10`);
+        const pagesRes = await fetch(
+          `/api/v1/analytics/${project.id}/pages${query}&limit=10`,
+        );
         if (pagesRes.ok) {
           const data = await pagesRes.json();
           if (data && Array.isArray(data.pages)) {
             data.pages.forEach((p: TopPageData) => {
               if (p && p.url) {
-                allPages[p.url] = (allPages[p.url] || 0) + (p.totalPageViews || 0);
+                allPages[p.url] =
+                  (allPages[p.url] || 0) + (p.totalPageViews || 0);
               }
             });
           }
@@ -216,13 +224,16 @@ export default function ProjectsPage() {
       }
 
       try {
-        const eventsRes = await fetch(`/api/v1/analytics/${project.id}/events${query}&limit=10`);
+        const eventsRes = await fetch(
+          `/api/v1/analytics/${project.id}/events${query}&limit=10`,
+        );
         if (eventsRes.ok) {
           const data = await eventsRes.json();
           if (data && Array.isArray(data.events)) {
             data.events.forEach((e: EventData) => {
               if (e && e.eventType) {
-                allEvents[e.eventType] = (allEvents[e.eventType] || 0) + (e.totalCount || 0);
+                allEvents[e.eventType] =
+                  (allEvents[e.eventType] || 0) + (e.totalCount || 0);
               }
             });
           }
@@ -232,13 +243,16 @@ export default function ProjectsPage() {
       }
 
       try {
-        const locationsRes = await fetch(`/api/v1/analytics/${project.id}/locations`);
+        const locationsRes = await fetch(
+          `/api/v1/analytics/${project.id}/locations`,
+        );
         if (locationsRes.ok) {
           const data = await locationsRes.json();
           if (data && Array.isArray(data.countries)) {
             data.countries.forEach((c: LocationData) => {
               if (c && c.country) {
-                allCountries[c.country] = (allCountries[c.country] || 0) + (c.visitor_count || 0);
+                allCountries[c.country] =
+                  (allCountries[c.country] || 0) + (c.visitor_count || 0);
               }
             });
           }
@@ -248,17 +262,20 @@ export default function ProjectsPage() {
       }
 
       try {
-        const realtimeRes = await fetch(`/api/v1/analytics/${project.id}/realtime`);
+        const realtimeRes = await fetch(
+          `/api/v1/analytics/${project.id}/realtime`,
+        );
         if (realtimeRes.ok) {
           const data = await realtimeRes.json();
           if (data && data.realtime) {
             realtimeMap[project.id] = data.realtime.active_users || 0;
           }
-          // Use realtime device data from ClickHouse (more accurate than aggregated)
+
           if (data && Array.isArray(data.devices)) {
             data.devices.forEach((d: DeviceData) => {
               if (d && d.deviceType) {
-                allDevices[d.deviceType] = (allDevices[d.deviceType] || 0) + (d.totalVisits || 0);
+                allDevices[d.deviceType] =
+                  (allDevices[d.deviceType] || 0) + (d.totalVisits || 0);
               }
             });
           }
@@ -274,35 +291,35 @@ export default function ProjectsPage() {
     setDeviceData(
       Object.entries(allDevices)
         .map(([deviceType, totalVisits]) => ({ deviceType, totalVisits }))
-        .sort((a, b) => b.totalVisits - a.totalVisits)
+        .sort((a, b) => b.totalVisits - a.totalVisits),
     );
 
     setTopReferrers(
       Object.entries(allReferrers)
         .map(([referrer, totalVisits]) => ({ referrer, totalVisits }))
         .sort((a, b) => b.totalVisits - a.totalVisits)
-        .slice(0, 5)
+        .slice(0, 5),
     );
 
     setTopPages(
       Object.entries(allPages)
         .map(([url, totalPageViews]) => ({ url, totalPageViews }))
         .sort((a, b) => b.totalPageViews - a.totalPageViews)
-        .slice(0, 5)
+        .slice(0, 5),
     );
 
     setTopEvents(
       Object.entries(allEvents)
         .map(([eventType, totalCount]) => ({ eventType, totalCount }))
         .sort((a, b) => b.totalCount - a.totalCount)
-        .slice(0, 5)
+        .slice(0, 5),
     );
 
     setTopCountries(
       Object.entries(allCountries)
         .map(([country, visitor_count]) => ({ country, visitor_count }))
         .sort((a, b) => b.visitor_count - a.visitor_count)
-        .slice(0, 5)
+        .slice(0, 5),
     );
   }, [projects]);
 
@@ -332,18 +349,31 @@ export default function ProjectsPage() {
     }
   }, [projects, fetchProjectStats]);
 
-  // Computed values
-  const totalViews = Object.values(projectStats).reduce((sum, s) => sum + (s?.totalPageViews || 0), 0);
-  const totalVisitors = Object.values(projectStats).reduce((sum, s) => sum + (s?.totalUniqueVisitors || 0), 0);
-  const totalSessions = Object.values(projectStats).reduce((sum, s) => sum + (s?.totalSessions || 0), 0);
-  const totalClicks = Object.values(projectStats).reduce((sum, s) => sum + (s?.totalClicks || 0), 0);
+  const totalViews = Object.values(projectStats).reduce(
+    (sum, s) => sum + (s?.totalPageViews || 0),
+    0,
+  );
+  const totalVisitors = Object.values(projectStats).reduce(
+    (sum, s) => sum + (s?.totalUniqueVisitors || 0),
+    0,
+  );
+  const totalSessions = Object.values(projectStats).reduce(
+    (sum, s) => sum + (s?.totalSessions || 0),
+    0,
+  );
+  const totalClicks = Object.values(projectStats).reduce(
+    (sum, s) => sum + (s?.totalClicks || 0),
+    0,
+  );
   const activeProjects = projects.filter((p) => p?.isActive).length;
-  const totalActiveVisitors = Object.values(realtimeCounts).reduce((sum, c) => sum + (c || 0), 0);
+  const totalActiveVisitors = Object.values(realtimeCounts).reduce(
+    (sum, c) => sum + (c || 0),
+    0,
+  );
 
-  // Filter and search projects
   const filteredProjects = useMemo(() => {
     if (!projects || projects.length === 0) return [];
-    
+
     return projects
       .filter((project) => {
         if (!project) return false;
@@ -352,28 +382,35 @@ export default function ProjectsPage() {
 
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
-          return project.title?.toLowerCase().includes(q) || 
-                 project.link?.toLowerCase().includes(q) || 
-                 project.category?.toLowerCase().includes(q);
+          return (
+            project.title?.toLowerCase().includes(q) ||
+            project.link?.toLowerCase().includes(q) ||
+            project.category?.toLowerCase().includes(q)
+          );
         }
         return true;
       })
-      .sort((a, b) => (projectStats[b.id]?.totalPageViews || 0) - (projectStats[a.id]?.totalPageViews || 0));
+      .sort(
+        (a, b) =>
+          (projectStats[b.id]?.totalPageViews || 0) -
+          (projectStats[a.id]?.totalPageViews || 0),
+      );
   }, [projects, projectStats, searchQuery, filterStatus]);
 
-  // Recently updated projects
   const recentlyUpdated = useMemo(() => {
     if (!projects || projects.length === 0) return [];
-    
+
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     return projects
       .filter((p) => p && p.updatedAt && new Date(p.updatedAt) > sevenDaysAgo)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      )
       .slice(0, 5);
   }, [projects]);
 
-  // Top performing project
   const topProject = useMemo(() => {
     if (!filteredProjects || filteredProjects.length === 0) return null;
     const top = filteredProjects[0];
@@ -381,7 +418,8 @@ export default function ProjectsPage() {
     return { ...top, stats: projectStats[top.id] };
   }, [filteredProjects, projectStats]);
 
-  const getStatusColor = (isActive: boolean) => isActive ? "bg-[var(--color-indeks-green)]" : "bg-muted-foreground";
+  const getStatusColor = (isActive: boolean) =>
+    isActive ? "bg-[var(--color-indeks-green)]" : "bg-muted-foreground";
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
@@ -414,8 +452,18 @@ export default function ProjectsPage() {
   };
 
   const getPerformanceIndicator = (views: number) => {
-    if (views > 1000) return { icon: TrendingUp, color: "text-[var(--color-indeks-green)]", label: "High" };
-    if (views > 100) return { icon: Minus, color: "text-[var(--color-indeks-yellow)]", label: "Medium" };
+    if (views > 1000)
+      return {
+        icon: TrendingUp,
+        color: "text-[var(--color-indeks-green)]",
+        label: "High",
+      };
+    if (views > 100)
+      return {
+        icon: Minus,
+        color: "text-[var(--color-indeks-yellow)]",
+        label: "Medium",
+      };
     return { icon: TrendingDown, color: "text-muted-foreground", label: "Low" };
   };
 
@@ -430,7 +478,8 @@ export default function ProjectsPage() {
   const getHostname = (link: string) => {
     if (!link) return "-";
     try {
-      return new URL(link.startsWith("http") ? link : `https://${link}`).hostname;
+      return new URL(link.startsWith("http") ? link : `https://${link}`)
+        .hostname;
     } catch {
       return link;
     }
@@ -452,7 +501,9 @@ export default function ProjectsPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Projects</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Projects
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
               Manage and monitor all your analytics projects
             </p>
@@ -461,16 +512,22 @@ export default function ProjectsPage() {
         </div>
 
         {error && (
-          <div className="rounded-md bg-destructive/15 p-3 sm:p-4 text-sm text-destructive">{error}</div>
+          <div className="rounded-md bg-destructive/15 p-3 sm:p-4 text-sm text-destructive">
+            {error}
+          </div>
         )}
 
         {projects.length === 0 ? (
           <Card className="p-8 sm:p-12">
             <Empty>
               <EmptyHeader>
-                <EmptyMedia variant="icon"><FolderOpen /></EmptyMedia>
+                <EmptyMedia variant="icon">
+                  <FolderOpen />
+                </EmptyMedia>
                 <EmptyTitle>No projects yet</EmptyTitle>
-                <EmptyDescription>Create your first project to start tracking analytics.</EmptyDescription>
+                <EmptyDescription>
+                  Create your first project to start tracking analytics.
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           </Card>
@@ -481,8 +538,12 @@ export default function ProjectsPage() {
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Projects</p>
-                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{projects.length}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                      Total Projects
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {projects.length}
+                    </h3>
                   </div>
                   <FolderKanban className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
                 </div>
@@ -490,8 +551,12 @@ export default function ProjectsPage() {
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active</p>
-                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{activeProjects}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                      Active
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {activeProjects}
+                    </h3>
                   </div>
                   <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
                 </div>
@@ -499,8 +564,12 @@ export default function ProjectsPage() {
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Views</p>
-                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{formatNumber(totalViews)}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                      Total Views
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                      {formatNumber(totalViews)}
+                    </h3>
                   </div>
                   <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
                 </div>
@@ -508,9 +577,13 @@ export default function ProjectsPage() {
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Live Now</p>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                      Live Now
+                    </p>
                     <div className="flex items-center gap-2 mt-1 sm:mt-2">
-                      <h3 className="text-xl sm:text-2xl font-bold">{totalActiveVisitors}</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold">
+                        {totalActiveVisitors}
+                      </h3>
                       {totalActiveVisitors > 0 && (
                         <span className="relative flex h-2.5 w-2.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-indeks-green)] opacity-75"></span>
@@ -528,87 +601,138 @@ export default function ProjectsPage() {
             <Card className="p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-                <h3 className="text-base sm:text-lg font-semibold">Quick Insights</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Quick Insights
+                </h3>
               </div>
               <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Top Performer */}
                 <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
                   <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-green)] mb-2 sm:mb-3" />
-                  <h4 className="font-medium text-sm sm:text-base mb-1">Top Performer</h4>
+                  <h4 className="font-medium text-sm sm:text-base mb-1">
+                    Top Performer
+                  </h4>
                   {topProject && topProject.stats ? (
                     <Link href={`/projects/${topProject.id}`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className={`h-2 w-2 rounded-full ${getStatusColor(topProject.isActive)}`} />
-                        <span className="text-sm truncate">{topProject.title}</span>
+                        <div
+                          className={`h-2 w-2 rounded-full ${getStatusColor(topProject.isActive)}`}
+                        />
+                        <span className="text-sm truncate">
+                          {topProject.title}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {formatNumber(topProject.stats.totalPageViews)} views • {formatNumber(topProject.stats.totalUniqueVisitors)} visitors
+                        {formatNumber(topProject.stats.totalPageViews)} views •{" "}
+                        {formatNumber(topProject.stats.totalUniqueVisitors)}{" "}
+                        visitors
                       </p>
                     </Link>
                   ) : (
-                    <p className="text-xs text-muted-foreground">No data available</p>
+                    <p className="text-xs text-muted-foreground">
+                      No data available
+                    </p>
                   )}
                 </div>
 
                 {/* Devices */}
                 <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
                   <Monitor className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-blue)] mb-2 sm:mb-3" />
-                  <h4 className="font-medium text-sm sm:text-base mb-1">Devices</h4>
+                  <h4 className="font-medium text-sm sm:text-base mb-1">
+                    Devices
+                  </h4>
                   {deviceData.length > 0 ? (
                     <div className="space-y-1">
                       {deviceData.slice(0, 3).map((d, i) => {
                         const Icon = getDeviceIcon(d.deviceType);
-                        const total = deviceData.reduce((s, x) => s + (x.totalVisits || 0), 0);
-                        const pct = total > 0 ? Math.round((d.totalVisits / total) * 100) : 0;
+                        const total = deviceData.reduce(
+                          (s, x) => s + (x.totalVisits || 0),
+                          0,
+                        );
+                        const pct =
+                          total > 0
+                            ? Math.round((d.totalVisits / total) * 100)
+                            : 0;
                         return (
-                          <div key={i} className="flex items-center gap-2 text-xs">
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 text-xs"
+                          >
                             <Icon className="h-3 w-3 text-muted-foreground" />
-                            <span className="capitalize truncate flex-1">{d.deviceType}</span>
+                            <span className="capitalize truncate flex-1">
+                              {d.deviceType}
+                            </span>
                             <span className="font-medium">{pct}%</span>
                           </div>
                         );
                       })}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">No device data</p>
+                    <p className="text-xs text-muted-foreground">
+                      No device data
+                    </p>
                   )}
                 </div>
 
                 {/* Top Referrers */}
                 <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
                   <Link2 className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-orange)] mb-2 sm:mb-3" />
-                  <h4 className="font-medium text-sm sm:text-base mb-1">Top Referrers</h4>
+                  <h4 className="font-medium text-sm sm:text-base mb-1">
+                    Top Referrers
+                  </h4>
                   {topReferrers.length > 0 ? (
                     <div className="space-y-1">
                       {topReferrers.slice(0, 3).map((r, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs">
-                          <span className="text-muted-foreground">{i + 1}.</span>
-                          <span className="truncate flex-1">{r.referrer || "Direct"}</span>
-                          <span className="font-medium">{formatNumber(r.totalVisits)}</span>
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 text-xs"
+                        >
+                          <span className="text-muted-foreground">
+                            {i + 1}.
+                          </span>
+                          <span className="truncate flex-1">
+                            {r.referrer || "Direct"}
+                          </span>
+                          <span className="font-medium">
+                            {formatNumber(r.totalVisits)}
+                          </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">No referrer data</p>
+                    <p className="text-xs text-muted-foreground">
+                      No referrer data
+                    </p>
                   )}
                 </div>
 
                 {/* Top Countries */}
                 <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
                   <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-indeks-green)] mb-2 sm:mb-3" />
-                  <h4 className="font-medium text-sm sm:text-base mb-1">Top Countries</h4>
+                  <h4 className="font-medium text-sm sm:text-base mb-1">
+                    Top Countries
+                  </h4>
                   {topCountries.length > 0 ? (
                     <div className="space-y-1">
                       {topCountries.slice(0, 3).map((c, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs">
-                          <span className="text-muted-foreground">{i + 1}.</span>
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 text-xs"
+                        >
+                          <span className="text-muted-foreground">
+                            {i + 1}.
+                          </span>
                           <span className="truncate flex-1">{c.country}</span>
-                          <span className="font-medium">{formatNumber(c.visitor_count)}</span>
+                          <span className="font-medium">
+                            {formatNumber(c.visitor_count)}
+                          </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">No location data</p>
+                    <p className="text-xs text-muted-foreground">
+                      No location data
+                    </p>
                   )}
                 </div>
               </div>
@@ -620,7 +744,9 @@ export default function ProjectsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FolderKanban className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                    <h3 className="text-base sm:text-lg font-semibold">All Projects</h3>
+                    <h3 className="text-base sm:text-lg font-semibold">
+                      All Projects
+                    </h3>
                   </div>
                   <div className="hidden md:flex items-center gap-1 border rounded-lg p-1">
                     <Button
@@ -663,7 +789,9 @@ export default function ProjectsPage() {
                       All
                     </Button>
                     <Button
-                      variant={filterStatus === "active" ? "secondary" : "ghost"}
+                      variant={
+                        filterStatus === "active" ? "secondary" : "ghost"
+                      }
                       size="sm"
                       onClick={() => setFilterStatus("active")}
                       className="h-7 px-2 sm:px-3 text-xs"
@@ -672,7 +800,9 @@ export default function ProjectsPage() {
                       <span className="hidden sm:inline">Active</span>
                     </Button>
                     <Button
-                      variant={filterStatus === "inactive" ? "secondary" : "ghost"}
+                      variant={
+                        filterStatus === "inactive" ? "secondary" : "ghost"
+                      }
                       size="sm"
                       onClick={() => setFilterStatus("inactive")}
                       className="h-7 px-2 sm:px-3 text-xs"
@@ -689,9 +819,13 @@ export default function ProjectsPage() {
                 <div className="py-8">
                   <Empty>
                     <EmptyHeader>
-                      <EmptyMedia variant="icon"><Search /></EmptyMedia>
+                      <EmptyMedia variant="icon">
+                        <Search />
+                      </EmptyMedia>
                       <EmptyTitle>No projects found</EmptyTitle>
-                      <EmptyDescription>Try adjusting your search or filter.</EmptyDescription>
+                      <EmptyDescription>
+                        Try adjusting your search or filter.
+                      </EmptyDescription>
                     </EmptyHeader>
                   </Empty>
                 </div>
@@ -705,13 +839,27 @@ export default function ProjectsPage() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Project</TableHead>
-                              <TableHead className="text-center">Status</TableHead>
-                              <TableHead className="text-center">Live</TableHead>
-                              <TableHead className="text-right">Views</TableHead>
-                              <TableHead className="text-right">Visitors</TableHead>
-                              <TableHead className="text-right">Sessions</TableHead>
-                              <TableHead className="text-right">Avg Time</TableHead>
-                              <TableHead className="text-right">Actions</TableHead>
+                              <TableHead className="text-center">
+                                Status
+                              </TableHead>
+                              <TableHead className="text-center">
+                                Live
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Views
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Visitors
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Sessions
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Avg Time
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Actions
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -721,18 +869,32 @@ export default function ProjectsPage() {
                               return (
                                 <TableRow key={project.id}>
                                   <TableCell>
-                                    <Link href={`/projects/${project.id}`} className="hover:text-[var(--color-indeks-blue)] transition-colors">
+                                    <Link
+                                      href={`/projects/${project.id}`}
+                                      className="hover:text-[var(--color-indeks-blue)] transition-colors"
+                                    >
                                       <div className="flex items-center gap-3">
-                                        <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
+                                        <div
+                                          className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`}
+                                        />
                                         <div className="min-w-0">
-                                          <p className="text-sm font-medium">{project.title}</p>
-                                          <p className="text-xs text-muted-foreground">{getHostname(project.link)}</p>
+                                          <p className="text-sm font-medium">
+                                            {project.title}
+                                          </p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {getHostname(project.link)}
+                                          </p>
                                         </div>
                                       </div>
                                     </Link>
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    <Badge variant={project.isActive ? "success" : "error"} className="text-xs">
+                                    <Badge
+                                      variant={
+                                        project.isActive ? "success" : "error"
+                                      }
+                                      className="text-xs"
+                                    >
                                       {project.isActive ? "active" : "inactive"}
                                     </Badge>
                                   </TableCell>
@@ -743,23 +905,35 @@ export default function ProjectsPage() {
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-indeks-green)] opacity-75"></span>
                                           <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-indeks-green)]"></span>
                                         </span>
-                                        <span className="text-sm font-medium">{liveCount}</span>
+                                        <span className="text-sm font-medium">
+                                          {liveCount}
+                                        </span>
                                       </div>
                                     ) : (
-                                      <span className="text-muted-foreground">-</span>
+                                      <span className="text-muted-foreground">
+                                        -
+                                      </span>
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right font-semibold">
-                                    {stats ? formatNumber(stats.totalPageViews) : "-"}
+                                    {stats
+                                      ? formatNumber(stats.totalPageViews)
+                                      : "-"}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {stats ? formatNumber(stats.totalUniqueVisitors) : "-"}
+                                    {stats
+                                      ? formatNumber(stats.totalUniqueVisitors)
+                                      : "-"}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {stats ? formatNumber(stats.totalSessions) : "-"}
+                                    {stats
+                                      ? formatNumber(stats.totalSessions)
+                                      : "-"}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {stats ? formatDuration(stats.avgSessionDuration) : "-"}
+                                    {stats
+                                      ? formatDuration(stats.avgSessionDuration)
+                                      : "-"}
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex items-center justify-end gap-2">
@@ -772,7 +946,13 @@ export default function ProjectsPage() {
                                         }}
                                         disabled={syncing === project.id}
                                       >
-                                        <RefreshCw className={cn("h-4 w-4", syncing === project.id && "animate-spin")} />
+                                        <RefreshCw
+                                          className={cn(
+                                            "h-4 w-4",
+                                            syncing === project.id &&
+                                              "animate-spin",
+                                          )}
+                                        />
                                       </Button>
                                       <Button size="sm" variant="ghost">
                                         <MoreVertical className="h-4 w-4" />
@@ -789,16 +969,25 @@ export default function ProjectsPage() {
                       <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                         {filteredProjects.map((project) => {
                           const stats = projectStats[project.id];
-                          const perf = getPerformanceIndicator(stats?.totalPageViews || 0);
+                          const perf = getPerformanceIndicator(
+                            stats?.totalPageViews || 0,
+                          );
                           const PerfIcon = perf.icon;
                           const liveCount = realtimeCounts[project.id] || 0;
                           return (
-                            <Link key={project.id} href={`/projects/${project.id}`}>
+                            <Link
+                              key={project.id}
+                              href={`/projects/${project.id}`}
+                            >
                               <div className="p-4 rounded-lg border hover:bg-muted/50 transition-colors h-full">
                                 <div className="flex items-center justify-between gap-2 mb-3">
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
-                                    <h4 className="font-medium text-sm truncate">{project.title}</h4>
+                                    <div
+                                      className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`}
+                                    />
+                                    <h4 className="font-medium text-sm truncate">
+                                      {project.title}
+                                    </h4>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
                                     {liveCount > 0 && (
@@ -807,11 +996,20 @@ export default function ProjectsPage() {
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-indeks-green)] opacity-75"></span>
                                           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--color-indeks-green)]"></span>
                                         </span>
-                                        <span className="text-xs font-medium">{liveCount}</span>
+                                        <span className="text-xs font-medium">
+                                          {liveCount}
+                                        </span>
                                       </div>
                                     )}
-                                    <PerfIcon className={cn("h-4 w-4", perf.color)} />
-                                    <Badge variant={project.isActive ? "success" : "error"} className="text-xs">
+                                    <PerfIcon
+                                      className={cn("h-4 w-4", perf.color)}
+                                    />
+                                    <Badge
+                                      variant={
+                                        project.isActive ? "success" : "error"
+                                      }
+                                      className="text-xs"
+                                    >
                                       {project.isActive ? "active" : "inactive"}
                                     </Badge>
                                   </div>
@@ -823,23 +1021,45 @@ export default function ProjectsPage() {
                                   <div>
                                     <div className="flex items-center gap-1">
                                       <Eye className="h-3 w-3 text-[var(--color-indeks-green)]" />
-                                      <p className="text-xs text-muted-foreground">Views</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Views
+                                      </p>
                                     </div>
-                                    <p className="text-sm font-semibold">{stats ? formatNumber(stats.totalPageViews) : "-"}</p>
+                                    <p className="text-sm font-semibold">
+                                      {stats
+                                        ? formatNumber(stats.totalPageViews)
+                                        : "-"}
+                                    </p>
                                   </div>
                                   <div>
                                     <div className="flex items-center gap-1">
                                       <Users className="h-3 w-3 text-[var(--color-indeks-blue)]" />
-                                      <p className="text-xs text-muted-foreground">Visitors</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Visitors
+                                      </p>
                                     </div>
-                                    <p className="text-sm font-semibold">{stats ? formatNumber(stats.totalUniqueVisitors) : "-"}</p>
+                                    <p className="text-sm font-semibold">
+                                      {stats
+                                        ? formatNumber(
+                                            stats.totalUniqueVisitors,
+                                          )
+                                        : "-"}
+                                    </p>
                                   </div>
                                   <div>
                                     <div className="flex items-center gap-1">
                                       <Clock className="h-3 w-3 text-[var(--color-indeks-yellow)]" />
-                                      <p className="text-xs text-muted-foreground">Time</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Time
+                                      </p>
                                     </div>
-                                    <p className="text-sm font-semibold">{stats ? formatDuration(stats.avgSessionDuration) : "-"}</p>
+                                    <p className="text-sm font-semibold">
+                                      {stats
+                                        ? formatDuration(
+                                            stats.avgSessionDuration,
+                                          )
+                                        : "-"}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
@@ -854,7 +1074,9 @@ export default function ProjectsPage() {
                   <div className="md:hidden space-y-3">
                     {filteredProjects.map((project) => {
                       const stats = projectStats[project.id];
-                      const perf = getPerformanceIndicator(stats?.totalPageViews || 0);
+                      const perf = getPerformanceIndicator(
+                        stats?.totalPageViews || 0,
+                      );
                       const PerfIcon = perf.icon;
                       const liveCount = realtimeCounts[project.id] || 0;
                       return (
@@ -863,9 +1085,18 @@ export default function ProjectsPage() {
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
-                                  <h4 className="font-medium text-sm truncate">{project.title}</h4>
-                                  <PerfIcon className={cn("h-3 w-3 shrink-0", perf.color)} />
+                                  <div
+                                    className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`}
+                                  />
+                                  <h4 className="font-medium text-sm truncate">
+                                    {project.title}
+                                  </h4>
+                                  <PerfIcon
+                                    className={cn(
+                                      "h-3 w-3 shrink-0",
+                                      perf.color,
+                                    )}
+                                  />
                                 </div>
                                 <p className="text-xs text-muted-foreground truncate mb-2">
                                   {getHostname(project.link)}
@@ -873,11 +1104,21 @@ export default function ProjectsPage() {
                                 <div className="flex items-center gap-3 text-xs">
                                   <div className="flex items-center gap-1">
                                     <Eye className="h-3 w-3 text-[var(--color-indeks-green)]" />
-                                    <span className="font-medium">{stats ? formatNumber(stats.totalPageViews) : "-"}</span>
+                                    <span className="font-medium">
+                                      {stats
+                                        ? formatNumber(stats.totalPageViews)
+                                        : "-"}
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Users className="h-3 w-3 text-[var(--color-indeks-blue)]" />
-                                    <span className="font-medium">{stats ? formatNumber(stats.totalUniqueVisitors) : "-"}</span>
+                                    <span className="font-medium">
+                                      {stats
+                                        ? formatNumber(
+                                            stats.totalUniqueVisitors,
+                                          )
+                                        : "-"}
+                                    </span>
                                   </div>
                                   {liveCount > 0 && (
                                     <div className="flex items-center gap-1">
@@ -885,13 +1126,20 @@ export default function ProjectsPage() {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-indeks-green)] opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--color-indeks-green)]"></span>
                                       </span>
-                                      <span className="font-medium">{liveCount}</span>
+                                      <span className="font-medium">
+                                        {liveCount}
+                                      </span>
                                     </div>
                                   )}
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-1 shrink-0">
-                                <Badge variant={project.isActive ? "success" : "error"} className="text-[10px]">
+                                <Badge
+                                  variant={
+                                    project.isActive ? "success" : "error"
+                                  }
+                                  className="text-[10px]"
+                                >
                                   {project.isActive ? "active" : "inactive"}
                                 </Badge>
                                 <ChevronRight className="h-4 w-4 text-muted-foreground mt-auto" />
@@ -912,22 +1160,35 @@ export default function ProjectsPage() {
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="h-5 w-5 text-[var(--color-indeks-green)]" />
-                  <h3 className="text-base sm:text-lg font-semibold">Top Pages</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    Top Pages
+                  </h3>
                 </div>
                 {topPages.length > 0 ? (
                   <div className="space-y-3">
                     {topPages.map((p, i) => (
-                      <div key={i} className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-accent/30">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-accent/30"
+                      >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-sm text-muted-foreground w-5">{i + 1}.</span>
-                          <span className="text-sm truncate">{p.url || "/"}</span>
+                          <span className="text-sm text-muted-foreground w-5">
+                            {i + 1}.
+                          </span>
+                          <span className="text-sm truncate">
+                            {p.url || "/"}
+                          </span>
                         </div>
-                        <span className="text-sm font-medium shrink-0 ml-2">{formatNumber(p.totalPageViews)} views</span>
+                        <span className="text-sm font-medium shrink-0 ml-2">
+                          {formatNumber(p.totalPageViews)} views
+                        </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No page data available</p>
+                  <p className="text-sm text-muted-foreground">
+                    No page data available
+                  </p>
                 )}
               </Card>
 
@@ -935,7 +1196,9 @@ export default function ProjectsPage() {
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                  <h3 className="text-base sm:text-lg font-semibold">Recently Updated</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    Recently Updated
+                  </h3>
                 </div>
                 {recentlyUpdated.length > 0 ? (
                   <div className="space-y-3">
@@ -943,16 +1206,24 @@ export default function ProjectsPage() {
                       <Link key={project.id} href={`/projects/${project.id}`}>
                         <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <div className={`h-2 w-2 rounded-full ${getStatusColor(project.isActive)}`} />
-                            <span className="text-sm truncate">{project.title}</span>
+                            <div
+                              className={`h-2 w-2 rounded-full ${getStatusColor(project.isActive)}`}
+                            />
+                            <span className="text-sm truncate">
+                              {project.title}
+                            </span>
                           </div>
-                          <span className="text-xs text-muted-foreground shrink-0 ml-2">{formatDate(project.updatedAt)}</span>
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                            {formatDate(project.updatedAt)}
+                          </span>
                         </div>
                       </Link>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No recent updates</p>
+                  <p className="text-sm text-muted-foreground">
+                    No recent updates
+                  </p>
                 )}
               </Card>
             </div>
@@ -961,23 +1232,38 @@ export default function ProjectsPage() {
             <Card className="p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <MousePointerClick className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-                <h3 className="text-base sm:text-lg font-semibold">Top Events</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Top Events
+                </h3>
               </div>
               {topEvents.length > 0 ? (
                 <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-5">
                   {topEvents.map((e, i) => (
-                    <div key={i} className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+                    <div
+                      key={i}
+                      className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50"
+                    >
                       <div className="flex items-start justify-between mb-2">
-                        <Badge variant="outline" className="text-xs">{e.eventType}</Badge>
-                        <span className="text-xs text-muted-foreground">#{i + 1}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {e.eventType}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          #{i + 1}
+                        </span>
                       </div>
-                      <p className="text-xl sm:text-2xl font-bold">{formatNumber(e.totalCount)}</p>
-                      <p className="text-xs text-muted-foreground">total events</p>
+                      <p className="text-xl sm:text-2xl font-bold">
+                        {formatNumber(e.totalCount)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        total events
+                      </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No event data available</p>
+                <p className="text-sm text-muted-foreground">
+                  No event data available
+                </p>
               )}
             </Card>
           </>

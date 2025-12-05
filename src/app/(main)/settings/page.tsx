@@ -51,10 +51,26 @@ export default function SettingsPage() {
   ];
 
   const notificationSettings = [
-    { label: "Email notifications", description: "Receive email updates about your account", enabled: true },
-    { label: "Product updates", description: "News about new features and improvements", enabled: true },
-    { label: "Weekly reports", description: "Weekly analytics summary via email", enabled: false },
-    { label: "Security alerts", description: "Notifications about security events", enabled: true },
+    {
+      label: "Email notifications",
+      description: "Receive email updates about your account",
+      enabled: true,
+    },
+    {
+      label: "Product updates",
+      description: "News about new features and improvements",
+      enabled: true,
+    },
+    {
+      label: "Weekly reports",
+      description: "Weekly analytics summary via email",
+      enabled: false,
+    },
+    {
+      label: "Security alerts",
+      description: "Notifications about security events",
+      enabled: true,
+    },
   ];
 
   const securitySettings = [
@@ -65,9 +81,24 @@ export default function SettingsPage() {
   ];
 
   const teamMembers = [
-    { name: "John Doe", email: "john@example.com", role: "Owner", status: "Active" },
-    { name: "Jane Smith", email: "jane@example.com", role: "Admin", status: "Active" },
-    { name: "Bob Johnson", email: "bob@example.com", role: "Member", status: "Active" },
+    {
+      name: "John Doe",
+      email: "john@example.com",
+      role: "Owner",
+      status: "Active",
+    },
+    {
+      name: "Jane Smith",
+      email: "jane@example.com",
+      role: "Admin",
+      status: "Active",
+    },
+    {
+      name: "Bob Johnson",
+      email: "bob@example.com",
+      role: "Member",
+      status: "Active",
+    },
   ];
 
   return (
@@ -76,7 +107,9 @@ export default function SettingsPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Settings
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
               Manage your account settings and preferences
             </p>
@@ -88,8 +121,12 @@ export default function SettingsPage() {
           <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Team Members</p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">3</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Team Members
+                </p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                  3
+                </h3>
               </div>
               <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
             </div>
@@ -97,8 +134,12 @@ export default function SettingsPage() {
           <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">API Keys</p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">2</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  API Keys
+                </p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                  2
+                </h3>
               </div>
               <Key className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
             </div>
@@ -106,8 +147,12 @@ export default function SettingsPage() {
           <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Sessions</p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">3</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Active Sessions
+                </p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                  3
+                </h3>
               </div>
               <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
             </div>
@@ -115,8 +160,12 @@ export default function SettingsPage() {
           <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">2FA Status</p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">On</h3>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  2FA Status
+                </p>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                  On
+                </h3>
               </div>
               <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-orange)]" />
             </div>
@@ -127,7 +176,9 @@ export default function SettingsPage() {
         <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <User className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-            <h3 className="text-base sm:text-lg font-semibold">Profile Information</h3>
+            <h3 className="text-base sm:text-lg font-semibold">
+              Profile Information
+            </h3>
           </div>
           <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             <div className="space-y-2">
@@ -148,7 +199,9 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 mt-4 sm:mt-6 pt-4 border-t">
-            <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
+            <Button variant="outline" className="w-full sm:w-auto">
+              Cancel
+            </Button>
             <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)] w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
@@ -167,33 +220,49 @@ export default function SettingsPage() {
               {securitySettings.map((setting, index) => {
                 const Icon = setting.icon;
                 return (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50"
+                  >
                     <div className="flex items-center gap-3">
                       <Icon className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-medium">{setting.label}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{setting.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {setting.value}
+                        </p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm"><ChevronRight className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm">
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 );
               })}
             </div>
-            <Button variant="outline" className="w-full mt-4">Change Password</Button>
+            <Button variant="outline" className="w-full mt-4">
+              Change Password
+            </Button>
           </Card>
 
           <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Bell className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-              <h3 className="text-base sm:text-lg font-semibold">Notifications</h3>
+              <h3 className="text-base sm:text-lg font-semibold">
+                Notifications
+              </h3>
             </div>
             <div className="space-y-4">
               {notificationSettings.map((setting, index) => (
-                <div key={index} className="flex items-start justify-between py-3 border-b last:border-0">
+                <div
+                  key={index}
+                  className="flex items-start justify-between py-3 border-b last:border-0"
+                >
                   <div className="flex-1 pr-4">
                     <p className="text-sm font-medium">{setting.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{setting.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {setting.description}
+                    </p>
                   </div>
                   <Switch defaultChecked={setting.enabled} />
                 </div>
@@ -216,16 +285,31 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-3">
             {apiKeys.map((api, index) => (
-              <div key={index} className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50">
+              <div
+                key={index}
+                className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50"
+              >
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <h4 className="font-medium text-sm sm:text-base">{api.name}</h4>
-                      <Badge variant="success" className="text-xs">{api.status}</Badge>
+                      <h4 className="font-medium text-sm sm:text-base">
+                        {api.name}
+                      </h4>
+                      <Badge variant="success" className="text-xs">
+                        {api.status}
+                      </Badge>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
-                      <code className="text-xs bg-muted px-2 sm:px-3 py-1 sm:py-1.5 rounded font-mono truncate max-w-[200px] sm:max-w-none">{api.key}</code>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 shrink-0"><Copy className="h-3 w-3" /></Button>
+                      <code className="text-xs bg-muted px-2 sm:px-3 py-1 sm:py-1.5 rounded font-mono truncate max-w-[200px] sm:max-w-none">
+                        {api.key}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 shrink-0"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground flex-wrap">
                       <span>{api.created}</span>
@@ -234,11 +318,19 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" variant="outline" className="flex-1 sm:flex-none">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 sm:flex-none"
+                    >
                       <RefreshCw className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Rotate</span>
                     </Button>
-                    <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 flex-1 sm:flex-none">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:bg-destructive/10 flex-1 sm:flex-none"
+                    >
                       <Trash2 className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Revoke</span>
                     </Button>
@@ -254,7 +346,9 @@ export default function SettingsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-[var(--color-indeks-orange)]" />
-              <h3 className="text-base sm:text-lg font-semibold">Team Members</h3>
+              <h3 className="text-base sm:text-lg font-semibold">
+                Team Members
+              </h3>
             </div>
             <Button variant="outline" className="w-full sm:w-auto">
               <Users className="h-4 w-4 mr-2" />
@@ -278,21 +372,41 @@ export default function SettingsPage() {
                       <TableRow key={index}>
                         <TableCell>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{member.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                            <p className="text-sm font-medium truncate">
+                              {member.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {member.email}
+                            </p>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">{member.role}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {member.role}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant="success" className="text-xs">{member.status}</Badge>
+                          <Badge variant="success" className="text-xs">
+                            {member.status}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1 sm:gap-2">
-                            <Button size="sm" variant="ghost" className="h-8 px-2 sm:px-3">Edit</Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 px-2 sm:px-3"
+                            >
+                              Edit
+                            </Button>
                             {member.role !== "Owner" && (
-                              <Button size="sm" variant="ghost" className="text-destructive h-8 px-2 sm:px-3">Remove</Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive h-8 px-2 sm:px-3"
+                              >
+                                Remove
+                              </Button>
                             )}
                           </div>
                         </TableCell>
@@ -309,13 +423,17 @@ export default function SettingsPage() {
         <Card className="p-4 sm:p-6 border-destructive/50">
           <div className="flex items-center gap-2 mb-4">
             <Trash2 className="h-5 w-5 text-destructive" />
-            <h3 className="text-base sm:text-lg font-semibold text-destructive">Danger Zone</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-destructive">
+              Danger Zone
+            </h3>
           </div>
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
               <div>
                 <p className="text-sm font-medium">Export Account Data</p>
-                <p className="text-xs text-muted-foreground mt-1">Download all your data in JSON format</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Download all your data in JSON format
+                </p>
               </div>
               <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Download className="h-4 w-4 mr-2" />
@@ -324,10 +442,20 @@ export default function SettingsPage() {
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
               <div>
-                <p className="text-sm font-medium text-destructive">Delete Account</p>
-                <p className="text-xs text-muted-foreground mt-1">Permanently delete your account and all data</p>
+                <p className="text-sm font-medium text-destructive">
+                  Delete Account
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Permanently delete your account and all data
+                </p>
               </div>
-              <Button variant="destructive" size="sm" className="w-full sm:w-auto">Delete</Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </Card>

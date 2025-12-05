@@ -10,8 +10,6 @@ import {
   real,
 } from "drizzle-orm/pg-core";
 
-// ============================= BETTER AUTH Tables ============================= //
-
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -74,25 +72,20 @@ export const verification = pgTable("verification", {
     .notNull(),
 });
 
-// ============================= INDEKS Tables ============================= //
-
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 
-  // Core metadata
   title: text("title").notNull(),
   description: text("description"),
   category: text("category"),
   link: text("link").notNull(),
 
-  // API key info
   publicKey: text("public_key").notNull().unique(),
   keyHash: text("key_hash").notNull(),
 
-  // Additional fields
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -101,9 +94,6 @@ export const projects = pgTable("projects", {
     .notNull(),
 });
 
-// ============================= ANALYTICS Tables ============================= //
-
-// Daily aggregated metrics per project
 export const analyticsDaily = pgTable("analytics_daily", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")
@@ -111,7 +101,6 @@ export const analyticsDaily = pgTable("analytics_daily", {
     .references(() => projects.id, { onDelete: "cascade" }),
   date: date("date").notNull(),
 
-  // Core metrics
   pageViews: integer("page_views").default(0).notNull(),
   uniqueVisitors: integer("unique_visitors").default(0).notNull(),
   sessions: integer("sessions").default(0).notNull(),
@@ -119,12 +108,10 @@ export const analyticsDaily = pgTable("analytics_daily", {
   totalScrolls: integer("total_scrolls").default(0).notNull(),
   totalErrors: integer("total_errors").default(0).notNull(),
 
-  // Engagement metrics
-  avgSessionDuration: real("avg_session_duration").default(0), // in seconds
-  bounceRate: real("bounce_rate").default(0), // percentage
-  avgScrollDepth: real("avg_scroll_depth").default(0), // percentage
+  avgSessionDuration: real("avg_session_duration").default(0),
+  bounceRate: real("bounce_rate").default(0),
+  avgScrollDepth: real("avg_scroll_depth").default(0),
 
-  // Rage/frustration metrics
   rageClicks: integer("rage_clicks").default(0).notNull(),
   deadClicks: integer("dead_clicks").default(0).notNull(),
   errorClicks: integer("error_clicks").default(0).notNull(),
@@ -136,7 +123,6 @@ export const analyticsDaily = pgTable("analytics_daily", {
     .notNull(),
 });
 
-// Top pages per project per day
 export const analyticsTopPages = pgTable("analytics_top_pages", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")
@@ -147,13 +133,12 @@ export const analyticsTopPages = pgTable("analytics_top_pages", {
   url: text("url").notNull(),
   pageViews: integer("page_views").default(0).notNull(),
   uniqueVisitors: integer("unique_visitors").default(0).notNull(),
-  avgTimeOnPage: real("avg_time_on_page").default(0), // in seconds
+  avgTimeOnPage: real("avg_time_on_page").default(0),
   bounceRate: real("bounce_rate").default(0),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Top referrers per project per day
 export const analyticsReferrers = pgTable("analytics_referrers", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")
@@ -169,7 +154,6 @@ export const analyticsReferrers = pgTable("analytics_referrers", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Device/browser breakdown per project per day
 export const analyticsDevices = pgTable("analytics_devices", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")
@@ -177,7 +161,7 @@ export const analyticsDevices = pgTable("analytics_devices", {
     .references(() => projects.id, { onDelete: "cascade" }),
   date: date("date").notNull(),
 
-  deviceType: text("device_type").notNull(), // desktop, mobile, tablet
+  deviceType: text("device_type").notNull(),
   browser: text("browser"),
   os: text("os"),
   visits: integer("visits").default(0).notNull(),
@@ -186,7 +170,6 @@ export const analyticsDevices = pgTable("analytics_devices", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Event breakdown per project per day
 export const analyticsEvents = pgTable("analytics_events", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")
@@ -201,7 +184,6 @@ export const analyticsEvents = pgTable("analytics_events", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Top clicked elements per project per day
 export const analyticsClickedElements = pgTable("analytics_clicked_elements", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")
@@ -219,15 +201,14 @@ export const analyticsClickedElements = pgTable("analytics_clicked_elements", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Sync status tracking
 export const analyticsSyncLog = pgTable("analytics_sync_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")
     .notNull()
     .references(() => projects.id, { onDelete: "cascade" }),
   syncDate: date("sync_date").notNull(),
-  syncType: text("sync_type").notNull(), // 'daily', 'hourly', 'manual'
-  status: text("status").notNull(), // 'success', 'failed', 'in_progress'
+  syncType: text("sync_type").notNull(),
+  status: text("status").notNull(),
   recordsProcessed: integer("records_processed").default(0),
   errorMessage: text("error_message"),
   startedAt: timestamp("started_at").defaultNow().notNull(),

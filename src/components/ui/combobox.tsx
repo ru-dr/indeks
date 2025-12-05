@@ -48,7 +48,6 @@ function ComboboxInput({
   const { multiple } = React.useContext(ComboboxContext);
   const sizeValue = (size ?? "default") as "sm" | "default" | "lg" | number;
 
-  // multiple mode
   if (multiple) {
     return (
       <ComboboxPrimitive.Input
@@ -64,7 +63,7 @@ function ComboboxInput({
       />
     );
   }
-  // single mode
+
   return (
     <div className="relative w-full has-disabled:opacity-64">
       <ComboboxPrimitive.Input

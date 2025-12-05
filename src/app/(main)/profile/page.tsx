@@ -97,7 +97,9 @@ export default function ProfilePage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Profile</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Profile
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">
               Manage your profile information and account settings
             </p>
@@ -128,14 +130,20 @@ export default function ProfilePage() {
             <div className="flex-1 text-center sm:text-left w-full">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold">{user?.name}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">
+                    {user?.name}
+                  </h2>
                   {user?.username && (
                     <p className="text-muted-foreground mt-1">
                       @{user?.username}
                     </p>
                   )}
                 </div>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Profile
                 </Button>
@@ -144,7 +152,9 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate max-w-[200px] sm:max-w-none">{user?.email}</span>
+                  <span className="truncate max-w-[200px] sm:max-w-none">
+                    {user?.email}
+                  </span>
                 </div>
                 {user?.emailVerified ? (
                   <Badge variant="success" className="text-xs">
@@ -183,7 +193,9 @@ export default function ProfilePage() {
                 <User className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-blue)]" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold">Personal Information</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Personal Information
+                </h3>
                 <p className="text-xs text-muted-foreground">
                   Your account details
                 </p>
@@ -251,7 +263,9 @@ export default function ProfilePage() {
                 <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-green)]" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold">Account Security</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Account Security
+                </h3>
                 <p className="text-xs text-muted-foreground">
                   Security and verification status
                 </p>
@@ -329,7 +343,9 @@ export default function ProfilePage() {
 
         {/* Quick Actions */}
         <Card className="p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Actions</h3>
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+            Quick Actions
+          </h3>
           <div className="grid gap-2 sm:gap-3 grid-cols-2 lg:grid-cols-4">
             <Button
               variant="outline"
@@ -337,7 +353,9 @@ export default function ProfilePage() {
               onClick={() => router.push("/settings")}
             >
               <Settings className="h-4 w-4 sm:h-5 sm:w-5 mb-1 sm:mb-2 text-[var(--color-indeks-blue)]" />
-              <span className="font-medium text-xs sm:text-sm">Account Settings</span>
+              <span className="font-medium text-xs sm:text-sm">
+                Account Settings
+              </span>
               <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
                 Manage preferences
               </span>
@@ -372,7 +390,9 @@ export default function ProfilePage() {
               className="h-auto flex-col items-start p-3 sm:p-4 hover:border-primary/50"
             >
               <User className="h-4 w-4 sm:h-5 sm:w-5 mb-1 sm:mb-2 text-[var(--color-indeks-orange)]" />
-              <span className="font-medium text-xs sm:text-sm">Edit Profile</span>
+              <span className="font-medium text-xs sm:text-sm">
+                Edit Profile
+              </span>
               <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
                 Update information
               </span>

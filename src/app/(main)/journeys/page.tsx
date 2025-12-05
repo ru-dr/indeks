@@ -24,8 +24,8 @@ export default function JourneysPage() {
             </EmptyMedia>
             <EmptyTitle>Journeys Coming Soon</EmptyTitle>
             <EmptyDescription>
-              Track and visualize user journeys across your application. 
-              Understand how users navigate through your site and identify 
+              Track and visualize user journeys across your application.
+              Understand how users navigate through your site and identify
               opportunities to improve their experience.
             </EmptyDescription>
           </EmptyHeader>

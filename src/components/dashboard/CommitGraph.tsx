@@ -24,7 +24,6 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
   const [maxCount, setMaxCount] = useState(0);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
-  // Check for mobile on mount and resize
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640);
@@ -35,7 +34,6 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
   }, []);
 
   useEffect(() => {
-    // Wait until we know if it's mobile or not
     if (isMobile === null) return;
 
     const fetchTrafficData = async () => {
@@ -121,7 +119,6 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
     return "bg-[var(--color-indeks-green)]";
   };
 
-  // Show loading while determining mobile state or fetching data
   if (loading || isMobile === null) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -132,9 +129,7 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
 
   const hasData = maxCount > 0;
 
-  // Mobile: Show simplified bar chart view
   if (isMobile) {
-    // Aggregate by week for mobile view
     const weeklyData: { week: string; count: number }[] = [];
     const weeksToShow = 12;
     const today = new Date();
@@ -166,20 +161,18 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
         {/* Mobile: Weekly bar chart */}
         <div className="flex items-end gap-1" style={{ height: "100px" }}>
           {weeklyData.map((week, index) => {
-            const heightPx = week.count > 0 
-              ? Math.max((week.count / maxWeekCount) * 92, 8) 
-              : 4;
+            const heightPx =
+              week.count > 0
+                ? Math.max((week.count / maxWeekCount) * 92, 8)
+                : 4;
             return (
-              <div
-                key={index}
-                className="flex-1 flex flex-col justify-end"
-              >
+              <div key={index} className="flex-1 flex flex-col justify-end">
                 <div
                   className={cn(
                     "w-full rounded-t-sm",
                     week.count > 0
                       ? "bg-[var(--color-indeks-green)]"
-                      : "bg-secondary"
+                      : "bg-secondary",
                   )}
                   style={{ height: `${heightPx}px` }}
                   title={`Week of ${week.week}: ${week.count} events`}
@@ -210,8 +203,6 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
     );
   }
 
-  // Desktop: Full commit graph
-  // Process data into months
   const monthsData: {
     month: string;
     year: number;
@@ -233,8 +224,18 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
   daysByMonth.forEach((monthDays, monthKey) => {
     const [year, month] = monthKey.split("-").map(Number);
     const monthNames = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
 
     const firstDay = new Date(year, month, 1);
@@ -320,7 +321,7 @@ export function CommitGraph({ projectId }: CommitGraphProps) {
                             "h-[12px] w-[12px] rounded transition-all cursor-pointer",
                             day
                               ? `${getActivityColor(day.count)} hover:ring-2 hover:ring-[var(--color-indeks-green)]/50`
-                              : "bg-transparent"
+                              : "bg-transparent",
                           )}
                           title={day ? `${day.date}: ${day.count} events` : ""}
                         />

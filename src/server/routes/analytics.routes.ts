@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { analyticsController } from "@/server/controllers/analytics.controller";
 
 export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
-  // Get dashboard overview for a project
+
   .get(
     "/:projectId/overview",
     async ({ params, query, set }) => {
@@ -35,10 +35,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         startDate: t.Optional(t.String()),
         endDate: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get top pages
   .get(
     "/:projectId/pages",
     async ({ params, query, set }) => {
@@ -66,10 +65,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         endDate: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get referrers
   .get(
     "/:projectId/referrers",
     async ({ params, query, set }) => {
@@ -97,10 +95,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         endDate: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get device breakdown
   .get(
     "/:projectId/devices",
     async ({ params, query, set }) => {
@@ -126,10 +123,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         startDate: t.Optional(t.String()),
         endDate: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get event breakdown
   .get(
     "/:projectId/events",
     async ({ params, query, set }) => {
@@ -157,10 +153,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         endDate: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get clicked elements
   .get(
     "/:projectId/clicks",
     async ({ params, query, set }) => {
@@ -188,10 +183,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         endDate: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Trigger manual sync for a project
   .post(
     "/:projectId/sync",
     async ({ params, body, set }) => {
@@ -220,10 +214,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       body: t.Object({
         date: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get real-time stats from ClickHouse (for live dashboard)
   .get(
     "/:projectId/realtime",
     async ({ params, set }) => {
@@ -241,10 +234,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       params: t.Object({
         projectId: t.String(),
       }),
-    }
+    },
   )
 
-  // Get visitor locations for globe visualization
   .get(
     "/:projectId/locations",
     async ({ params, set }) => {
@@ -262,10 +254,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       params: t.Object({
         projectId: t.String(),
       }),
-    }
+    },
   )
 
-  // Get monthly traffic trend for commit graph
   .get(
     "/:projectId/traffic-trend",
     async ({ params, query, set }) => {
@@ -287,10 +278,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       query: t.Object({
         months: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get aggregated traffic trend across all projects
   .get(
     "/global/traffic-trend",
     async ({ query, set }) => {
@@ -308,10 +298,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       query: t.Object({
         months: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
-  // Get all visitor locations across all projects (for global view)
   .get("/global/locations", async ({ set }) => {
     try {
       return await analyticsController.getGlobalLocations();

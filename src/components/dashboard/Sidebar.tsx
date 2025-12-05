@@ -15,11 +15,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { GlobalSearch } from "@/components/dashboard/GlobalSearch";
 
 const navigationItems = [
   {
@@ -57,11 +56,6 @@ const navigationItems = [
     href: "/journeys",
     icon: Route,
   },
-  {
-    name: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
 ];
 
 interface SidebarProps {
@@ -70,7 +64,6 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
-  const [userName, setUserName] = useState<string>("");
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -78,33 +71,16 @@ export function Sidebar({ onClose }: SidebarProps) {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const { data } = await authClient.getSession();
-      if (data?.user?.name) {
-        setUserName(data.user.name);
-      }
-    };
-    loadUser();
-  }, []);
-
   const logoSrc =
     mounted && resolvedTheme === "light"
       ? "/assets/images/svgs/INDEKS-light.svg"
       : "/assets/images/svgs/INDEKS-dark.svg";
 
-  const userInitials = userName
-    ? userName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "U";
-
   const handleLinkClick = () => {
     if (onClose) onClose();
   };
+
+  const isSettingsActive = pathname === "/settings";
 
   return (
     <aside className="flex h-full w-full flex-col border-r bg-background">
@@ -113,10 +89,10 @@ export function Sidebar({ onClose }: SidebarProps) {
         <Image
           src={logoSrc}
           alt="INDEKS Logo"
-          width={100}
-          height={24}
+          width={125}
+          height={30}
           priority
-          className="w-20 sm:w-[100px] h-auto"
+          className="w-20 sm:w-[125px] h-auto"
         />
         {/* Close button for mobile */}
         {onClose && (
@@ -133,7 +109,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 sm:p-4">
+      <nav className="flex-1 overflow-y-auto p-3 sm:p-4 lg:pt-3">
         <div className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -148,7 +124,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                 )}
               >
                 <Icon className="h-5 w-5 shrink-0" />
@@ -159,20 +135,20 @@ export function Sidebar({ onClose }: SidebarProps) {
         </div>
       </nav>
 
-      {/* User Section */}
+      {/* Settings at Bottom */}
       <div className="shrink-0 border-t p-3 sm:p-4">
         <Link
-          href="/profile"
+          href="/settings"
           onClick={handleLinkClick}
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+            isSettingsActive
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          )}
         >
-          <Avatar className="h-8 w-8 shrink-0">
-            <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{userName || "User"}</p>
-            <p className="text-xs text-muted-foreground">View profile</p>
-          </div>
+          <Settings className="h-5 w-5 shrink-0" />
+          <span className="truncate">Settings</span>
         </Link>
       </div>
     </aside>

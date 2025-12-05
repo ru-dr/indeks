@@ -75,10 +75,13 @@ interface RealtimeData {
 interface UseAnalyticsOptions {
   startDate?: string;
   endDate?: string;
-  refreshInterval?: number; // in milliseconds
+  refreshInterval?: number;
 }
 
-export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {}) {
+export function useAnalytics(
+  projectId: string,
+  options: UseAnalyticsOptions = {},
+) {
   const { startDate, endDate, refreshInterval } = options;
 
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
@@ -101,7 +104,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchOverview = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/v1/analytics/${projectId}/overview${buildQuery()}`
+        `/api/v1/analytics/${projectId}/overview${buildQuery()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch overview");
       const data = await response.json();
@@ -115,7 +118,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchTopPages = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/v1/analytics/${projectId}/pages${buildQuery()}`
+        `/api/v1/analytics/${projectId}/pages${buildQuery()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch top pages");
       const data = await response.json();
@@ -128,7 +131,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchReferrers = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/v1/analytics/${projectId}/referrers${buildQuery()}`
+        `/api/v1/analytics/${projectId}/referrers${buildQuery()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch referrers");
       const data = await response.json();
@@ -141,7 +144,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchDevices = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/v1/analytics/${projectId}/devices${buildQuery()}`
+        `/api/v1/analytics/${projectId}/devices${buildQuery()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch devices");
       const data = await response.json();
@@ -154,7 +157,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchEvents = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/v1/analytics/${projectId}/events${buildQuery()}`
+        `/api/v1/analytics/${projectId}/events${buildQuery()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch events");
       const data = await response.json();
@@ -167,7 +170,7 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   const fetchClicks = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/v1/analytics/${projectId}/clicks${buildQuery()}`
+        `/api/v1/analytics/${projectId}/clicks${buildQuery()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch clicks");
       const data = await response.json();
@@ -228,17 +231,15 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
         throw err;
       }
     },
-    [projectId]
+    [projectId],
   );
 
-  // Initial fetch
   useEffect(() => {
     if (projectId) {
       fetchAll();
     }
   }, [projectId, fetchAll]);
 
-  // Refresh interval for realtime data
   useEffect(() => {
     if (refreshInterval && projectId) {
       const interval = setInterval(() => {
@@ -250,7 +251,6 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
   }, [refreshInterval, projectId, fetchRealtime]);
 
   return {
-    // Data
     overview,
     topPages,
     referrers,
@@ -259,18 +259,15 @@ export function useAnalytics(projectId: string, options: UseAnalyticsOptions = {
     clicks,
     realtime,
 
-    // State
     loading,
     error,
 
-    // Actions
     refresh: fetchAll,
     refreshRealtime: fetchRealtime,
     triggerSync,
   };
 }
 
-// Helper hook for date range selection
 export function useDateRange(defaultDays: number = 30) {
   const [dateRange, setDateRange] = useState(() => {
     const end = new Date();

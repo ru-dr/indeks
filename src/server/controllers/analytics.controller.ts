@@ -21,7 +21,6 @@ interface PaginatedQuery extends DateRangeQuery {
 }
 
 export const analyticsController = {
-  // Verify project exists
   async verifyProject(projectId: string) {
     const [project] = await db
       .select({ id: projects.id, userId: projects.userId })
@@ -32,17 +31,14 @@ export const analyticsController = {
     return project;
   },
 
-  // Get dashboard overview for a project
   async getOverview(projectId: string, query: DateRangeQuery) {
     const { startDate, endDate } = query;
 
-    // Verify project exists
     const project = await this.verifyProject(projectId);
     if (!project) {
       return { error: "Project not found", status: 404 };
     }
 
-    // Get aggregated daily metrics
     const dailyMetrics = await db
       .select({
         totalPageViews: sql<number>`SUM(${analyticsDaily.pageViews})`,
@@ -60,11 +56,10 @@ export const analyticsController = {
         and(
           eq(analyticsDaily.projectId, projectId),
           startDate ? gte(analyticsDaily.date, startDate) : undefined,
-          endDate ? lte(analyticsDaily.date, endDate) : undefined
-        )
+          endDate ? lte(analyticsDaily.date, endDate) : undefined,
+        ),
       );
 
-    // Get daily breakdown for charts
     const dailyBreakdown = await db
       .select({
         date: analyticsDaily.date,
@@ -78,8 +73,8 @@ export const analyticsController = {
         and(
           eq(analyticsDaily.projectId, projectId),
           startDate ? gte(analyticsDaily.date, startDate) : undefined,
-          endDate ? lte(analyticsDaily.date, endDate) : undefined
-        )
+          endDate ? lte(analyticsDaily.date, endDate) : undefined,
+        ),
       )
       .orderBy(analyticsDaily.date);
 
@@ -99,7 +94,6 @@ export const analyticsController = {
     };
   },
 
-  // Get top pages
   async getTopPages(projectId: string, query: PaginatedQuery) {
     const { startDate, endDate, limit = "20" } = query;
 
@@ -115,8 +109,8 @@ export const analyticsController = {
         and(
           eq(analyticsTopPages.projectId, projectId),
           startDate ? gte(analyticsTopPages.date, startDate) : undefined,
-          endDate ? lte(analyticsTopPages.date, endDate) : undefined
-        )
+          endDate ? lte(analyticsTopPages.date, endDate) : undefined,
+        ),
       )
       .groupBy(analyticsTopPages.url)
       .orderBy(desc(sql`SUM(${analyticsTopPages.pageViews})`))
@@ -125,7 +119,6 @@ export const analyticsController = {
     return { pages };
   },
 
-  // Get referrers
   async getReferrers(projectId: string, query: PaginatedQuery) {
     const { startDate, endDate, limit = "20" } = query;
 
@@ -141,8 +134,8 @@ export const analyticsController = {
         and(
           eq(analyticsReferrers.projectId, projectId),
           startDate ? gte(analyticsReferrers.date, startDate) : undefined,
-          endDate ? lte(analyticsReferrers.date, endDate) : undefined
-        )
+          endDate ? lte(analyticsReferrers.date, endDate) : undefined,
+        ),
       )
       .groupBy(analyticsReferrers.referrer, analyticsReferrers.referrerDomain)
       .orderBy(desc(sql`SUM(${analyticsReferrers.visits})`))
@@ -151,7 +144,6 @@ export const analyticsController = {
     return { referrers };
   },
 
-  // Get device breakdown
   async getDevices(projectId: string, query: DateRangeQuery) {
     const { startDate, endDate } = query;
 
@@ -168,17 +160,16 @@ export const analyticsController = {
         and(
           eq(analyticsDevices.projectId, projectId),
           startDate ? gte(analyticsDevices.date, startDate) : undefined,
-          endDate ? lte(analyticsDevices.date, endDate) : undefined
-        )
+          endDate ? lte(analyticsDevices.date, endDate) : undefined,
+        ),
       )
       .groupBy(
         analyticsDevices.deviceType,
         analyticsDevices.browser,
-        analyticsDevices.os
+        analyticsDevices.os,
       )
       .orderBy(desc(sql`SUM(${analyticsDevices.visits})`));
 
-    // Also get device type breakdown
     const deviceTypeBreakdown = await db
       .select({
         deviceType: analyticsDevices.deviceType,
@@ -189,15 +180,14 @@ export const analyticsController = {
         and(
           eq(analyticsDevices.projectId, projectId),
           startDate ? gte(analyticsDevices.date, startDate) : undefined,
-          endDate ? lte(analyticsDevices.date, endDate) : undefined
-        )
+          endDate ? lte(analyticsDevices.date, endDate) : undefined,
+        ),
       )
       .groupBy(analyticsDevices.deviceType);
 
     return { devices, deviceTypeBreakdown };
   },
 
-  // Get events breakdown
   async getEvents(projectId: string, query: PaginatedQuery) {
     const { startDate, endDate, limit = "50" } = query;
 
@@ -212,8 +202,8 @@ export const analyticsController = {
         and(
           eq(analyticsEvents.projectId, projectId),
           startDate ? gte(analyticsEvents.date, startDate) : undefined,
-          endDate ? lte(analyticsEvents.date, endDate) : undefined
-        )
+          endDate ? lte(analyticsEvents.date, endDate) : undefined,
+        ),
       )
       .groupBy(analyticsEvents.eventType)
       .orderBy(desc(sql`SUM(${analyticsEvents.count})`))
@@ -222,7 +212,6 @@ export const analyticsController = {
     return { events };
   },
 
-  // Get clicked elements
   async getClickedElements(projectId: string, query: PaginatedQuery) {
     const { startDate, endDate, limit = "50" } = query;
 
@@ -239,17 +228,15 @@ export const analyticsController = {
       .where(
         and(
           eq(analyticsClickedElements.projectId, projectId),
-          startDate
-            ? gte(analyticsClickedElements.date, startDate)
-            : undefined,
-          endDate ? lte(analyticsClickedElements.date, endDate) : undefined
-        )
+          startDate ? gte(analyticsClickedElements.date, startDate) : undefined,
+          endDate ? lte(analyticsClickedElements.date, endDate) : undefined,
+        ),
       )
       .groupBy(
         analyticsClickedElements.elementSelector,
         analyticsClickedElements.elementText,
         analyticsClickedElements.elementTag,
-        analyticsClickedElements.pageUrl
+        analyticsClickedElements.pageUrl,
       )
       .orderBy(desc(sql`SUM(${analyticsClickedElements.clickCount})`))
       .limit(parseInt(limit));
@@ -257,18 +244,14 @@ export const analyticsController = {
     return { clicks };
   },
 
-  // Trigger manual sync for a project
   async triggerSync(projectId: string, date?: string) {
-    // Verify project exists
     const project = await this.verifyProject(projectId);
     if (!project) {
       return { error: "Project not found", status: 404 };
     }
 
-    // Use today's date if not specified
     const syncDate = date || new Date().toISOString().split("T")[0];
 
-    // Start sync in background
     analyticsSyncService.syncProjectData(projectId, syncDate).catch((err) => {
       console.error("Background sync failed:", err);
     });
@@ -279,11 +262,9 @@ export const analyticsController = {
     };
   },
 
-  // Get real-time stats from ClickHouse (for live dashboard)
   async getRealtimeStats(projectId: string) {
     const { clickhouse } = await import("@/db/clickhouse");
 
-    // Get last 30 minutes of data
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000)
       .toISOString()
       .replace("T", " ")
@@ -307,14 +288,15 @@ export const analyticsController = {
       format: "JSONEachRow",
     });
 
-    const [realtime] = await realtimeResult.json<{
-      total_events: number;
-      page_views: number;
-      active_users: number;
-      active_sessions: number;
-    }[]>();
+    const [realtime] = await realtimeResult.json<
+      {
+        total_events: number;
+        page_views: number;
+        active_users: number;
+        active_sessions: number;
+      }[]
+    >();
 
-    // Get recent events
     const recentEventsResult = await clickhouse.query({
       query: `
         SELECT 
@@ -339,18 +321,19 @@ export const analyticsController = {
       format: "JSONEachRow",
     });
 
-    const recentEvents = await recentEventsResult.json<{
-      event_type: string;
-      url: string | null;
-      timestamp: string;
-      country: string | null;
-      city: string | null;
-      user_agent: string | null;
-      referrer: string | null;
-      session_id: string | null;
-    }[]>();
+    const recentEvents = await recentEventsResult.json<
+      {
+        event_type: string;
+        url: string | null;
+        timestamp: string;
+        country: string | null;
+        city: string | null;
+        user_agent: string | null;
+        referrer: string | null;
+        session_id: string | null;
+      }[]
+    >();
 
-    // Get device breakdown from realtime data by parsing user_agent
     const devicesResult = await clickhouse.query({
       query: `
         SELECT 
@@ -395,7 +378,6 @@ export const analyticsController = {
     };
   },
 
-  // Get visitor locations for globe visualization
   async getLocations(projectId: string) {
     const { clickhouse } = await import("@/db/clickhouse");
 
@@ -438,7 +420,6 @@ export const analyticsController = {
       visitor_count: number;
     }>();
 
-    // Also get country breakdown
     const countriesResult = await clickhouse.query({
       query: `
         SELECT 
@@ -473,7 +454,6 @@ export const analyticsController = {
     };
   },
 
-  // Get monthly traffic trend for commit graph
   async getTrafficTrend(projectId: string, months: string = "8") {
     const monthCount = parseInt(months);
 
@@ -492,8 +472,8 @@ export const analyticsController = {
       .where(
         and(
           eq(analyticsDaily.projectId, projectId),
-          gte(analyticsDaily.date, startDateStr)
-        )
+          gte(analyticsDaily.date, startDateStr),
+        ),
       )
       .orderBy(analyticsDaily.date);
 
@@ -505,7 +485,6 @@ export const analyticsController = {
     };
   },
 
-  // Get aggregated traffic trend across all projects
   async getGlobalTrafficTrend(months: string = "8") {
     const monthCount = parseInt(months);
 
@@ -531,7 +510,6 @@ export const analyticsController = {
     };
   },
 
-  // Get all visitor locations across all projects (for global view)
   async getGlobalLocations() {
     const { clickhouse } = await import("@/db/clickhouse");
 

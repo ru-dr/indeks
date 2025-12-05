@@ -58,8 +58,12 @@ interface AggregatedStats {
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectStats, setProjectStats] = useState<Record<string, ProjectStats>>({});
-  const [recentEvents, setRecentEvents] = useState<{ event: RecentEvent; projectTitle: string }[]>([]);
+  const [projectStats, setProjectStats] = useState<
+    Record<string, ProjectStats>
+  >({});
+  const [recentEvents, setRecentEvents] = useState<
+    { event: RecentEvent; projectTitle: string }[]
+  >([]);
   const [aggregatedStats, setAggregatedStats] = useState<AggregatedStats>({
     totalViews: 0,
     totalVisitors: 0,
@@ -68,7 +72,6 @@ export default function Home() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Fetch projects
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -87,7 +90,6 @@ export default function Home() {
     fetchProjects();
   }, []);
 
-  // Fetch stats for all projects
   const fetchAllStats = useCallback(async () => {
     if (projects.length === 0) return;
 
@@ -105,8 +107,9 @@ export default function Home() {
     await Promise.all(
       projects.map(async (project) => {
         try {
-          // Fetch overview
-          const overviewRes = await fetch(`/api/v1/analytics/${project.id}/overview${query}`);
+          const overviewRes = await fetch(
+            `/api/v1/analytics/${project.id}/overview${query}`,
+          );
           if (overviewRes.ok) {
             const data = await overviewRes.json();
             const stats = {
@@ -121,18 +124,21 @@ export default function Home() {
             totalEvents += stats.totalClicks;
           }
 
-          // Fetch realtime events
-          const realtimeRes = await fetch(`/api/v1/analytics/${project.id}/realtime`);
+          const realtimeRes = await fetch(
+            `/api/v1/analytics/${project.id}/realtime`,
+          );
           if (realtimeRes.ok) {
             const data = await realtimeRes.json();
-            (data.recentEvents || []).slice(0, 3).forEach((event: RecentEvent) => {
-              allRecentEvents.push({ event, projectTitle: project.title });
-            });
+            (data.recentEvents || [])
+              .slice(0, 3)
+              .forEach((event: RecentEvent) => {
+                allRecentEvents.push({ event, projectTitle: project.title });
+              });
           }
         } catch (err) {
           console.error(`Error fetching stats for ${project.id}:`, err);
         }
-      })
+      }),
     );
 
     setProjectStats(statsMap);
@@ -143,9 +149,10 @@ export default function Home() {
       activeProjects: projects.filter((p) => p.isActive).length,
     });
 
-    // Sort recent events by timestamp and take top 6
     allRecentEvents.sort(
-      (a, b) => new Date(b.event.timestamp).getTime() - new Date(a.event.timestamp).getTime()
+      (a, b) =>
+        new Date(b.event.timestamp).getTime() -
+        new Date(a.event.timestamp).getTime(),
     );
     setRecentEvents(allRecentEvents.slice(0, 6));
   }, [projects]);
@@ -154,31 +161,37 @@ export default function Home() {
     fetchAllStats();
   }, [fetchAllStats]);
 
-  // Poll for realtime updates
   useEffect(() => {
     if (projects.length === 0) return;
 
     const pollRealtime = async () => {
-      const allRecentEvents: { event: RecentEvent; projectTitle: string }[] = [];
+      const allRecentEvents: { event: RecentEvent; projectTitle: string }[] =
+        [];
 
       await Promise.all(
         projects.slice(0, 5).map(async (project) => {
           try {
-            const realtimeRes = await fetch(`/api/v1/analytics/${project.id}/realtime`);
+            const realtimeRes = await fetch(
+              `/api/v1/analytics/${project.id}/realtime`,
+            );
             if (realtimeRes.ok) {
               const data = await realtimeRes.json();
-              (data.recentEvents || []).slice(0, 3).forEach((event: RecentEvent) => {
-                allRecentEvents.push({ event, projectTitle: project.title });
-              });
+              (data.recentEvents || [])
+                .slice(0, 3)
+                .forEach((event: RecentEvent) => {
+                  allRecentEvents.push({ event, projectTitle: project.title });
+                });
             }
           } catch (err) {
             console.error(`Error polling realtime for ${project.id}:`, err);
           }
-        })
+        }),
       );
 
       allRecentEvents.sort(
-        (a, b) => new Date(b.event.timestamp).getTime() - new Date(a.event.timestamp).getTime()
+        (a, b) =>
+          new Date(b.event.timestamp).getTime() -
+          new Date(a.event.timestamp).getTime(),
       );
       setRecentEvents(allRecentEvents.slice(0, 6));
     };
@@ -211,10 +224,11 @@ export default function Home() {
     return isActive ? "bg-[var(--color-indeks-green)]" : "bg-muted-foreground";
   };
 
-  // Sort projects by views
   const sortedProjects = [...projects]
     .map((p) => ({ ...p, stats: projectStats[p.id] }))
-    .sort((a, b) => (b.stats?.totalPageViews || 0) - (a.stats?.totalPageViews || 0));
+    .sort(
+      (a, b) => (b.stats?.totalPageViews || 0) - (a.stats?.totalPageViews || 0),
+    );
 
   if (loading) {
     return (
@@ -232,8 +246,12 @@ export default function Home() {
         {/* General Overview Section */}
         <div>
           <div className="mb-4 sm:mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">General Overview</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Analytics across all your projects</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              General Overview
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Analytics across all your projects
+            </p>
           </div>
 
           {/* Global Stats Grid */}
@@ -278,9 +296,13 @@ export default function Home() {
             <Card className="lg:col-span-4 p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold">Overall Traffic Trend</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    Overall Traffic Trend
+                  </h3>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    <span className="hidden sm:inline">Activity over the last 8 months</span>
+                    <span className="hidden sm:inline">
+                      Activity over the last 8 months
+                    </span>
                     <span className="sm:hidden">Weekly activity</span>
                   </p>
                 </div>
@@ -294,14 +316,19 @@ export default function Home() {
             {/* Top Projects Card */}
             <Card className="lg:col-span-3 p-4 sm:p-6">
               <div className="mb-4">
-                <h3 className="text-base sm:text-lg font-semibold">Top Projects</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">By total views (30 days)</p>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Top Projects
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  By total views (30 days)
+                </p>
               </div>
               {sortedProjects.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
                   {sortedProjects.slice(0, 5).map((project) => {
                     const views = project.stats?.totalPageViews || 0;
-                    const maxViews = sortedProjects[0]?.stats?.totalPageViews || 1;
+                    const maxViews =
+                      sortedProjects[0]?.stats?.totalPageViews || 1;
                     const percentage = Math.round((views / maxViews) * 100);
                     return (
                       <div key={project.id} className="space-y-1.5">
@@ -310,7 +337,9 @@ export default function Home() {
                             {project.title}
                           </p>
                           <div className="text-right shrink-0">
-                            <span className="text-sm font-medium">{formatNumber(views)}</span>
+                            <span className="text-sm font-medium">
+                              {formatNumber(views)}
+                            </span>
                             <span className="text-xs text-muted-foreground ml-1 hidden sm:inline">
                               ({percentage}%)
                             </span>
@@ -329,9 +358,13 @@ export default function Home() {
               ) : (
                 <Empty>
                   <EmptyHeader>
-                    <EmptyMedia variant="icon"><FolderKanban /></EmptyMedia>
+                    <EmptyMedia variant="icon">
+                      <FolderKanban />
+                    </EmptyMedia>
                     <EmptyTitle>No projects</EmptyTitle>
-                    <EmptyDescription>Create a project to see stats.</EmptyDescription>
+                    <EmptyDescription>
+                      Create a project to see stats.
+                    </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
               )}
@@ -343,8 +376,12 @@ export default function Home() {
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Top Projects</h2>
-              <p className="text-sm text-muted-foreground">Your most active projects</p>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                Top Projects
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Your most active projects
+              </p>
             </div>
             <Link href="/projects">
               <Button variant="outline" size="sm" className="w-full sm:w-auto">
@@ -365,8 +402,12 @@ export default function Home() {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <div className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`} />
-                            <h3 className="text-sm sm:text-base font-semibold truncate">{project.title}</h3>
+                            <div
+                              className={`h-2 w-2 rounded-full shrink-0 ${getStatusColor(project.isActive)}`}
+                            />
+                            <h3 className="text-sm sm:text-base font-semibold truncate">
+                              {project.title}
+                            </h3>
                             <Badge
                               variant={project.isActive ? "success" : "error"}
                               className="text-xs shrink-0"
@@ -380,7 +421,7 @@ export default function Home() {
                                 return new URL(
                                   project.link.startsWith("http")
                                     ? project.link
-                                    : `https://${project.link}`
+                                    : `https://${project.link}`,
                                 ).hostname;
                               } catch {
                                 return project.link;
@@ -388,7 +429,11 @@ export default function Home() {
                             })()}
                           </p>
                         </div>
-                        <Button variant="ghost" size="icon" className="-mt-1 -mr-1 shrink-0 h-8 w-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="-mt-1 -mr-1 shrink-0 h-8 w-8"
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </div>
@@ -397,8 +442,13 @@ export default function Home() {
                       <div className="grid grid-cols-2 gap-2 mb-2">
                         <div className="p-2 rounded-lg bg-secondary/50">
                           <div className="flex items-center gap-1.5">
-                            <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "var(--color-indeks-green)" }} />
-                            <p className="text-xs text-muted-foreground">Views</p>
+                            <Eye
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                              style={{ color: "var(--color-indeks-green)" }}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Views
+                            </p>
                           </div>
                           <p className="text-base sm:text-lg font-bold">
                             {stats ? formatNumber(stats.totalPageViews) : "-"}
@@ -406,11 +456,18 @@ export default function Home() {
                         </div>
                         <div className="p-2 rounded-lg bg-secondary/50">
                           <div className="flex items-center gap-1.5">
-                            <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "var(--color-indeks-blue)" }} />
-                            <p className="text-xs text-muted-foreground">Visitors</p>
+                            <Users
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                              style={{ color: "var(--color-indeks-blue)" }}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Visitors
+                            </p>
                           </div>
                           <p className="text-base sm:text-lg font-bold">
-                            {stats ? formatNumber(stats.totalUniqueVisitors) : "-"}
+                            {stats
+                              ? formatNumber(stats.totalUniqueVisitors)
+                              : "-"}
                           </p>
                         </div>
                       </div>
@@ -421,14 +478,18 @@ export default function Home() {
                           className="h-3 w-3 mr-1"
                           style={{ color: "var(--color-indeks-yellow)" }}
                         />
-                        <span>{stats ? formatNumber(stats.totalClicks) : "0"} clicks</span>
+                        <span>
+                          {stats ? formatNumber(stats.totalClicks) : "0"} clicks
+                        </span>
                       </div>
 
                       {/* Last Active */}
                       <div className="flex items-center justify-between pt-2 border-t">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Activity className="h-3 w-3" />
-                          <span className="truncate">Created {formatTimeAgo(project.createdAt)}</span>
+                          <span className="truncate">
+                            Created {formatTimeAgo(project.createdAt)}
+                          </span>
                         </div>
                         <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
                       </div>
@@ -441,7 +502,9 @@ export default function Home() {
             <Card className="p-8 sm:p-12">
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><FolderKanban /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <FolderKanban />
+                  </EmptyMedia>
                   <EmptyTitle>No projects yet</EmptyTitle>
                   <EmptyDescription>
                     Create your first project to start tracking analytics.
@@ -455,8 +518,12 @@ export default function Home() {
         {/* Recent Activity Section */}
         <div>
           <div className="mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Recent Activity</h2>
-            <p className="text-sm text-muted-foreground">Latest events across all projects</p>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Recent Activity
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Latest events across all projects
+            </p>
           </div>
 
           <Card className="p-4 sm:p-6">
@@ -470,7 +537,9 @@ export default function Home() {
                     <div className="flex items-start sm:items-center gap-3 min-w-0">
                       <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0 mt-1.5 sm:mt-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium">{item.event.event_type}</p>
+                        <p className="text-sm font-medium">
+                          {item.event.event_type}
+                        </p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-xs text-muted-foreground truncate max-w-[180px] sm:max-w-[300px]">
                             {item.event.url || "—"}
@@ -482,7 +551,10 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 ml-5 sm:ml-0">
-                      <Calendar className="h-3 w-3" style={{ color: "var(--color-indeks-yellow)" }} />
+                      <Calendar
+                        className="h-3 w-3"
+                        style={{ color: "var(--color-indeks-yellow)" }}
+                      />
                       <span>{formatTimeAgo(item.event.timestamp)}</span>
                     </div>
                   </div>
@@ -491,7 +563,9 @@ export default function Home() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><Activity /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <Activity />
+                  </EmptyMedia>
                   <EmptyTitle>No recent activity</EmptyTitle>
                   <EmptyDescription>
                     Events will appear here once your projects start tracking.

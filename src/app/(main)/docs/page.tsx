@@ -24,9 +24,9 @@ export default function DocumentationPage() {
             </EmptyMedia>
             <EmptyTitle>Documentation Coming Soon</EmptyTitle>
             <EmptyDescription>
-              Comprehensive guides, API references, and tutorials to help you 
-              get the most out of INDEKS. Learn how to integrate analytics, 
-              set up tracking, and analyze your data.
+              Comprehensive guides, API references, and tutorials to help you
+              get the most out of INDEKS. Learn how to integrate analytics, set
+              up tracking, and analyze your data.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

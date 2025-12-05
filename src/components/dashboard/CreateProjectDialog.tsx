@@ -79,12 +79,14 @@ export function CreateProjectDialog({
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Create New Project</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
+              Create New Project
+            </DialogTitle>
             <DialogDescription className="text-sm">
               Add a new project to start tracking analytics
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 sm:gap-4 py-4">
+          <div className="grid gap-3 sm:gap-4 py-4 px-6">
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                 {error}
@@ -153,7 +155,11 @@ export function CreateProjectDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto"
+            >
               {loading ? "Creating..." : "Create Project"}
             </Button>
           </DialogFooter>

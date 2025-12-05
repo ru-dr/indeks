@@ -1,6 +1,5 @@
 import { createClient } from "@clickhouse/client";
 
-// ClickHouse client configuration for ClickHouse Cloud
 export const clickhouse = createClient({
   url:
     process.env.CLICKHOUSE_URL ||
@@ -11,7 +10,6 @@ export const clickhouse = createClient({
   request_timeout: 30000,
 });
 
-// Test connection
 export const testClickHouseConnection = async () => {
   try {
     const result = await clickhouse.query({
@@ -28,10 +26,8 @@ export const testClickHouseConnection = async () => {
   }
 };
 
-// Initialize ClickHouse tables
 export const initializeClickHouseTables = async () => {
   try {
-    // Create events table with proper nullable columns including geo data
     await clickhouse.command({
       query: `
         CREATE TABLE IF NOT EXISTS events (

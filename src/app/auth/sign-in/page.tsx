@@ -125,7 +125,7 @@ function SignInForm() {
           description: "Sign in successful. Redirecting...",
           type: "success",
         });
-        
+
         const redirectPath = searchParams.get("redirect") || "/";
         router.push(redirectPath);
       }
@@ -272,7 +272,6 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        // show a spinner in the center of the screen
         <div className="min-h-screen flex items-center justify-center">
           <Spinner className="h-8 w-8 text-indeks-blue" />
         </div>

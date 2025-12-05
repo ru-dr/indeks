@@ -3,11 +3,10 @@ import { projectsController } from "@/server/controllers/projects.controller";
 import { auth } from "@/lib/auth";
 
 export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
-  // Create a new project
+
   .post(
     "/",
     async ({ body, request }) => {
-      // Get session from request
       const session = await auth.api.getSession({ headers: request.headers });
 
       if (!session?.user) {
@@ -44,7 +43,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       }),
     },
   )
-  // Get all projects for the logged-in user
+
   .get("/", async ({ request }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
@@ -73,7 +72,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
   })
 
-  // Get a single project
   .get("/:id", async ({ params, request }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
@@ -110,7 +108,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
   })
 
-  // Update a project
   .patch(
     "/:id",
     async ({ params, body, request }) => {
@@ -160,7 +157,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     },
   )
 
-  // Delete a project
   .delete("/:id", async ({ params, request }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
@@ -197,7 +193,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
   })
 
-  // Regenerate API key
   .post("/:id/regenerate-key", async ({ params, request }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 

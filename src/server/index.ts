@@ -34,7 +34,7 @@ export const app = new Elysia({ prefix: "/api" })
       exposeHeaders: ["*"],
       credentials: true,
       maxAge: 86400,
-    })
+    }),
   )
   .use(openapi())
   .get("/health", () => ({
@@ -47,7 +47,7 @@ export const app = new Elysia({ prefix: "/api" })
     message: "INDEKS API v1 is running",
     timestamp: Date.now(),
   }))
-  // Better Auth routes - keep at /api/auth for compatibility with better-auth client
+
   .all("/auth/*", ({ request }) => auth.handler(request))
   .use(projectsRoutes)
   .use(collectRoutes)

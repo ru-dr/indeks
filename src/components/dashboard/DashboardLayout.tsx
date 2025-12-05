@@ -14,7 +14,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
-  // Close sidebar on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSidebarOpen(false);
@@ -23,12 +22,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  // Close sidebar on route change (for mobile)
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
 
-  // Prevent body scroll when sidebar is open on mobile
   useEffect(() => {
     if (sidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -64,7 +61,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 lg:hidden",
           "transform transition-transform duration-300 ease-in-out",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <Sidebar onClose={() => setSidebarOpen(false)} />
@@ -74,8 +71,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div
         className={cn(
           "min-h-screen lg:pl-64",
-          // Prevent interaction when sidebar is open on mobile
-          sidebarOpen && "lg:pointer-events-auto pointer-events-none"
+
+          sidebarOpen && "lg:pointer-events-auto pointer-events-none",
         )}
       >
         <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />

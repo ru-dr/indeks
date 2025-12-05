@@ -158,7 +158,9 @@ export default function ProjectDetailPage() {
   const [topPages, setTopPages] = useState<TopPage[]>([]);
   const [referrers, setReferrers] = useState<Referrer[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
-  const [deviceTypeBreakdown, setDeviceTypeBreakdown] = useState<DeviceTypeBreakdown[]>([]);
+  const [deviceTypeBreakdown, setDeviceTypeBreakdown] = useState<
+    DeviceTypeBreakdown[]
+  >([]);
   const [events, setEvents] = useState<EventBreakdown[]>([]);
   const [clicks, setClicks] = useState<ClickedElement[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
@@ -207,15 +209,21 @@ export default function ProjectDetailPage() {
     const query = `?startDate=${startDate}&endDate=${endDate}`;
 
     try {
-      const [overviewRes, pagesRes, referrersRes, devicesRes, eventsRes, clicksRes] =
-        await Promise.all([
-          fetch(`/api/v1/analytics/${projectId}/overview${query}`),
-          fetch(`/api/v1/analytics/${projectId}/pages${query}`),
-          fetch(`/api/v1/analytics/${projectId}/referrers${query}`),
-          fetch(`/api/v1/analytics/${projectId}/devices${query}`),
-          fetch(`/api/v1/analytics/${projectId}/events${query}`),
-          fetch(`/api/v1/analytics/${projectId}/clicks${query}`),
-        ]);
+      const [
+        overviewRes,
+        pagesRes,
+        referrersRes,
+        devicesRes,
+        eventsRes,
+        clicksRes,
+      ] = await Promise.all([
+        fetch(`/api/v1/analytics/${projectId}/overview${query}`),
+        fetch(`/api/v1/analytics/${projectId}/pages${query}`),
+        fetch(`/api/v1/analytics/${projectId}/referrers${query}`),
+        fetch(`/api/v1/analytics/${projectId}/devices${query}`),
+        fetch(`/api/v1/analytics/${projectId}/events${query}`),
+        fetch(`/api/v1/analytics/${projectId}/clicks${query}`),
+      ]);
 
       if (overviewRes.ok) {
         const data = await overviewRes.json();
@@ -382,7 +390,9 @@ export default function ProjectDetailPage() {
             <p className="text-muted-foreground mb-6">
               The project you&apos;re looking for doesn&apos;t exist.
             </p>
-            <Button onClick={() => router.push("/projects")}>View All Projects</Button>
+            <Button onClick={() => router.push("/projects")}>
+              View All Projects
+            </Button>
           </Card>
         </div>
       </DashboardLayout>
@@ -405,49 +415,87 @@ export default function ProjectDetailPage() {
               <div
                 className={`h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full shrink-0 ${project.isActive ? "bg-[var(--color-indeks-green)]" : "bg-muted-foreground"}`}
               />
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">{project.title}</h1>
-              <Badge variant={project.isActive ? "success" : "error"} className="shrink-0">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">
+                {project.title}
+              </h1>
+              <Badge
+                variant={project.isActive ? "success" : "error"}
+                className="shrink-0"
+              >
                 {project.isActive ? "active" : "inactive"}
               </Badge>
-              {project.category && <Badge variant="outline" className="shrink-0">{project.category}</Badge>}
+              {project.category && (
+                <Badge variant="outline" className="shrink-0">
+                  {project.category}
+                </Badge>
+              )}
             </div>
             {project.description && (
-              <p className="text-sm sm:text-base text-muted-foreground mb-3 max-w-2xl">{project.description}</p>
+              <p className="text-sm sm:text-base text-muted-foreground mb-3 max-w-2xl">
+                {project.description}
+              </p>
             )}
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <Link
-                href={project.link.startsWith("http") ? project.link : `https://${project.link}`}
+                href={
+                  project.link.startsWith("http")
+                    ? project.link
+                    : `https://${project.link}`
+                }
                 target="_blank"
                 className="flex items-center gap-1 hover:text-foreground transition-colors truncate max-w-[200px] sm:max-w-none"
               >
                 <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate">{(() => {
-                  try {
-                    return new URL(
-                      project.link.startsWith("http") ? project.link : `https://${project.link}`
-                    ).hostname;
-                  } catch {
-                    return project.link;
-                  }
-                })()}</span>
+                <span className="truncate">
+                  {(() => {
+                    try {
+                      return new URL(
+                        project.link.startsWith("http")
+                          ? project.link
+                          : `https://${project.link}`,
+                      ).hostname;
+                    } catch {
+                      return project.link;
+                    }
+                  })()}
+                </span>
                 <ExternalLink className="h-3 w-3 shrink-0" />
               </Link>
-              <Separator orientation="vertical" className="h-4 hidden sm:block" />
+              <Separator
+                orientation="vertical"
+                className="h-4 hidden sm:block"
+              />
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Created</span> {formatDate(project.createdAt)}
+                <span className="hidden sm:inline">Created</span>{" "}
+                {formatDate(project.createdAt)}
               </span>
-              <Separator orientation="vertical" className="h-4 hidden sm:block" />
+              <Separator
+                orientation="vertical"
+                className="h-4 hidden sm:block"
+              />
               <span className="flex items-center gap-1">
                 <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Updated</span> {getTimeAgo(project.updatedAt)}
+                <span className="hidden sm:inline">Updated</span>{" "}
+                {getTimeAgo(project.updatedAt)}
               </span>
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={handleSync} disabled={syncing} className="flex-1 sm:flex-none">
-              {syncing ? <Loader2 className="sm:mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="sm:mr-2 h-4 w-4" />}
-              <span className="hidden sm:inline">{syncing ? "Syncing..." : "Sync"}</span>
+            <Button
+              variant="outline"
+              onClick={handleSync}
+              disabled={syncing}
+              className="flex-1 sm:flex-none"
+            >
+              {syncing ? (
+                <Loader2 className="sm:mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="sm:mr-2 h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">
+                {syncing ? "Syncing..." : "Sync"}
+              </span>
             </Button>
             <Button className="flex-1 sm:flex-none">
               <Settings className="sm:mr-2 h-4 w-4" />
@@ -460,7 +508,10 @@ export default function ProjectDetailPage() {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Key className="h-4 w-4" style={{ color: "var(--color-indeks-blue)" }} />
+              <Key
+                className="h-4 w-4"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
               <span className="text-xs sm:text-sm font-medium">API Key</span>
             </div>
             <div className="flex items-center gap-2">
@@ -473,14 +524,23 @@ export default function ProjectDetailPage() {
                 onClick={() => copyToClipboard(project.publicKey, "key")}
                 className="shrink-0"
               >
-                {copied === "key" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied === "key" ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </Card>
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Code className="h-4 w-4" style={{ color: "var(--color-indeks-green)" }} />
-              <span className="text-xs sm:text-sm font-medium">Installation Script</span>
+              <Code
+                className="h-4 w-4"
+                style={{ color: "var(--color-indeks-green)" }}
+              />
+              <span className="text-xs sm:text-sm font-medium">
+                Installation Script
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-[10px] sm:text-xs font-mono bg-secondary px-2 sm:px-3 py-1.5 sm:py-2 rounded truncate text-muted-foreground">
@@ -492,12 +552,16 @@ export default function ProjectDetailPage() {
                 onClick={() =>
                   copyToClipboard(
                     `<script src="https://cdn.indeks.io/sdk.js" data-api-key="${project.publicKey}" async></script>`,
-                    "script"
+                    "script",
                   )
                 }
                 className="shrink-0"
               >
-                {copied === "script" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied === "script" ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </Card>
@@ -542,38 +606,68 @@ export default function ProjectDetailPage() {
               {d}d
             </Button>
           ))}
-          {analyticsLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+          {analyticsLoading && (
+            <Loader2 className="h-4 w-4 animate-spin ml-2" />
+          )}
         </div>
 
         {/* Quick Stats */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
           <Card className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <Eye className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
-              <span className="text-[10px] sm:text-xs text-muted-foreground">Page Views</span>
+              <Eye
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-green)" }}
+              />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">
+                Page Views
+              </span>
             </div>
-            <p className="text-xl sm:text-2xl font-bold">{formatNumber(summary?.totalPageViews)}</p>
+            <p className="text-xl sm:text-2xl font-bold">
+              {formatNumber(summary?.totalPageViews)}
+            </p>
           </Card>
           <Card className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <Users className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <span className="text-[10px] sm:text-xs text-muted-foreground">Visitors</span>
+              <Users
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">
+                Visitors
+              </span>
             </div>
-            <p className="text-xl sm:text-2xl font-bold">{formatNumber(summary?.totalUniqueVisitors)}</p>
+            <p className="text-xl sm:text-2xl font-bold">
+              {formatNumber(summary?.totalUniqueVisitors)}
+            </p>
           </Card>
           <Card className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <Clock className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-yellow)" }} />
-              <span className="text-[10px] sm:text-xs text-muted-foreground">Avg Session</span>
+              <Clock
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-yellow)" }}
+              />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">
+                Avg Session
+              </span>
             </div>
-            <p className="text-xl sm:text-2xl font-bold">{formatDuration(summary?.avgSessionDuration || 0)}</p>
+            <p className="text-xl sm:text-2xl font-bold">
+              {formatDuration(summary?.avgSessionDuration || 0)}
+            </p>
           </Card>
           <Card className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-orange)" }} />
-              <span className="text-[10px] sm:text-xs text-muted-foreground">Bounce Rate</span>
+              <TrendingUp
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-orange)" }}
+              />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">
+                Bounce Rate
+              </span>
             </div>
-            <p className="text-xl sm:text-2xl font-bold">{(summary?.avgBounceRate || 0).toFixed(1)}%</p>
+            <p className="text-xl sm:text-2xl font-bold">
+              {(summary?.avgBounceRate || 0).toFixed(1)}%
+            </p>
           </Card>
         </div>
 
@@ -581,18 +675,32 @@ export default function ProjectDetailPage() {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4 flex-wrap">
-              <Activity className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <h3 className="font-semibold text-sm sm:text-base">Recent Activity</h3>
-              <span className="text-xs text-muted-foreground ml-auto">Live 30m</span>
+              <Activity
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
+              <h3 className="font-semibold text-sm sm:text-base">
+                Recent Activity
+              </h3>
+              <span className="text-xs text-muted-foreground ml-auto">
+                Live 30m
+              </span>
               {realtimeLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             </div>
             {realtime?.recentEvents?.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {realtime.recentEvents.map((event, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Badge variant="outline" className="text-xs shrink-0">{event.event_type}</Badge>
-                      <span className="truncate text-muted-foreground">{event.url || "—"}</span>
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {event.event_type}
+                      </Badge>
+                      <span className="truncate text-muted-foreground">
+                        {event.url || "—"}
+                      </span>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
                       {new Date(event.timestamp).toLocaleTimeString()}
@@ -603,7 +711,9 @@ export default function ProjectDetailPage() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><Activity /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <Activity />
+                  </EmptyMedia>
                   <EmptyTitle>No recent activity</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -612,13 +722,19 @@ export default function ProjectDetailPage() {
 
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
+              <BarChart3
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-green)" }}
+              />
               <h3 className="font-semibold text-sm sm:text-base">Top Pages</h3>
             </div>
             {topPages.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {topPages.slice(0, 10).map((page, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm"
+                  >
                     <span className="truncate flex-1">{page.url}</span>
                     <span className="shrink-0 ml-2 text-muted-foreground">
                       {formatNumber(page.totalPageViews)} views
@@ -629,7 +745,9 @@ export default function ProjectDetailPage() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><FileText /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <FileText />
+                  </EmptyMedia>
                   <EmptyTitle>No page data</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -641,14 +759,24 @@ export default function ProjectDetailPage() {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <Link2 className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <h3 className="font-semibold text-sm sm:text-base">Traffic Sources</h3>
+              <Link2
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
+              <h3 className="font-semibold text-sm sm:text-base">
+                Traffic Sources
+              </h3>
             </div>
             {referrers.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {referrers.slice(0, 10).map((ref, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm">
-                    <span className="truncate flex-1">{ref.referrerDomain || ref.referrer || "Direct"}</span>
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm"
+                  >
+                    <span className="truncate flex-1">
+                      {ref.referrerDomain || ref.referrer || "Direct"}
+                    </span>
                     <span className="shrink-0 ml-2 text-muted-foreground">
                       {formatNumber(ref.totalVisits)} visits
                     </span>
@@ -658,7 +786,9 @@ export default function ProjectDetailPage() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><Link2 /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <Link2 />
+                  </EmptyMedia>
                   <EmptyTitle>No referrer data</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -667,7 +797,10 @@ export default function ProjectDetailPage() {
 
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <Monitor className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-yellow)" }} />
+              <Monitor
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-yellow)" }}
+              />
               <h3 className="font-semibold text-sm sm:text-base">Devices</h3>
             </div>
             {deviceTypeBreakdown.length > 0 ? (
@@ -681,11 +814,17 @@ export default function ProjectDetailPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="flex items-center gap-2">
                           {getDeviceIcon(device.deviceType)}
-                          <span className="capitalize">{device.deviceType}</span>
+                          <span className="capitalize">
+                            {device.deviceType}
+                          </span>
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">{formatNumber(visits)}</span>
-                          <span className="font-semibold">{percent.toFixed(1)}%</span>
+                          <span className="text-muted-foreground">
+                            {formatNumber(visits)}
+                          </span>
+                          <span className="font-semibold">
+                            {percent.toFixed(1)}%
+                          </span>
                         </div>
                       </div>
                       <Progress value={percent} className="h-2" />
@@ -696,7 +835,9 @@ export default function ProjectDetailPage() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><Monitor /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <Monitor />
+                  </EmptyMedia>
                   <EmptyTitle>No device data</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -708,25 +849,39 @@ export default function ProjectDetailPage() {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <Chrome className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
-              <h3 className="font-semibold text-sm sm:text-base">Browsers & OS</h3>
+              <Chrome
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
+              <h3 className="font-semibold text-sm sm:text-base">
+                Browsers & OS
+              </h3>
             </div>
             {devices.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {devices.slice(0, 10).map((d, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm"
+                  >
                     <span className="flex items-center gap-2">
                       {getDeviceIcon(d.deviceType)}
-                      <span>{d.browser || "Unknown"} / {d.os || "Unknown"}</span>
+                      <span>
+                        {d.browser || "Unknown"} / {d.os || "Unknown"}
+                      </span>
                     </span>
-                    <span className="text-muted-foreground">{formatNumber(d.totalVisits)}</span>
+                    <span className="text-muted-foreground">
+                      {formatNumber(d.totalVisits)}
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><Chrome /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <Chrome />
+                  </EmptyMedia>
                   <EmptyTitle>No browser data</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -735,17 +890,25 @@ export default function ProjectDetailPage() {
 
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <Zap className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-orange)" }} />
+              <Zap
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-orange)" }}
+              />
               <h3 className="font-semibold text-sm sm:text-base">Events</h3>
             </div>
             {events.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {events.map((event, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm"
+                  >
                     <Badge variant="outline">{event.eventType}</Badge>
                     <div className="flex items-center gap-4">
                       <span>{formatNumber(event.totalCount)} total</span>
-                      <span className="text-muted-foreground">{formatNumber(event.totalUniqueUsers)} users</span>
+                      <span className="text-muted-foreground">
+                        {formatNumber(event.totalUniqueUsers)} users
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -753,7 +916,9 @@ export default function ProjectDetailPage() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><Zap /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <Zap />
+                  </EmptyMedia>
                   <EmptyTitle>No event data</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -765,8 +930,13 @@ export default function ProjectDetailPage() {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
-              <h3 className="font-semibold text-sm sm:text-base">Top Clicked Elements</h3>
+              <MousePointerClick
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-green)" }}
+              />
+              <h3 className="font-semibold text-sm sm:text-base">
+                Top Clicked Elements
+              </h3>
             </div>
             {clicks.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -774,13 +944,21 @@ export default function ProjectDetailPage() {
                   <div key={i} className="p-2 rounded bg-accent/30 text-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
-                        <Badge variant="outline" className="text-xs shrink-0">{click.elementTag || "el"}</Badge>
-                        <span className="truncate">{click.elementText || click.elementSelector}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {click.elementTag || "el"}
+                        </Badge>
+                        <span className="truncate">
+                          {click.elementText || click.elementSelector}
+                        </span>
                       </div>
-                      <span className="shrink-0 ml-2 font-medium">{formatNumber(click.totalClicks)}</span>
+                      <span className="shrink-0 ml-2 font-medium">
+                        {formatNumber(click.totalClicks)}
+                      </span>
                     </div>
                     {click.pageUrl && (
-                      <p className="text-xs text-muted-foreground truncate mt-1">{click.pageUrl}</p>
+                      <p className="text-xs text-muted-foreground truncate mt-1">
+                        {click.pageUrl}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -788,7 +966,9 @@ export default function ProjectDetailPage() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><MousePointerClick /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <MousePointerClick />
+                  </EmptyMedia>
                   <EmptyTitle>No click data</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -797,23 +977,35 @@ export default function ProjectDetailPage() {
 
           <Card className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3 sm:mb-4 flex-wrap">
-              <Globe className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-blue)" }} />
+              <Globe
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                style={{ color: "var(--color-indeks-blue)" }}
+              />
               <h3 className="font-semibold text-sm sm:text-base">Countries</h3>
-              <span className="text-xs text-muted-foreground ml-auto">Live 30m</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                Live 30m
+              </span>
             </div>
             {locations?.countries?.length ? (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {locations.countries.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded bg-accent/30 text-sm"
+                  >
                     <span>{c.country}</span>
-                    <span className="text-muted-foreground">{formatNumber(c.visitor_count)} visitors</span>
+                    <span className="text-muted-foreground">
+                      {formatNumber(c.visitor_count)} visitors
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon"><Globe /></EmptyMedia>
+                  <EmptyMedia variant="icon">
+                    <Globe />
+                  </EmptyMedia>
                   <EmptyTitle>No location data</EmptyTitle>
                 </EmptyHeader>
               </Empty>
@@ -824,23 +1016,34 @@ export default function ProjectDetailPage() {
         {/* Cities */}
         <Card className="p-3 sm:p-4">
           <div className="flex items-center gap-2 mb-3 sm:mb-4 flex-wrap">
-            <MapPin className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: "var(--color-indeks-green)" }} />
+            <MapPin
+              className="h-4 w-4 sm:h-5 sm:w-5"
+              style={{ color: "var(--color-indeks-green)" }}
+            />
             <h3 className="font-semibold text-sm sm:text-base">Cities</h3>
-            <span className="text-xs text-muted-foreground ml-auto">Live 30m</span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              Live 30m
+            </span>
           </div>
           {locations?.locations?.length ? (
             <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 max-h-64 overflow-y-auto">
               {locations.locations.slice(0, 20).map((loc, i) => (
                 <div key={i} className="p-2 rounded bg-accent/30 text-sm">
-                  <p className="font-medium truncate">{loc.city || "Unknown"}</p>
-                  <p className="text-xs text-muted-foreground">{loc.country} • {loc.visitor_count} visitors</p>
+                  <p className="font-medium truncate">
+                    {loc.city || "Unknown"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {loc.country} • {loc.visitor_count} visitors
+                  </p>
                 </div>
               ))}
             </div>
           ) : (
             <Empty>
               <EmptyHeader>
-                <EmptyMedia variant="icon"><MapPin /></EmptyMedia>
+                <EmptyMedia variant="icon">
+                  <MapPin />
+                </EmptyMedia>
                 <EmptyTitle>No city data</EmptyTitle>
               </EmptyHeader>
             </Empty>

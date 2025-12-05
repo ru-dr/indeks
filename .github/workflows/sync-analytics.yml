@@ -3,15 +3,15 @@ name: Sync Analytics
 on:
   schedule:
     # Yesterday's analytics - daily at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
     # Today's analytics - every 6 hours
-    - cron: '0 */6 * * *'
+    - cron: "0 */6 * * *"
   workflow_dispatch:
     inputs:
       sync_type:
-        description: 'Sync type (yesterday or today)'
+        description: "Sync type (yesterday or today)"
         required: true
-        default: 'today'
+        default: "today"
         type: choice
         options:
           - yesterday

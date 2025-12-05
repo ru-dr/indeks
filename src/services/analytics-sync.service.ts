@@ -12,7 +12,6 @@ import {
 } from "@/db/schema/schema";
 import { eq, and } from "drizzle-orm";
 
-// Helper to parse user agent
 function parseUserAgent(userAgent: string): {
   browser: string;
   os: string;
@@ -20,7 +19,6 @@ function parseUserAgent(userAgent: string): {
 } {
   const ua = userAgent.toLowerCase();
 
-  // Device type
   let deviceType: "desktop" | "mobile" | "tablet" = "desktop";
   if (/ipad|tablet|playbook|silk/i.test(ua)) {
     deviceType = "tablet";
@@ -30,7 +28,6 @@ function parseUserAgent(userAgent: string): {
     deviceType = "mobile";
   }
 
-  // Browser
   let browser = "Unknown";
   if (ua.includes("firefox")) browser = "Firefox";
   else if (ua.includes("edg")) browser = "Edge";
@@ -38,7 +35,6 @@ function parseUserAgent(userAgent: string): {
   else if (ua.includes("safari")) browser = "Safari";
   else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera";
 
-  // OS
   let os = "Unknown";
   if (ua.includes("windows")) os = "Windows";
   else if (ua.includes("mac")) os = "macOS";
@@ -49,7 +45,6 @@ function parseUserAgent(userAgent: string): {
   return { browser, os, deviceType };
 }
 
-// Extract domain from URL
 function extractDomain(url: string): string {
   try {
     return new URL(url).hostname;
@@ -65,7 +60,6 @@ export const analyticsSyncService = {
   async syncProjectData(projectId: string, date: string): Promise<void> {
     console.log(`Starting sync for project ${projectId} on ${date}`);
 
-    // Create sync log entry
     const [syncLog] = await db
       .insert(analyticsSyncLog)
       .values({
@@ -77,7 +71,6 @@ export const analyticsSyncService = {
       .returning();
 
     try {
-      // Fetch all events for this project and date from ClickHouse
       const eventsResult = await clickhouse.query({
         query: `
           SELECT 
@@ -127,13 +120,10 @@ export const analyticsSyncService = {
         return;
       }
 
-      // Process and aggregate the data
       const aggregatedData = this.aggregateEvents(events);
 
-      // Delete existing data for this project and date (upsert pattern)
       await this.deleteExistingData(projectId, date);
 
-      // Insert daily metrics
       await db.insert(analyticsDaily).values({
         projectId,
         date,
@@ -151,7 +141,6 @@ export const analyticsSyncService = {
         errorClicks: aggregatedData.errorClicks,
       });
 
-      // Insert top pages
       if (aggregatedData.topPages.length > 0) {
         await db.insert(analyticsTopPages).values(
           aggregatedData.topPages.map((page) => ({
@@ -162,11 +151,10 @@ export const analyticsSyncService = {
             uniqueVisitors: page.uniqueVisitors,
             avgTimeOnPage: page.avgTimeOnPage,
             bounceRate: page.bounceRate,
-          }))
+          })),
         );
       }
 
-      // Insert referrers
       if (aggregatedData.referrers.length > 0) {
         await db.insert(analyticsReferrers).values(
           aggregatedData.referrers.map((ref) => ({
@@ -176,11 +164,10 @@ export const analyticsSyncService = {
             referrerDomain: ref.referrerDomain,
             visits: ref.visits,
             uniqueVisitors: ref.uniqueVisitors,
-          }))
+          })),
         );
       }
 
-      // Insert device data
       if (aggregatedData.devices.length > 0) {
         await db.insert(analyticsDevices).values(
           aggregatedData.devices.map((device) => ({
@@ -191,11 +178,10 @@ export const analyticsSyncService = {
             os: device.os,
             visits: device.visits,
             uniqueVisitors: device.uniqueVisitors,
-          }))
+          })),
         );
       }
 
-      // Insert event breakdown
       if (aggregatedData.eventBreakdown.length > 0) {
         await db.insert(analyticsEvents).values(
           aggregatedData.eventBreakdown.map((event) => ({
@@ -204,11 +190,10 @@ export const analyticsSyncService = {
             eventType: event.eventType,
             count: event.count,
             uniqueUsers: event.uniqueUsers,
-          }))
+          })),
         );
       }
 
-      // Insert clicked elements
       if (aggregatedData.clickedElements.length > 0) {
         await db.insert(analyticsClickedElements).values(
           aggregatedData.clickedElements.map((element) => ({
@@ -220,11 +205,10 @@ export const analyticsSyncService = {
             pageUrl: element.pageUrl,
             clickCount: element.clickCount,
             uniqueUsers: element.uniqueUsers,
-          }))
+          })),
         );
       }
 
-      // Update sync log
       await db
         .update(analyticsSyncLog)
         .set({
@@ -235,7 +219,7 @@ export const analyticsSyncService = {
         .where(eq(analyticsSyncLog.id, syncLog.id));
 
       console.log(
-        `Sync completed for project ${projectId}: ${events.length} events processed`
+        `Sync completed for project ${projectId}: ${events.length} events processed`,
       );
     } catch (error) {
       console.error(`Sync failed for project ${projectId}:`, error);
@@ -244,7 +228,8 @@ export const analyticsSyncService = {
         .update(analyticsSyncLog)
         .set({
           status: "failed",
-          errorMessage: error instanceof Error ? error.message : "Unknown error",
+          errorMessage:
+            error instanceof Error ? error.message : "Unknown error",
           completedAt: new Date(),
         })
         .where(eq(analyticsSyncLog.id, syncLog.id));
@@ -260,47 +245,50 @@ export const analyticsSyncService = {
     await db
       .delete(analyticsDaily)
       .where(
-        and(eq(analyticsDaily.projectId, projectId), eq(analyticsDaily.date, date))
+        and(
+          eq(analyticsDaily.projectId, projectId),
+          eq(analyticsDaily.date, date),
+        ),
       );
     await db
       .delete(analyticsTopPages)
       .where(
         and(
           eq(analyticsTopPages.projectId, projectId),
-          eq(analyticsTopPages.date, date)
-        )
+          eq(analyticsTopPages.date, date),
+        ),
       );
     await db
       .delete(analyticsReferrers)
       .where(
         and(
           eq(analyticsReferrers.projectId, projectId),
-          eq(analyticsReferrers.date, date)
-        )
+          eq(analyticsReferrers.date, date),
+        ),
       );
     await db
       .delete(analyticsDevices)
       .where(
         and(
           eq(analyticsDevices.projectId, projectId),
-          eq(analyticsDevices.date, date)
-        )
+          eq(analyticsDevices.date, date),
+        ),
       );
     await db
       .delete(analyticsEvents)
       .where(
         and(
           eq(analyticsEvents.projectId, projectId),
-          eq(analyticsEvents.date, date)
-        )
+          eq(analyticsEvents.date, date),
+        ),
       );
     await db
       .delete(analyticsClickedElements)
       .where(
         and(
           eq(analyticsClickedElements.projectId, projectId),
-          eq(analyticsClickedElements.date, date)
-        )
+          eq(analyticsClickedElements.date, date),
+        ),
       );
   },
 
@@ -317,7 +305,7 @@ export const analyticsSyncService = {
       referrer: string | null;
       metadata: string;
       timestamp: string;
-    }[]
+    }[],
   ) {
     const uniqueUsers = new Set<string>();
     const uniqueSessions = new Set<string>();
@@ -333,7 +321,10 @@ export const analyticsSyncService = {
       string,
       { visits: number; users: Set<string> }
     >();
-    const eventCounts = new Map<string, { count: number; users: Set<string> }>();
+    const eventCounts = new Map<
+      string,
+      { count: number; users: Set<string> }
+    >();
     const clickedElements = new Map<
       string,
       {
@@ -359,7 +350,6 @@ export const analyticsSyncService = {
     let errorClicks = 0;
 
     for (const event of events) {
-      // Use user_id if available, fallback to session_id for anonymous visitors
       const visitorId = event.user_id || event.session_id || "anonymous";
       const sessionId = event.session_id || "unknown";
       const timestamp = new Date(event.timestamp).getTime();
@@ -367,7 +357,6 @@ export const analyticsSyncService = {
       uniqueUsers.add(visitorId);
       uniqueSessions.add(sessionId);
 
-      // Parse metadata
       let metadata: Record<string, unknown> = {};
       try {
         metadata =
@@ -378,7 +367,6 @@ export const analyticsSyncService = {
         metadata = {};
       }
 
-      // Track session data
       if (!sessionData.has(sessionId)) {
         sessionData.set(sessionId, {
           pageViews: 0,
@@ -389,7 +377,6 @@ export const analyticsSyncService = {
       const session = sessionData.get(sessionId)!;
       session.endTime = Math.max(session.endTime, timestamp);
 
-      // Event type counts
       if (!eventCounts.has(event.event_type)) {
         eventCounts.set(event.event_type, { count: 0, users: new Set() });
       }
@@ -397,7 +384,6 @@ export const analyticsSyncService = {
       eventData.count++;
       eventData.users.add(visitorId);
 
-      // Process by event type
       switch (event.event_type) {
         case "pageview":
           pageViews++;
@@ -418,17 +404,18 @@ export const analyticsSyncService = {
 
         case "click":
           totalClicks++;
-          const element = metadata.element as {
-            tagName?: string;
-            className?: string;
-            id?: string;
-            textContent?: string;
-          } | undefined;
+          const element = metadata.element as
+            | {
+                tagName?: string;
+                className?: string;
+                id?: string;
+                textContent?: string;
+              }
+            | undefined;
           if (element) {
-            const selector =
-              element.id
-                ? `#${element.id}`
-                : element.className
+            const selector = element.id
+              ? `#${element.id}`
+              : element.className
                 ? `${element.tagName}.${element.className.split(" ")[0]}`
                 : element.tagName || "unknown";
 
@@ -479,7 +466,6 @@ export const analyticsSyncService = {
           break;
       }
 
-      // Track referrers
       if (event.referrer && event.event_type === "pageview") {
         if (!referrerCounts.has(event.referrer)) {
           referrerCounts.set(event.referrer, { visits: 0, users: new Set() });
@@ -489,7 +475,6 @@ export const analyticsSyncService = {
         refData.users.add(visitorId);
       }
 
-      // Track devices
       if (event.user_agent) {
         const { browser, os, deviceType } = parseUserAgent(event.user_agent);
         const deviceKey = `${deviceType}|${browser}|${os}`;
@@ -502,11 +487,10 @@ export const analyticsSyncService = {
       }
     }
 
-    // Calculate session metrics
     let totalSessionDuration = 0;
     let bouncedSessions = 0;
     for (const [, session] of sessionData) {
-      totalSessionDuration += (session.endTime - session.startTime) / 1000; // Convert to seconds
+      totalSessionDuration += (session.endTime - session.startTime) / 1000;
       if (session.pageViews === 1) {
         bouncedSessions++;
       }
@@ -521,13 +505,12 @@ export const analyticsSyncService = {
         ? scrollDepths.reduce((a, b) => a + b, 0) / scrollDepths.length
         : 0;
 
-    // Convert maps to arrays
     const topPages = Array.from(pageViewsByUrl.entries())
       .map(([url, data]) => ({
         url,
         pageViews: data.views,
         uniqueVisitors: data.users.size,
-        avgTimeOnPage: 0, // Would need more complex calculation
+        avgTimeOnPage: 0,
         bounceRate: 0,
       }))
       .sort((a, b) => b.pageViews - a.pageViews)
@@ -613,7 +596,6 @@ export const analyticsSyncService = {
         await this.syncProjectData(project.id, date);
       } catch (error) {
         console.error(`Failed to sync project ${project.id}:`, error);
-        // Continue with other projects
       }
     }
 

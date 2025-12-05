@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,7 +23,6 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      // Call the forget password API directly
       const response = await fetch("/api/auth/forget-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -35,7 +33,7 @@ export default function ForgotPasswordPage() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         setError(data.message || "Failed to send reset email");
         return;

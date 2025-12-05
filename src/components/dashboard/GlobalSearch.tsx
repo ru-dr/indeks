@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import {
   LayoutDashboard,
@@ -25,6 +26,7 @@ import {
   Zap,
   Calendar,
   Activity,
+  X as XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -154,7 +156,6 @@ const commandItems: SearchItem[] = [
     category: "Commands",
     type: "command",
     action: () => {
-      // Navigate to projects page with create modal
       window.location.href = "/projects?create=true";
     },
   },
@@ -166,7 +167,6 @@ const commandItems: SearchItem[] = [
     category: "Commands",
     type: "command",
     action: () => {
-      // Navigate to reports page with generate modal
       window.location.href = "/reports?generate=true";
     },
   },
@@ -178,7 +178,6 @@ const commandItems: SearchItem[] = [
     category: "Commands",
     type: "command",
     action: () => {
-      // Trigger data export
       alert("Data export started. You'll receive an email when ready.");
     },
   },
@@ -190,7 +189,6 @@ const commandItems: SearchItem[] = [
     category: "Commands",
     type: "command",
     action: () => {
-      // Trigger data refresh
       alert("Data refresh initiated. This may take a few minutes.");
     },
   },
@@ -202,7 +200,6 @@ const commandItems: SearchItem[] = [
     category: "Commands",
     type: "command",
     action: () => {
-      // Navigate to insights page
       window.location.href = "/analytics?tab=insights";
     },
   },
@@ -214,7 +211,6 @@ const commandItems: SearchItem[] = [
     category: "Commands",
     type: "command",
     action: () => {
-      // Navigate to scheduled reports
       window.location.href = "/reports?tab=scheduled";
     },
   },
@@ -226,17 +222,218 @@ const commandItems: SearchItem[] = [
     category: "Commands",
     type: "command",
     action: () => {
-      // Navigate to realtime traffic
       window.location.href = "/realtime-traffic";
     },
   },
 ];
 
-export function GlobalSearch() {
+function SearchContent({
+  query,
+  setQuery,
+  filteredItems,
+  groupedItems,
+  selectedIndex,
+  setSelectedIndex,
+  showCreateProject,
+  handleSelect,
+  handleCreateProject,
+  onClose,
+  isMobile = false,
+  inputRef,
+}: {
+  query: string;
+  setQuery: (q: string) => void;
+  filteredItems: SearchItem[];
+  groupedItems: Record<string, SearchItem[]>;
+  selectedIndex: number;
+  setSelectedIndex: (i: number) => void;
+  showCreateProject: boolean;
+  handleSelect: (item: SearchItem) => void;
+  handleCreateProject: () => void;
+  onClose: () => void;
+  isMobile?: boolean;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+}) {
+  return (
+    <>
+      {/* Search Input */}
+      <div className={cn("border-b", isMobile ? "px-4 py-3" : "px-4 py-3")}>
+        <div className="flex items-center gap-3">
+          <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+          <Input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search..."
+            className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base h-auto p-0"
+            autoFocus={!isMobile}
+          />
+          {isMobile ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 px-2 text-muted-foreground shrink-0"
+            >
+              Cancel
+            </Button>
+          ) : (
+            <Kbd>ESC</Kbd>
+          )}
+        </div>
+      </div>
+
+      {/* Results */}
+      <div
+        className={cn(
+          "overflow-y-auto",
+          isMobile ? "flex-1 p-2" : "max-h-[400px] p-2",
+        )}
+      >
+        {showCreateProject ? (
+          <div className="p-2">
+            <button
+              onClick={handleCreateProject}
+              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors w-full bg-accent text-accent-foreground active:scale-[0.98]"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Plus
+                  className="h-5 w-5"
+                  style={{ color: "var(--color-indeks-blue)" }}
+                />
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <p className="font-medium">Create New Project</p>
+                <p className="text-xs text-muted-foreground">
+                  No project found. Tap to create one
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            </button>
+          </div>
+        ) : Object.keys(groupedItems).length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+            <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <p className="text-sm text-muted-foreground">
+              No results found for &quot;{query}&quot;
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Try a different search term
+            </p>
+          </div>
+        ) : (
+          <>
+            {Object.entries(groupedItems).map(([category, items]) => (
+              <div key={category} className="mb-4">
+                <div className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  {category}
+                </div>
+                <div className="space-y-0.5">
+                  {items.map((item) => {
+                    const globalIndex = filteredItems.indexOf(item);
+                    const isSelected = globalIndex === selectedIndex;
+                    const Icon = item.icon;
+
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleSelect(item)}
+                        onMouseEnter={() => setSelectedIndex(globalIndex)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors w-full active:scale-[0.98]",
+                          isSelected
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "flex h-9 w-9 items-center justify-center rounded-lg shrink-0",
+                            isSelected ? "bg-primary/10" : "bg-secondary",
+                          )}
+                        >
+                          <Icon
+                            className="h-[18px] w-[18px]"
+                            style={
+                              isSelected
+                                ? { color: "var(--color-indeks-blue)" }
+                                : {}
+                            }
+                          />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {item.title}
+                          </p>
+                          {item.description && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                        {isSelected && !isMobile && (
+                          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div
+        className={cn(
+          "border-t bg-muted/50 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground",
+          isMobile ? "pb-[calc(0.5rem+env(safe-area-inset-bottom))]" : "",
+        )}
+      >
+        {isMobile ? (
+          <span className="text-[11px]">
+            {filteredItems.length} result
+            {filteredItems.length !== 1 ? "s" : ""}
+          </span>
+        ) : (
+          <>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Kbd>↑</Kbd>
+                <Kbd>↓</Kbd>
+                <span>Navigate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Kbd>↵</Kbd>
+                <span>Select</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Kbd>ESC</Kbd>
+                <span>Close</span>
+              </div>
+            </div>
+            <span className="text-[11px] tabular-nums">
+              {filteredItems.length} result
+              {filteredItems.length !== 1 ? "s" : ""}
+            </span>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+export function GlobalSearch({
+  trigger = "button",
+}: {
+  trigger?: "button" | "icon";
+}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
+  const mobileInputRef = useRef<HTMLInputElement>(null);
 
   const allItems = [...navigationItems, ...projectItems, ...commandItems];
 
@@ -248,7 +445,6 @@ export function GlobalSearch() {
       })
     : allItems;
 
-  // Smart project creation: if user types "project" and project name doesn't exist
   const isProjectQuery =
     query.toLowerCase().includes("project") && filteredItems.length === 0;
   const showCreateProject = isProjectQuery && query.trim().length > 7;
@@ -282,6 +478,11 @@ export function GlobalSearch() {
     setOpen(false);
     setQuery("");
     window.location.href = "/projects?create=true";
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setQuery("");
   }, []);
 
   useEffect(() => {
@@ -343,160 +544,76 @@ export function GlobalSearch() {
     setSelectedIndex(0);
   }, [query]);
 
+  const sharedProps = {
+    query,
+    setQuery,
+    filteredItems,
+    groupedItems,
+    selectedIndex,
+    setSelectedIndex,
+    showCreateProject,
+    handleSelect,
+    handleCreateProject,
+    onClose: handleClose,
+  };
+
   return (
     <>
       {/* Search Trigger Button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-lg border bg-background px-2 sm:px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground w-full"
-      >
-        <Search className="h-4 w-4 shrink-0" />
-        <span className="flex-1 text-left truncate">Search...</span>
-        <div className="hidden sm:flex items-center gap-1">
-          <Kbd>Ctrl</Kbd>
-          <Kbd>K</Kbd>
-        </div>
-      </button>
+      {trigger === "button" ? (
+        <Button
+          variant="outline"
+          onClick={() => setOpen(true)}
+          className="w-full justify-start text-muted-foreground font-normal"
+        >
+          <Search className="mr-2 h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left truncate">Search...</span>
+          <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
+            <Kbd>Ctrl</Kbd>
+            <Kbd>K</Kbd>
+          </div>
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(true)}
+          className="h-9 w-9"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+      )}
 
-      {/* Search Dialog */}
+      {/* Mobile: Bottom Sheet */}
+      {open && (
+        <div className="sm:hidden fixed inset-0 z-50">
+          {/* Backdrop - no blur on mobile to prevent glitches with keyboard */}
+          <div
+            className="absolute inset-0 bg-black/60 animate-in fade-in duration-200"
+            onClick={handleClose}
+          />
+          {/* Sheet */}
+          <div className="absolute inset-x-0 bottom-0 flex flex-col bg-popover border-t rounded-t-2xl max-h-[85vh] animate-in slide-in-from-bottom duration-300">
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            <SearchContent
+              {...sharedProps}
+              isMobile
+              inputRef={mobileInputRef}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop: Centered Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogPopup
-          className="max-w-[calc(100vw-2rem)] sm:max-w-2xl p-0 overflow-hidden mx-4 sm:mx-auto"
+          className="hidden sm:flex sm:flex-col sm:max-w-2xl p-0 overflow-hidden"
           showCloseButton={false}
         >
-          <div className="border-b">
-            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3">
-              <Search className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search..."
-                className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-sm sm:text-base"
-                autoFocus
-              />
-              <Kbd className="hidden sm:inline-flex">ESC</Kbd>
-            </div>
-          </div>
-
-          <div className="max-h-[60vh] sm:max-h-[400px] overflow-y-auto p-2">
-            {showCreateProject ? (
-              <div className="p-2">
-                <button
-                  onClick={handleCreateProject}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors w-full bg-accent text-accent-foreground"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                    <Plus
-                      className="h-5 w-5"
-                      style={{ color: "var(--color-indeks-blue)" }}
-                    />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">Create New Project</p>
-                    <p className="text-xs text-muted-foreground">
-                      No project found. Press Enter to create one
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-            ) : Object.keys(groupedItems).length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  No results found for &quot;{query}&quot;
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Try a different search term
-                </p>
-              </div>
-            ) : (
-              <>
-                {Object.entries(groupedItems).map(([category, items]) => (
-                  <div key={category} className="mb-4">
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                      {category}
-                    </div>
-                    <div className="space-y-1">
-                      {items.map((item) => {
-                        const globalIndex = filteredItems.indexOf(item);
-                        const isSelected = globalIndex === selectedIndex;
-                        const Icon = item.icon;
-
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => handleSelect(item)}
-                            onMouseEnter={() => setSelectedIndex(globalIndex)}
-                            className={cn(
-                              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors w-full",
-                              isSelected
-                                ? "bg-accent text-accent-foreground"
-                                : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground",
-                            )}
-                          >
-                            <div
-                              className={cn(
-                                "flex h-9 w-9 items-center justify-center rounded-lg",
-                                isSelected ? "bg-primary/10" : "bg-secondary",
-                              )}
-                            >
-                              <Icon
-                                className="h-5 w-5"
-                                style={
-                                  isSelected
-                                    ? { color: "var(--color-indeks-blue)" }
-                                    : {}
-                                }
-                              />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <p className="font-medium">{item.title}</p>
-                              {item.description && (
-                                <p className="text-xs text-muted-foreground">
-                                  {item.description}
-                                </p>
-                              )}
-                            </div>
-                            {isSelected && (
-                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="border-t bg-muted/50 px-3 sm:px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
-            <div className="hidden sm:flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Kbd>↑</Kbd>
-                <Kbd>↓</Kbd>
-                <span>Navigate</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Kbd>↵</Kbd>
-                <span>Select</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Kbd>ESC</Kbd>
-                <span>Close</span>
-              </div>
-            </div>
-            <div className="sm:hidden text-muted-foreground">
-              Tap to select
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px]">
-                {filteredItems.length} results
-              </span>
-            </div>
-          </div>
+          <SearchContent {...sharedProps} isMobile={false} />
         </DialogPopup>
       </Dialog>
     </>
