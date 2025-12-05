@@ -41,7 +41,7 @@ import {
 import { RoleGate, AdminOnly, OwnerOnly } from "@/components/auth";
 import { useAuth, useAdminActions } from "@/hooks/use-auth";
 import { roleDisplayNames, roleHierarchy, Role } from "@/lib/permissions";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 export default function SettingsPage() {
   const { user, role, isAdmin, isOwner } = useAuth();
@@ -51,6 +51,40 @@ export default function SettingsPage() {
     isLoading: isAdminActionLoading,
   } = useAdminActions();
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    email: "",
+    company: "Los Pollos Hermanos",
+    timezone: "UTC-05:00 Eastern Time",
+  });
+
+  // Initialize form with user data when available
+  useEffect(() => {
+    if (user) {
+      setProfileForm((prev) => ({
+        ...prev,
+        name: user.name || "John Doe",
+        email: user.email || "john.doe@example.com",
+      }));
+    }
+  }, [user]);
+
+  // Notification settings state
+  const [notifications, setNotifications] = useState({
+    emailNotifications: true,
+    productUpdates: true,
+    weeklyReports: false,
+    securityAlerts: true,
+  });
+
+  const handleNotificationChange = useCallback((key: keyof typeof notifications) => {
+    setNotifications((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  }, []);
 
   const apiKeys = [
     {
@@ -71,24 +105,24 @@ export default function SettingsPage() {
 
   const notificationSettings = [
     {
+      key: "emailNotifications" as const,
       label: "Email notifications",
       description: "Receive email updates about your account",
-      enabled: true,
     },
     {
+      key: "productUpdates" as const,
       label: "Product updates",
       description: "News about new features and improvements",
-      enabled: true,
     },
     {
+      key: "weeklyReports" as const,
       label: "Weekly reports",
       description: "Weekly analytics summary via email",
-      enabled: false,
     },
     {
+      key: "securityAlerts" as const,
       label: "Security alerts",
       description: "Notifications about security events",
-      enabled: true,
     },
   ];
 
@@ -229,22 +263,40 @@ export default function SettingsPage() {
           <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Full Name</label>
-              <Input defaultValue={user?.name || "John Doe"} />
+              <Input
+                value={profileForm.name || user?.name || "John Doe"}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Email Address</label>
               <Input
                 type="email"
-                defaultValue={user?.email || "john.doe@example.com"}
+                value={profileForm.email || user?.email || "john.doe@example.com"}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({ ...prev, email: e.target.value }))
+                }
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Company</label>
-              <Input defaultValue="Los Pollos Hermanos" />
+              <Input
+                value={profileForm.company}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({ ...prev, company: e.target.value }))
+                }
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Time Zone</label>
-              <Input defaultValue="UTC-05:00 Eastern Time" />
+              <Input
+                value={profileForm.timezone}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({ ...prev, timezone: e.target.value }))
+                }
+              />
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 mt-4 sm:mt-6 pt-4 border-t">
@@ -302,9 +354,9 @@ export default function SettingsPage() {
               </h3>
             </div>
             <div className="space-y-4">
-              {notificationSettings.map((setting, index) => (
+              {notificationSettings.map((setting) => (
                 <div
-                  key={index}
+                  key={setting.key}
                   className="flex items-start justify-between py-3 border-b last:border-0"
                 >
                   <div className="flex-1 pr-4">
@@ -313,7 +365,10 @@ export default function SettingsPage() {
                       {setting.description}
                     </p>
                   </div>
-                  <Switch defaultChecked={setting.enabled} />
+                  <Switch
+                    checked={notifications[setting.key]}
+                    onCheckedChange={() => handleNotificationChange(setting.key)}
+                  />
                 </div>
               ))}
             </div>

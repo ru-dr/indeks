@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 
 type InvitationStatus =
   | "loading"
@@ -16,24 +16,18 @@ type InvitationStatus =
   | "expired"
   | "error";
 
-interface Invitation {
+// Match the actual API response structure
+interface InvitationData {
   id: string;
   email: string;
   role: string;
   status: string;
   expiresAt: Date;
-  organization: {
-    id: string;
-    name: string;
-    slug: string;
-    logo?: string;
-  };
-  inviter: {
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-  };
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
+  inviterId: string;
+  inviterEmail: string;
 }
 
 export default function InvitePage() {
@@ -42,7 +36,7 @@ export default function InvitePage() {
   const invitationId = params.id as string;
 
   const [status, setStatus] = useState<InvitationStatus>("loading");
-  const [invitation, setInvitation] = useState<Invitation | null>(null);
+  const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const { data: session, isPending: sessionLoading } = authClient.useSession();
@@ -51,7 +45,7 @@ export default function InvitePage() {
     async function fetchInvitation() {
       try {
         const { data, error } = await authClient.organization.getInvitation({
-          id: invitationId,
+          query: { id: invitationId },
         });
 
         if (error || !data) {
@@ -69,7 +63,7 @@ export default function InvitePage() {
           return;
         }
 
-        setInvitation(data as Invitation);
+        setInvitation(data as InvitationData);
         setStatus("pending");
       } catch {
         setStatus("error");
@@ -94,22 +88,28 @@ export default function InvitePage() {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to accept invitation");
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to accept invitation",
+        });
         return;
       }
 
-      toast.success(`You've joined ${invitation?.organization.name}!`);
+      toastManager.add({
+        type: "success",
+        title: `You've joined ${invitation?.organizationName ?? "the team"}!`,
+      });
       setStatus("accepted");
 
-      if (invitation?.organization.id) {
+      if (invitation?.organizationId) {
         await authClient.organization.setActive({
-          organizationId: invitation.organization.id,
+          organizationId: invitation.organizationId,
         });
       }
 
       router.push("/projects");
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
       setIsProcessing(false);
     }
@@ -123,15 +123,18 @@ export default function InvitePage() {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to reject invitation");
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to reject invitation",
+        });
         return;
       }
 
-      toast.success("Invitation declined");
+      toastManager.add({ type: "success", title: "Invitation declined" });
       setStatus("rejected");
       router.push("/");
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
       setIsProcessing(false);
     }
@@ -179,7 +182,7 @@ export default function InvitePage() {
       <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="max-w-md p-8 text-center">
           <h1 className="text-2xl font-semibold mb-4">
-            Welcome to {invitation?.organization.name}!
+            Welcome to {invitation?.organizationName ?? "the team"}!
           </h1>
           <p className="text-muted-foreground mb-6">
             You&apos;ve successfully joined the team.
@@ -206,25 +209,19 @@ export default function InvitePage() {
     );
   }
 
-  const roleDisplay =
-    invitation?.role.charAt(0).toUpperCase() + invitation?.role.slice(1);
+  const roleDisplay = invitation
+    ? invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)
+    : "";
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="max-w-md p-8">
         <div className="text-center mb-6">
-          {invitation?.organization.logo && (
-            <img
-              src={invitation.organization.logo}
-              alt={invitation.organization.name}
-              className="w-16 h-16 rounded-full mx-auto mb-4"
-            />
-          )}
           <h1 className="text-2xl font-semibold mb-2">
-            Join {invitation?.organization.name}
+            Join {invitation?.organizationName ?? "the team"}
           </h1>
           <p className="text-muted-foreground">
-            <strong>{invitation?.inviter.name}</strong> has invited you to join
+            <strong>{invitation?.inviterEmail}</strong> has invited you to join
             their team as a <strong>{roleDisplay}</strong>.
           </p>
         </div>
