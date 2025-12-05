@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { username } from "better-auth/plugins";
+import { username, admin } from "better-auth/plugins";
 import { db } from "@/db/connect";
 import * as schema from "@/db/schema/schema";
 import { emailService } from "@/lib/email";
@@ -29,7 +29,7 @@ export const auth = betterAuth({
       await emailService.sendVerificationEmail({ user, url });
     },
   },
-  plugins: [username()],
+  plugins: [username(), admin()],
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL!,
   trustedOrigins: ["http://localhost:3000", "http://10.0.0.126:3000"],

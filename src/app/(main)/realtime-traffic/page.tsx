@@ -14,6 +14,14 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Users,
   Globe,
   MapPin,
@@ -312,129 +320,120 @@ export default function RealtimeTrafficPage() {
                   </div>
                 </div>
 
-                {/* Location Details */}
-                <div className="order-2 lg:order-2 h-full">
+                {/* Location Details - Table View */}
+                <div className="order-2 lg:order-2 h-full flex flex-col">
                   {cities.length > 0 ? (
-                    <Frame className="h-full flex flex-col">
-                      <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/20">
-                        <h4 className="text-sm font-semibold">
-                          Active Locations
-                        </h4>
-                        <span className="text-xs text-muted-foreground">
-                          Last 30 min
-                        </span>
-                      </div>
-
-                      <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[200px] max-h-[300px]">
-                        {cities.slice(0, 15).map((loc, i) => (
-                          <div
-                            key={i}
-                            className="p-2.5 sm:p-3 rounded-lg bg-card border shadow-sm hover:bg-accent/50 transition-colors"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
-                                  <p className="text-sm font-medium truncate">
-                                    {loc.city || "Unknown City"}
-                                  </p>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate">
-                                  {loc.country}
-                                </p>
-                              </div>
-                              <div className="text-right shrink-0">
-                                <p className="text-sm font-bold">
-                                  {loc.visitor_count}
-                                </p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                                  visitors
-                                </p>
-                              </div>
-                            </div>
-                            {/* Collapse details on mobile, show on larger screens */}
-                            <div className="hidden sm:block mt-2 pt-2 border-t border-dashed">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-muted-foreground">
-                                  Coordinates
-                                </span>
-                                <span className="font-mono text-muted-foreground">
-                                  {loc.latitude?.toFixed(2)}°,{" "}
-                                  {loc.longitude?.toFixed(2)}°
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-xs mt-1">
-                                <span className="text-muted-foreground">
-                                  Events
-                                </span>
-                                <span className="font-medium">
-                                  {formatNumber(loc.event_count)}
-                                </span>
-                              </div>
-                            </div>
+                    <>
+                      {/* Desktop: Table View */}
+                      <div className="hidden md:block">
+                        <Frame className="w-full">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Location</TableHead>
+                                <TableHead className="text-center">Status</TableHead>
+                                <TableHead className="text-right">Visitors</TableHead>
+                                <TableHead className="text-right">Events</TableHead>
+                                <TableHead className="text-right">Coordinates</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {cities.slice(0, 10).map((loc, i) => (
+                                <TableRow key={i}>
+                                  <TableCell>
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-medium">{loc.city || "Unknown"}</p>
+                                        <p className="text-xs text-muted-foreground">{loc.country}</p>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge variant="success" className="text-xs">Live</Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right font-semibold">
+                                    {loc.visitor_count}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {formatNumber(loc.event_count)}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <span className="font-mono text-xs text-muted-foreground">
+                                      {loc.latitude?.toFixed(2)}°, {loc.longitude?.toFixed(2)}°
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </Frame>
+                        
+                        {/* Summary below table */}
+                        <div className="mt-4 grid grid-cols-3 gap-4">
+                          <div className="p-3 rounded-lg bg-muted/30 text-center">
+                            <p className="text-lg font-bold">{cities.length}</p>
+                            <p className="text-xs text-muted-foreground">Active Locations</p>
                           </div>
-                        ))}
-                      </div>
-
-                      {/* Summary Stats */}
-                      <div className="p-3 border-t bg-muted/20 mt-auto">
-                        <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
-                          <div>
-                            <p className="text-base sm:text-lg font-bold">
-                              {cities.length}
-                            </p>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground">
-                              Locations
-                            </p>
+                          <div className="p-3 rounded-lg bg-muted/30 text-center">
+                            <p className="text-lg font-bold">{countries.length}</p>
+                            <p className="text-xs text-muted-foreground">Countries</p>
                           </div>
-                          <div>
-                            <p className="text-base sm:text-lg font-bold">
-                              {countries.length}
-                            </p>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground">
-                              Countries
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-base sm:text-lg font-bold">
-                              {formatNumber(
-                                cities.reduce(
-                                  (sum, c) => sum + c.visitor_count,
-                                  0,
-                                ),
-                              )}
-                            </p>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground">
-                              Visitors
-                            </p>
+                          <div className="p-3 rounded-lg bg-muted/30 text-center">
+                            <p className="text-lg font-bold">{formatNumber(cities.reduce((sum, c) => sum + c.visitor_count, 0))}</p>
+                            <p className="text-xs text-muted-foreground">Total Visitors</p>
                           </div>
                         </div>
                       </div>
-                    </Frame>
+                      
+                      {/* Mobile: Card View */}
+                      <div className="md:hidden space-y-3">
+                        {cities.slice(0, 8).map((loc, i) => (
+                          <div key={i} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="h-2 w-2 rounded-full bg-[var(--color-indeks-green)] animate-pulse shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{loc.city || "Unknown"}</p>
+                                <p className="text-xs text-muted-foreground truncate">{loc.country}</p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0 ml-3">
+                              <p className="text-sm font-bold">{loc.visitor_count}</p>
+                              <p className="text-[10px] text-muted-foreground">visitors</p>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {/* Mobile Summary */}
+                        <div className="grid grid-cols-3 gap-2 pt-2">
+                          <div className="p-2 rounded-lg bg-muted/30 text-center">
+                            <p className="text-base font-bold">{cities.length}</p>
+                            <p className="text-[10px] text-muted-foreground">Locations</p>
+                          </div>
+                          <div className="p-2 rounded-lg bg-muted/30 text-center">
+                            <p className="text-base font-bold">{countries.length}</p>
+                            <p className="text-[10px] text-muted-foreground">Countries</p>
+                          </div>
+                          <div className="p-2 rounded-lg bg-muted/30 text-center">
+                            <p className="text-base font-bold">{formatNumber(cities.reduce((sum, c) => sum + c.visitor_count, 0))}</p>
+                            <p className="text-[10px] text-muted-foreground">Visitors</p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-muted-foreground">
-                          Active Locations
-                        </h4>
-                        <span className="text-xs text-muted-foreground">
-                          Last 30 min
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-center h-[200px] sm:h-[300px]">
-                        <Empty>
-                          <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <MapPin />
-                            </EmptyMedia>
-                            <EmptyTitle>No active locations</EmptyTitle>
-                            <EmptyDescription className="text-xs sm:text-sm">
-                              Location data will appear once visitors are
-                              tracked.
-                            </EmptyDescription>
-                          </EmptyHeader>
-                        </Empty>
-                      </div>
+                    <div className="flex items-center justify-center h-full min-h-[300px]">
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <MapPin />
+                          </EmptyMedia>
+                          <EmptyTitle>No active locations</EmptyTitle>
+                          <EmptyDescription className="text-xs sm:text-sm">
+                            Location data will appear once visitors are tracked.
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
                     </div>
                   )}
                 </div>
