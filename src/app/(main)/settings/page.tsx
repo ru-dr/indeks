@@ -99,7 +99,6 @@ export default function SettingsPage() {
     { label: "Login History", value: "View recent activity", icon: Eye },
   ];
 
-  // Mock team members - in real app, fetch from API
   const teamMembers = [
     {
       id: "1",

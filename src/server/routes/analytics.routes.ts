@@ -311,8 +311,6 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
     }
   })
 
-  // ==================== NEW ENHANCED ANALYTICS ROUTES ====================
-
   .get(
     "/:projectId/traffic-sources",
     async ({ params, query, set }) => {

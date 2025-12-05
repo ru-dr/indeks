@@ -38,16 +38,13 @@ export const authClient = createAuthClient({
   ],
 });
 
-// Export useful types
 export type Session = typeof authClient.$Infer.Session;
 export type User = typeof authClient.$Infer.Session.user;
 
-// Re-export hooks from authClient for convenience
 export const useSession = authClient.useSession;
 export const signIn = authClient.signIn;
 export const signUp = authClient.signUp;
 export const signOut = authClient.signOut;
 
-// Organization/Team hooks
 export const useActiveOrganization = authClient.useActiveOrganization;
 export const useListOrganizations = authClient.useListOrganizations;

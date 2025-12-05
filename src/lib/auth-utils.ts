@@ -3,11 +3,9 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Role, roleHierarchy, statement } from "@/lib/permissions";
 
-// Type for permission resources
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
 
-// Permission check type
 type PermissionCheck = {
   [K in Resource]?: Action<K>[];
 };

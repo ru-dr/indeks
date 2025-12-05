@@ -59,7 +59,6 @@ export default function InvitePage() {
           return;
         }
 
-        // Check if expired
         if (new Date(data.expiresAt) < new Date()) {
           setStatus("expired");
           return;
@@ -84,7 +83,6 @@ export default function InvitePage() {
 
   const handleAccept = async () => {
     if (!session) {
-      // Redirect to sign in with return URL
       router.push(`/auth/sign-in?redirect=/invite/${invitationId}`);
       return;
     }
@@ -103,7 +101,6 @@ export default function InvitePage() {
       toast.success(`You've joined ${invitation?.organization.name}!`);
       setStatus("accepted");
 
-      // Set the organization as active and redirect
       if (invitation?.organization.id) {
         await authClient.organization.setActive({
           organizationId: invitation.organization.id,
@@ -209,7 +206,6 @@ export default function InvitePage() {
     );
   }
 
-  // Pending invitation
   const roleDisplay =
     invitation?.role.charAt(0).toUpperCase() + invitation?.role.slice(1);
 

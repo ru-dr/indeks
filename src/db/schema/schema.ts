@@ -189,17 +189,13 @@ export const invitationRelations = relations(invitation, ({ one }) => ({
   }),
 }));
 
-// ============================================
-// Projects (now linked to organization)
-// ============================================
-
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
-  // Keep userId for backwards compatibility and as creator reference
+
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  // Link project to organization (team)
+
   organizationId: text("organization_id").references(() => organization.id, {
     onDelete: "cascade",
   }),
@@ -219,10 +215,6 @@ export const projects = pgTable("projects", {
     .$onUpdate(() => new Date())
     .notNull(),
 });
-
-// ============================================
-// Analytics Tables
-// ============================================
 
 export const analyticsDaily = pgTable("analytics_daily", {
   id: uuid("id").primaryKey().defaultRandom(),

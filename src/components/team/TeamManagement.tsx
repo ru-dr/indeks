@@ -10,7 +10,6 @@ import { TeamMembers } from "./TeamMembers";
 import { TeamSettings } from "./TeamSettings";
 import type { Role } from "@/lib/permissions";
 
-// Custom hook for full organization data
 function useFullOrganization(organizationId: string) {
   const [data, setData] = useState<any>(null);
   const [isPending, setIsPending] = useState(true);
@@ -34,7 +33,6 @@ function useFullOrganization(organizationId: string) {
   return { data, isPending };
 }
 
-// Custom hook for active member
 function useActiveMember() {
   const [data, setData] = useState<any>(null);
 
@@ -49,7 +47,6 @@ function useActiveMember() {
   return { data };
 }
 
-// Separate component to fetch members
 function TeamMembersWrapper({
   organizationId,
   currentUserId,
@@ -81,7 +78,6 @@ function TeamMembersWrapper({
       currentUserId={currentUserId}
       currentUserRole={(activeMember?.role as Role) || "viewer"}
       onMembersChange={() => {
-        // Trigger refetch
         window.location.reload();
       }}
     />
@@ -104,7 +100,6 @@ export function TeamManagement() {
     );
   }
 
-  // No teams yet - show create form
   if (!organizations || organizations.length === 0) {
     return (
       <div className="max-w-md mx-auto">
@@ -123,7 +118,6 @@ export function TeamManagement() {
     );
   }
 
-  // Has teams but none active - prompt to select
   if (!activeOrg) {
     return (
       <div className="max-w-md mx-auto">
@@ -151,7 +145,6 @@ export function TeamManagement() {
     );
   }
 
-  // Active organization - show full management UI
   return (
     <div className="space-y-6">
       <TeamSettings

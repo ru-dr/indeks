@@ -567,8 +567,6 @@ export const analyticsController = {
     };
   },
 
-  // ==================== NEW ENHANCED ANALYTICS ENDPOINTS ====================
-
   async getTrafficSources(projectId: string, query: PaginatedQuery) {
     const { startDate, endDate, limit = "20" } = query;
 

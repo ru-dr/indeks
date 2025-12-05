@@ -50,17 +50,17 @@ export const auth = betterAuth({
         member: roles.member,
         viewer: roles.viewer,
       },
-      // Creator of a team becomes owner
+
       creatorRole: "owner",
-      // Allow users to create teams (you can restrict this later)
+
       allowUserToCreateOrganization: true,
-      // Max teams per user (set to 1 for simple use case, increase if needed)
+
       organizationLimit: 5,
-      // Max members per team
+
       membershipLimit: 50,
-      // Invitation expires in 7 days
+
       invitationExpiresIn: 60 * 60 * 24 * 7,
-      // Send invitation email
+
       async sendInvitationEmail(data) {
         const inviteLink = `${process.env.BETTER_AUTH_URL}/invite/${data.id}`;
         await emailService.sendTeamInvitationEmail({

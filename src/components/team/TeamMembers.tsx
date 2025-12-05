@@ -65,7 +65,6 @@ export function TeamMembers({
   const canManageMembers = ["owner", "admin"].includes(currentUserRole);
   const canChangeRoles = currentUserRole === "owner";
 
-  // Get roles that current user can assign (can't assign equal or higher roles)
   const assignableRoles = roleHierarchy.filter((role) => {
     const currentIndex = roleHierarchy.indexOf(currentUserRole);
     const roleIndex = roleHierarchy.indexOf(role);

@@ -4,7 +4,6 @@ import { ReactNode } from "react";
 import { useAuth, useRole, usePermission } from "@/hooks/use-auth";
 import { Role, statement } from "@/lib/permissions";
 
-// Type for permission resources
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
 
@@ -161,7 +160,6 @@ interface ImpersonationBannerProps {
 export function ImpersonationBanner({ className }: ImpersonationBannerProps) {
   const { session } = useAuth();
 
-  // Check if the current session is an impersonation session
   const isImpersonating =
     session?.session &&
     "impersonatedBy" in session.session &&

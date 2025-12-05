@@ -59,8 +59,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
 
     try {
-      // If organizationId is provided, filter by that org
-      // Otherwise get all projects user has access to
       let projects;
       if (query?.organizationId) {
         projects = await projectsController.getOrganizationProjects(

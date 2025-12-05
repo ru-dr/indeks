@@ -14,7 +14,6 @@ async function migrateRoles() {
   console.log("Starting role migration...");
 
   try {
-    // Update all users with 'user' role to 'viewer'
     const result = await db
       .update(user)
       .set({ role: "viewer" })

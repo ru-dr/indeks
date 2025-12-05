@@ -4,11 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Role, roleHierarchy, statement } from "@/lib/permissions";
 
-// Type for permission resources
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
 
-// Permission check type
 type PermissionCheck = {
   [K in Resource]?: Action<K>[];
 };
@@ -66,7 +64,6 @@ export function usePermission(permissions: PermissionCheck) {
       return;
     }
 
-    // Use the client-side checkRolePermission for synchronous checking
     const result = authClient.admin.checkRolePermission({
       permissions: permissions as Record<string, string[]>,
       role,

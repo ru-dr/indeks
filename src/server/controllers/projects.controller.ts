@@ -90,9 +90,8 @@ export const projectsController = {
       .from(projects)
       .where(
         or(
-          // Personal projects (owned by user, no org)
           and(eq(projects.userId, userId), isNull(projects.organizationId)),
-          // Organization projects (user is a member)
+
           orgIds.length > 0
             ? inArray(projects.organizationId, orgIds)
             : undefined,
@@ -154,9 +153,8 @@ export const projectsController = {
         and(
           eq(projects.id, projectId),
           or(
-            // Personal project owned by user
             and(eq(projects.userId, userId), isNull(projects.organizationId)),
-            // Organization project (user is a member)
+
             orgIds.length > 0
               ? inArray(projects.organizationId, orgIds)
               : undefined,
@@ -181,7 +179,6 @@ export const projectsController = {
     projectId: string,
     data: UpdateProjectDto,
   ) {
-    // First verify access
     const hasAccess = await this.hasProjectAccess(userId, projectId);
     if (!hasAccess) {
       return null;
@@ -200,7 +197,6 @@ export const projectsController = {
   },
 
   async deleteProject(userId: string, projectId: string) {
-    // First verify access
     const hasAccess = await this.hasProjectAccess(userId, projectId);
     if (!hasAccess) {
       return null;
@@ -215,7 +211,6 @@ export const projectsController = {
   },
 
   async regenerateApiKey(userId: string, projectId: string) {
-    // First verify access
     const hasAccess = await this.hasProjectAccess(userId, projectId);
     if (!hasAccess) {
       return null;

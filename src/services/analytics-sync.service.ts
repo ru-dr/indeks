@@ -77,7 +77,6 @@ type EventRow = {
 };
 
 export const analyticsSyncService = {
-  // Helper functions
   avg(arr: number[]): number {
     return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
   },
@@ -207,7 +206,6 @@ export const analyticsSyncService = {
       const aggregatedData = this.aggregateEvents(events);
       await this.deleteExistingData(projectId, date);
 
-      // Insert all analytics data
       await db.insert(analyticsDaily).values({
         projectId,
         date,
@@ -283,7 +281,6 @@ export const analyticsSyncService = {
         );
       }
 
-      // New enhanced analytics
       if (aggregatedData.trafficSources.length > 0) {
         await db.insert(analyticsTrafficSources).values(
           aggregatedData.trafficSources.map((t) => ({

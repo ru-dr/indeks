@@ -27,7 +27,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
   const handleNameChange = (value: string) => {
     setName(value);
-    // Auto-generate slug from name
+
     if (!slug || slug === generateSlug(name)) {
       setSlug(generateSlug(value));
     }
@@ -48,7 +48,6 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
     setIsLoading(true);
     try {
-      // Check if slug is available
       const { data: slugCheck } = await authClient.organization.checkSlug({
         slug,
       });
@@ -58,7 +57,6 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         return;
       }
 
-      // Create the team
       const { data, error } = await authClient.organization.create({
         name: name.trim(),
         slug: slug.trim(),
@@ -72,7 +70,6 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       if (data) {
         toast.success("Team created successfully!");
 
-        // Set as active organization
         await authClient.organization.setActive({
           organizationId: data.id,
         });
