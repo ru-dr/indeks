@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { roleDisplayNames, roleHierarchy, type Role } from "@/lib/permissions";
 
 interface TeamMember {
@@ -75,7 +75,7 @@ export function TeamMembers({
     e.preventDefault();
 
     if (!inviteEmail.trim()) {
-      toast.error("Email is required");
+      toastManager.add({ type: "error", title: "Email is required" });
       return;
     }
 
@@ -88,16 +88,16 @@ export function TeamMembers({
       });
 
       if (error) {
-        toast.error(error.message || "Failed to send invitation");
+        toastManager.add({ type: "error", title: error.message || "Failed to send invitation" });
         return;
       }
 
-      toast.success(`Invitation sent to ${inviteEmail}`);
+      toastManager.add({ type: "success", title: `Invitation sent to ${inviteEmail}` });
       setInviteEmail("");
       setInviteRole("member");
       setIsInviteDialogOpen(false);
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
       setIsInviting(false);
     }
@@ -112,14 +112,14 @@ export function TeamMembers({
       });
 
       if (error) {
-        toast.error(error.message || "Failed to remove member");
+        toastManager.add({ type: "error", title: error.message || "Failed to remove member" });
         return;
       }
 
-      toast.success("Member removed");
+      toastManager.add({ type: "success", title: "Member removed" });
       onMembersChange?.();
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
       setRemovingMemberId(null);
     }
@@ -134,14 +134,14 @@ export function TeamMembers({
       });
 
       if (error) {
-        toast.error(error.message || "Failed to update role");
+        toastManager.add({ type: "error", title: error.message || "Failed to update role" });
         return;
       }
 
-      toast.success("Role updated");
+      toastManager.add({ type: "success", title: "Role updated" });
       onMembersChange?.();
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     }
   };
 
@@ -165,7 +165,7 @@ export function TeamMembers({
             open={isInviteDialogOpen}
             onOpenChange={setIsInviteDialogOpen}
           >
-            <DialogTrigger asChild>
+            <DialogTrigger>
               <Button size="sm">Invite Member</Button>
             </DialogTrigger>
             <DialogContent>

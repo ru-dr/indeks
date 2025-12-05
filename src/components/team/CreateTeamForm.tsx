@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 
 interface CreateTeamFormProps {
   onSuccess?: (team: { id: string; name: string; slug: string }) => void;
@@ -37,12 +37,12 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error("Team name is required");
+      toastManager.add({ type: "error", title: "Team name is required" });
       return;
     }
 
     if (!slug.trim()) {
-      toast.error("Team slug is required");
+      toastManager.add({ type: "error", title: "Team slug is required" });
       return;
     }
 
@@ -53,7 +53,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       });
 
       if (slugCheck?.status === false) {
-        toast.error("This slug is already taken");
+        toastManager.add({ type: "error", title: "This slug is already taken" });
         return;
       }
 
@@ -63,12 +63,12 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to create team");
+        toastManager.add({ type: "error", title: error.message || "Failed to create team" });
         return;
       }
 
       if (data) {
-        toast.success("Team created successfully!");
+        toastManager.add({ type: "success", title: "Team created successfully!" });
 
         await authClient.organization.setActive({
           organizationId: data.id,
@@ -77,7 +77,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         onSuccess?.(data);
       }
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
       setIsLoading(false);
     }

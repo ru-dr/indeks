@@ -18,7 +18,7 @@ function useFullOrganization(organizationId: string) {
     async function fetch() {
       try {
         const { data } = await authClient.organization.getFullOrganization({
-          organizationId,
+          query: { organizationId },
         });
         setData(data);
       } finally {

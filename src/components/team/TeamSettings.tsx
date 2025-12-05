@@ -9,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -18,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 
 interface Organization {
@@ -42,12 +41,13 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error("Team name is required");
+      toastManager.add({ type: "error", title: "Team name is required" });
       return;
     }
 
@@ -61,14 +61,17 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to update team");
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to update team",
+        });
         return;
       }
 
-      toast.success("Team updated");
+      toastManager.add({ type: "success", title: "Team updated" });
       onUpdate?.();
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
       setIsUpdating(false);
     }
@@ -76,7 +79,10 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
 
   const handleDelete = async () => {
     if (deleteConfirmation !== organization.name) {
-      toast.error("Please type the team name to confirm");
+      toastManager.add({
+        type: "error",
+        title: "Please type the team name to confirm",
+      });
       return;
     }
 
@@ -87,17 +93,26 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to delete team");
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to delete team",
+        });
         return;
       }
 
-      toast.success("Team deleted");
+      toastManager.add({ type: "success", title: "Team deleted" });
+      setIsDialogOpen(false);
       router.push("/projects");
     } catch {
-      toast.error("Something went wrong");
+      toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleDialogClose = () => {
+    setDeleteConfirmation("");
+    setIsDialogOpen(false);
   };
 
   return (
@@ -146,8 +161,8 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
           associated with this team will be permanently deleted.
         </p>
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialogTrigger>
             <Button variant="destructive">Delete Team</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -159,7 +174,7 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
                 projects and data.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="py-4">
+            <div className="px-6 py-4">
               <Label htmlFor="delete-confirm">
                 Type <strong>{organization.name}</strong> to confirm
               </Label>
@@ -172,19 +187,21 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
               />
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
+              <AlertDialogClose>
+                <Button variant="outline" onClick={handleDialogClose}>
+                  Cancel
+                </Button>
+              </AlertDialogClose>
+              <Button
+                variant="destructive"
                 onClick={handleDelete}
                 disabled={
                   deleteConfirmation !== organization.name || isDeleting
                 }
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isDeleting ? <Spinner className="h-4 w-4 mr-2" /> : null}
                 Delete Team
-              </AlertDialogAction>
+              </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
