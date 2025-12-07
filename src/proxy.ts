@@ -36,13 +36,13 @@ export async function proxy(request: NextRequest) {
     if (redirectParam?.startsWith("/invite/")) {
       return NextResponse.next();
     }
-    
+
     // Allow access if user just registered (they need to verify email)
     const registeredParam = request.nextUrl.searchParams.get("registered");
     if (registeredParam === "true") {
       return NextResponse.next();
     }
-    
+
     return NextResponse.redirect(new URL("/", request.url));
   }
 

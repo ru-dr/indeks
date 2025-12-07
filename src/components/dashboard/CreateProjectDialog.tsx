@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +14,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Plus, Building2 } from "lucide-react";
+import { useListOrganizations, authClient } from "@/lib/auth-client";
 
 interface CreateProjectDialogProps {
   onProjectCreated?: () => void;
@@ -25,18 +34,83 @@ export function CreateProjectDialog({
 }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [creatingOrg, setCreatingOrg] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
     link: "",
+    organizationId: "",
   });
+
+  const {
+    data: organizations,
+    isPending: orgsLoading,
+    refetch: refetchOrgs,
+  } = useListOrganizations();
+
+  // Get first org ID safely
+  const firstOrgId = organizations?.[0]?.id ?? "";
+
+  // Auto-select organization if user has exactly one
+  useEffect(() => {
+    if (organizations?.length === 1 && !formData.organizationId && firstOrgId) {
+      setFormData((prev) => ({ ...prev, organizationId: firstOrgId }));
+    }
+  }, [organizations?.length, formData.organizationId, firstOrgId]);
+
+  const createDefaultOrganization = async () => {
+    setCreatingOrg(true);
+    setError(null);
+
+    try {
+      const result = await authClient.organization.create({
+        name: "My Workspace",
+        slug: `workspace-${Date.now()}`,
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message || "Failed to create workspace");
+      }
+
+      // Refetch organizations
+      await refetchOrgs();
+
+      // Set the new org as selected
+      const newOrgId = result.data?.id;
+      if (newOrgId) {
+        setFormData((prev) => ({
+          ...prev,
+          organizationId: newOrgId,
+        }));
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to create workspace",
+      );
+    } finally {
+      setCreatingOrg(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // If no organization exists, create a default one first
+    if (!organizations || organizations.length === 0) {
+      setError("Please create a workspace first to organize your projects");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.organizationId) {
+      setError("Please select a workspace for your project");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/v1/projects", {
@@ -44,7 +118,13 @@ export function CreateProjectDialog({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description || undefined,
+          category: formData.category || undefined,
+          link: formData.link,
+          organizationId: formData.organizationId,
+        }),
       });
 
       const result = await response.json();
@@ -56,6 +136,7 @@ export function CreateProjectDialog({
           description: "",
           category: "",
           link: "",
+          organizationId: organizations.length === 1 ? firstOrgId : "",
         });
         onProjectCreated?.();
       } else {
@@ -68,6 +149,8 @@ export function CreateProjectDialog({
       setLoading(false);
     }
   };
+
+  const hasOrganizations = organizations && organizations.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -92,6 +175,89 @@ export function CreateProjectDialog({
                 {error}
               </div>
             )}
+
+            {/* Organization Selection */}
+            <div className="grid gap-2">
+              <Label htmlFor="organization">Workspace *</Label>
+              {orgsLoading ? (
+                <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-muted/50">
+                  <Spinner className="h-4 w-4" />
+                  <span className="text-sm text-muted-foreground">
+                    Loading workspaces...
+                  </span>
+                </div>
+              ) : !hasOrganizations ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-3 rounded-md border border-dashed bg-muted/30">
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">No workspace found</p>
+                      <p className="text-xs text-muted-foreground">
+                        Create a workspace to organize your projects
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={createDefaultOrganization}
+                    disabled={creatingOrg}
+                  >
+                    {creatingOrg ? (
+                      <>
+                        <Spinner className="h-4 w-4 mr-2" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Workspace
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : organizations.length === 1 ? (
+                <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-muted/50">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{organizations[0].name}</span>
+                </div>
+              ) : (
+                <Select
+                  value={formData.organizationId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, organizationId: value ?? "" })
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.id ?? ""}>
+                        <div className="flex items-center gap-2">
+                          {org.logo ? (
+                            <img
+                              src={org.logo}
+                              alt={org.name}
+                              className="h-4 w-4 rounded"
+                            />
+                          ) : (
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          {org.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Projects are organized within workspaces for team collaboration
+              </p>
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="title">Title *</Label>
               <Input
@@ -102,7 +268,7 @@ export function CreateProjectDialog({
                 }
                 placeholder="My Awesome Project"
                 required
-                disabled={loading}
+                disabled={loading || !hasOrganizations}
               />
             </div>
             <div className="grid gap-2">
@@ -116,7 +282,7 @@ export function CreateProjectDialog({
                 }
                 placeholder="https://example.com"
                 required
-                disabled={loading}
+                disabled={loading || !hasOrganizations}
               />
             </div>
             <div className="grid gap-2">
@@ -128,7 +294,7 @@ export function CreateProjectDialog({
                   setFormData({ ...formData, category: e.target.value })
                 }
                 placeholder="E-commerce, Blog, etc."
-                disabled={loading}
+                disabled={loading || !hasOrganizations}
               />
             </div>
             <div className="grid gap-2">
@@ -141,7 +307,7 @@ export function CreateProjectDialog({
                 }
                 placeholder="Describe your project..."
                 rows={3}
-                disabled={loading}
+                disabled={loading || !hasOrganizations}
               />
             </div>
           </div>
@@ -157,7 +323,9 @@ export function CreateProjectDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading || !hasOrganizations || !formData.organizationId
+              }
               className="w-full sm:w-auto"
             >
               {loading ? "Creating..." : "Create Project"}

@@ -1,0 +1,196 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPortal,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Dialog as DialogPrimitive } from "@base-ui-components/react/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsPanel, TabsList, TabsTab } from "@/components/ui/tabs";
+import { Settings, Users, Key, AlertTriangle, X } from "lucide-react";
+import { GeneralSettings } from "./GeneralSettings";
+import { TeamAccess } from "./TeamAccess";
+import { ApiKeySettings } from "./ApiKeySettings";
+import { DangerZone } from "./DangerZone";
+import { cn } from "@/lib/utils";
+import type { ProjectRole } from "@/server/controllers/projects.controller";
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  link: string;
+  publicKey: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  organizationId: string | null;
+  userId: string;
+  userRole?: ProjectRole;
+}
+
+interface ProjectSettingsProps {
+  project: Project;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onProjectUpdate: (project: Project) => void;
+  onProjectDelete: () => void;
+  currentUserId: string;
+}
+
+export function ProjectSettings({
+  project,
+  open,
+  onOpenChange,
+  onProjectUpdate,
+  onProjectDelete,
+  currentUserId,
+}: ProjectSettingsProps) {
+  const [activeTab, setActiveTab] = useState<string | null>("general");
+  const userRole = project.userRole || "viewer";
+  const isOwner = userRole === "owner";
+  const canManage = isOwner || userRole === "admin";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogPortal>
+        <DialogBackdrop />
+        {/* Custom viewport for vertical centering */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <DialogPrimitive.Popup
+            className={cn(
+              "relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl border bg-popover text-popover-foreground shadow-lg",
+              "transition-all duration-200 data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95",
+            )}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b px-6 py-4">
+              <div>
+                <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+                  <Settings className="h-5 w-5" />
+                  Project Settings
+                </DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground mt-1">
+                  Manage settings for {project.title}
+                </DialogDescription>
+              </div>
+              <DialogClose className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent opacity-70 outline-none transition hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            </div>
+
+            {/* Content with Tabs */}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                orientation="vertical"
+                className="flex h-full"
+              >
+                {/* Sidebar */}
+                <div className="w-48 shrink-0 border-r bg-muted/30 p-3">
+                  <TabsList className="flex flex-col w-full bg-transparent p-0 gap-1">
+                    <TabsTab
+                      value="general"
+                      className={cn(
+                        "w-full justify-start gap-2 px-3 py-2 text-sm font-medium rounded-lg",
+                        "hover:bg-accent hover:text-accent-foreground",
+                        "data-[active]:bg-accent data-[active]:text-accent-foreground",
+                      )}
+                    >
+                      <Settings className="h-4 w-4" />
+                      General
+                    </TabsTab>
+                    <TabsTab
+                      value="team"
+                      className={cn(
+                        "w-full justify-start gap-2 px-3 py-2 text-sm font-medium rounded-lg",
+                        "hover:bg-accent hover:text-accent-foreground",
+                        "data-[active]:bg-accent data-[active]:text-accent-foreground",
+                      )}
+                    >
+                      <Users className="h-4 w-4" />
+                      Teams & Org
+                    </TabsTab>
+                    <TabsTab
+                      value="api"
+                      className={cn(
+                        "w-full justify-start gap-2 px-3 py-2 text-sm font-medium rounded-lg",
+                        "hover:bg-accent hover:text-accent-foreground",
+                        "data-[active]:bg-accent data-[active]:text-accent-foreground",
+                      )}
+                    >
+                      <Key className="h-4 w-4" />
+                      API Keys
+                    </TabsTab>
+                    {isOwner && (
+                      <TabsTab
+                        value="danger"
+                        className={cn(
+                          "w-full justify-start gap-2 px-3 py-2 text-sm font-medium rounded-lg",
+                          "hover:bg-destructive/10 hover:text-destructive",
+                          "data-[active]:bg-destructive/10 data-[active]:text-destructive",
+                          "text-destructive/80",
+                        )}
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        Danger Zone
+                      </TabsTab>
+                    )}
+                  </TabsList>
+                </div>
+
+                {/* Panel Content */}
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <ScrollArea className="h-full max-h-[calc(85vh-5rem)]">
+                    <div className="p-6">
+                      <TabsPanel value="general">
+                        <GeneralSettings
+                          project={project}
+                          onProjectUpdate={onProjectUpdate}
+                          canEdit={canManage}
+                        />
+                      </TabsPanel>
+
+                      <TabsPanel value="team">
+                        <TeamAccess
+                          project={project}
+                          currentUserId={currentUserId}
+                          userRole={userRole}
+                        />
+                      </TabsPanel>
+
+                      <TabsPanel value="api">
+                        <ApiKeySettings
+                          project={project}
+                          onProjectUpdate={onProjectUpdate}
+                          canManage={canManage}
+                        />
+                      </TabsPanel>
+
+                      {isOwner && (
+                        <TabsPanel value="danger">
+                          <DangerZone
+                            project={project}
+                            onProjectDelete={onProjectDelete}
+                          />
+                        </TabsPanel>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </Tabs>
+            </div>
+          </DialogPrimitive.Popup>
+        </div>
+      </DialogPortal>
+    </Dialog>
+  );
+}

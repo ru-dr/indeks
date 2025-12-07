@@ -122,7 +122,7 @@ export function TeamMembers({
       setIsInviteDialogOpen(false);
       setInviteEmail("");
       setInviteRole("member");
-      
+
       // Defer toast to avoid flushSync during React render
       setTimeout(() => {
         toastManager.add({
@@ -130,7 +130,7 @@ export function TeamMembers({
           title: `Invitation sent to ${emailToInvite}`,
         });
       }, 0);
-      
+
       onMembersChange?.();
     } catch {
       toastManager.add({ type: "error", title: "Something went wrong" });

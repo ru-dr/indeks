@@ -273,7 +273,13 @@ export default function SignUpPage() {
                 variant="outline"
                 className="w-full h-10 border-[#2A2A2A] hover:bg-[#0D0D0D] hover:text-white"
               >
-                <Link href={redirectUrl ? `/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}` : "/auth/sign-in"}>
+                <Link
+                  href={
+                    redirectUrl
+                      ? `/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}`
+                      : "/auth/sign-in"
+                  }
+                >
                   Already have an account?
                 </Link>
               </Button>

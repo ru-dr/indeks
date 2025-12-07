@@ -28,8 +28,8 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
           .where(
             and(
               eq(member.organizationId, body.organizationId),
-              eq(member.userId, session.user.id)
-            )
+              eq(member.userId, session.user.id),
+            ),
           )
           .limit(1);
 
@@ -96,8 +96,8 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
           .where(
             and(
               eq(member.organizationId, query.organizationId as string),
-              eq(member.userId, session.user.id)
-            )
+              eq(member.userId, session.user.id),
+            ),
           )
           .limit(1);
 
@@ -202,7 +202,8 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
           set.status = 404;
           return {
             error: "Not found",
-            message: "Project not found or you don't have permission to update it",
+            message:
+              "Project not found or you don't have permission to update it",
           };
         }
 
@@ -251,7 +252,8 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         set.status = 404;
         return {
           error: "Not found",
-          message: "Project not found or you don't have permission to delete it",
+          message:
+            "Project not found or you don't have permission to delete it",
         };
       }
 

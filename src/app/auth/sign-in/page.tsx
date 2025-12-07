@@ -170,7 +170,9 @@ function SignInForm() {
         <div className="flex flex-col items-center gap-4">
           <Spinner className="h-8 w-8" />
           {isInviteFlow && (
-            <p className="text-sm text-muted-foreground">Preparing for team invitation...</p>
+            <p className="text-sm text-muted-foreground">
+              Preparing for team invitation...
+            </p>
           )}
         </div>
       </div>
@@ -202,7 +204,8 @@ function SignInForm() {
             {justRegistered && (
               <div className="mb-4 rounded-lg bg-indeks-green/10 border border-indeks-green/20 p-3">
                 <p className="text-sm text-center text-indeks-green">
-                  Account created! Please check your email to verify your account, then sign in.
+                  Account created! Please check your email to verify your
+                  account, then sign in.
                 </p>
               </div>
             )}
@@ -315,7 +318,13 @@ function SignInForm() {
                 variant="outline"
                 className="w-full h-10 border-[#2A2A2A] hover:bg-[#0D0D0D] hover:text-white"
               >
-                <Link href={redirectUrl ? `/auth/sign-up?redirect=${encodeURIComponent(redirectUrl)}` : "/auth/sign-up"}>
+                <Link
+                  href={
+                    redirectUrl
+                      ? `/auth/sign-up?redirect=${encodeURIComponent(redirectUrl)}`
+                      : "/auth/sign-up"
+                  }
+                >
                   Create an account
                 </Link>
               </Button>

@@ -22,10 +22,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       }
 
       // Authorization check
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -69,10 +75,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -111,10 +123,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -153,10 +171,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -193,10 +217,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -235,10 +265,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -277,10 +313,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -319,10 +361,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -351,10 +399,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -384,10 +438,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -477,10 +537,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -517,10 +583,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -557,10 +629,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -597,10 +675,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -637,10 +721,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -677,10 +767,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -717,10 +813,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -757,10 +859,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -797,10 +905,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -837,10 +951,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -877,10 +997,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -917,10 +1043,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {
@@ -956,10 +1088,16 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      const hasAccess = await verifyProjectAccess(
+        authContext.user.id,
+        projectId,
+      );
       if (!hasAccess) {
         set.status = 403;
-        return { error: "Forbidden", message: "You don't have access to this project" };
+        return {
+          error: "Forbidden",
+          message: "You don't have access to this project",
+        };
       }
 
       try {

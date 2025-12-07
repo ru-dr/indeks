@@ -65,8 +65,8 @@ async function getUserProjectAccessIds(userId: string): Promise<string[]> {
     return access.map((a) => a.projectId);
   } catch (error: any) {
     // If table doesn't exist yet (during migration), return empty array
-    if (error?.cause?.code === '42P01') {
-      console.warn('project_access table does not exist yet, skipping...');
+    if (error?.cause?.code === "42P01") {
+      console.warn("project_access table does not exist yet, skipping...");
       return [];
     }
     throw error;
@@ -169,7 +169,7 @@ export const projectsController = {
 
   /**
    * Get a single project
-   * User must either own it personally, be a member of its organization, or have explicit access
+   * User must either own it (creator), be a member of its organization, or have explicit access
    */
   async getProject(userId: string, projectId: string) {
     const orgIds = await getUserOrganizationIds(userId);
@@ -194,14 +194,16 @@ export const projectsController = {
         and(
           eq(projects.id, projectId),
           or(
-            // Owner of personal project
-            and(eq(projects.userId, userId), isNull(projects.organizationId)),
+            // Project creator (owner)
+            eq(projects.userId, userId),
             // Organization member
             orgIds.length > 0
               ? inArray(projects.organizationId, orgIds)
               : undefined,
             // Has explicit access
-            accessProjectIds.includes(projectId) ? eq(projects.id, projectId) : undefined,
+            accessProjectIds.includes(projectId)
+              ? eq(projects.id, projectId)
+              : undefined,
           ),
         ),
       )
@@ -213,20 +215,19 @@ export const projectsController = {
   /**
    * Get user's role for a project
    */
-  async getUserProjectRole(userId: string, projectId: string): Promise<ProjectRole | null> {
-    // Check if user is owner
+  async getUserProjectRole(
+    userId: string,
+    projectId: string,
+  ): Promise<ProjectRole | null> {
+    // Check if user is owner (project creator)
     const [ownedProject] = await db
-      .select({ id: projects.id })
+      .select({ id: projects.id, organizationId: projects.organizationId })
       .from(projects)
-      .where(
-        and(
-          eq(projects.id, projectId),
-          eq(projects.userId, userId),
-          isNull(projects.organizationId),
-        ),
-      )
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
       .limit(1);
 
+    // For personal projects (no org), the creator is always the owner
+    // For org projects, the creator still has owner-level access
     if (ownedProject) {
       return "owner";
     }
@@ -436,7 +437,10 @@ export const projectsController = {
     }
 
     // Check if user already has access
-    const existingAccess = await this.getUserProjectRole(targetUser.id, projectId);
+    const existingAccess = await this.getUserProjectRole(
+      targetUser.id,
+      projectId,
+    );
     if (existingAccess) {
       return { error: "User already has access", status: 400 };
     }

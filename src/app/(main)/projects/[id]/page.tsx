@@ -45,6 +45,9 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { JOLT } from "@/components/projects/JOLT";
+import { ProjectSettings } from "@/components/projects/settings";
+import { useAuth } from "@/hooks/use-auth";
+import type { ProjectRole } from "@/server/controllers/projects.controller";
 
 interface Project {
   id: string;
@@ -56,6 +59,9 @@ interface Project {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  organizationId: string | null;
+  userId: string;
+  userRole?: ProjectRole;
 }
 
 interface AnalyticsSummary {
@@ -147,6 +153,7 @@ interface LocationData {
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const projectId = params.id as string;
 
   const [project, setProject] = useState<Project | null>(null);
@@ -154,6 +161,7 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [topPages, setTopPages] = useState<TopPage[]>([]);
@@ -493,7 +501,10 @@ export default function ProjectDetailPage() {
                 {syncing ? "Syncing..." : "Sync"}
               </span>
             </Button>
-            <Button className="flex-1 sm:flex-none">
+            <Button
+              className="flex-1 sm:flex-none"
+              onClick={() => setSettingsOpen(true)}
+            >
               <Settings className="sm:mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Settings</span>
             </Button>
@@ -528,7 +539,7 @@ export default function ProjectDetailPage() {
               </Button>
             </div>
           </Card>
-          <Card className="p-3 sm:p-4">
+          <Card className="p-3 sm:p-4 relative overflow-hidden">
             <div className="flex items-center gap-2 mb-2">
               <Code
                 className="h-4 w-4"
@@ -559,6 +570,12 @@ export default function ProjectDetailPage() {
                   <Copy className="h-4 w-4" />
                 )}
               </Button>
+            </div>
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+              <Badge variant="secondary" className="text-sm px-4 py-1.5">
+                Coming Soon
+              </Badge>
             </div>
           </Card>
         </div>
@@ -1046,6 +1063,16 @@ export default function ProjectDetailPage() {
           )}
         </Card>
       </div>
+
+      {/* Project Settings Modal */}
+      <ProjectSettings
+        project={project}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        onProjectUpdate={(updated) => setProject(updated)}
+        onProjectDelete={() => router.push("/projects")}
+        currentUserId={user?.id || ""}
+      />
     </DashboardLayout>
   );
 }

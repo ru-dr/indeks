@@ -17,7 +17,7 @@ export interface AuthContext {
  * Returns null if not authenticated
  */
 export async function getAuthFromRequest(
-  request: Request
+  request: Request,
 ): Promise<AuthContext | null> {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -47,7 +47,7 @@ export async function getAuthFromRequest(
  */
 export async function verifyProjectAccess(
   userId: string,
-  projectId: string
+  projectId: string,
 ): Promise<boolean> {
   return projectsController.hasProjectAccess(userId, projectId);
 }

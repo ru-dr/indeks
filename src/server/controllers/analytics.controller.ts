@@ -964,7 +964,9 @@ export const analyticsController = {
         format: "JSONEachRow",
       });
       const countData = await countResult.json<{ total: string }[]>();
-      const total = parseInt(countData[0]?.total || "0");
+      const total = parseInt(
+        (countData?.[0] as { total: string } | undefined)?.total || "0",
+      );
 
       // Get events
       const result = await clickhouse.query({
@@ -993,21 +995,23 @@ export const analyticsController = {
         format: "JSONEachRow",
       });
 
-      const events = await result.json<{
-        event_type: string;
-        url: string | null;
-        session_id: string | null;
-        user_id: string | null;
-        user_agent: string | null;
-        referrer: string | null;
-        metadata: string;
-        country: string | null;
-        city: string | null;
-        latitude: number | null;
-        longitude: number | null;
-        timestamp: string;
-        created_at: string;
-      }[]>();
+      const events = await result.json<
+        {
+          event_type: string;
+          url: string | null;
+          session_id: string | null;
+          user_id: string | null;
+          user_agent: string | null;
+          referrer: string | null;
+          metadata: string;
+          country: string | null;
+          city: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          timestamp: string;
+          created_at: string;
+        }[]
+      >();
 
       // Parse metadata JSON for each event
       const parsedEvents = events.map((event) => {
