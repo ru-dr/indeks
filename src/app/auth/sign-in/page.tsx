@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -20,8 +20,32 @@ function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const hasSignedOut = useRef(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+  const isInviteFlow = redirectUrl?.startsWith("/invite/");
+  const justRegistered = searchParams.get("registered") === "true";
+
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
+
+  // Handle initial session check and sign out if needed
+  useEffect(() => {
+    async function initialize() {
+      // Wait for session to load
+      if (sessionLoading) return;
+
+      // If user is logged in and this is an invite flow, sign them out (only once)
+      if (session?.user && isInviteFlow && !hasSignedOut.current) {
+        hasSignedOut.current = true;
+        await authClient.signOut();
+      }
+
+      setInitializing(false);
+    }
+    initialize();
+  }, [session, sessionLoading, isInviteFlow]);
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -126,7 +150,10 @@ function SignInForm() {
           type: "success",
         });
 
-        const redirectPath = searchParams.get("redirect") || "/";
+        const redirectPath = redirectUrl || "/";
+
+        // Force a refresh to ensure the session is properly recognized
+        router.refresh();
         router.push(redirectPath);
       }
     } catch {
@@ -135,6 +162,20 @@ function SignInForm() {
       setLoading(false);
     }
   };
+
+  // Show loading while initializing
+  if (initializing || sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Spinner className="h-8 w-8" />
+          {isInviteFlow && (
+            <p className="text-sm text-muted-foreground">Preparing for team invitation...</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -157,6 +198,22 @@ function SignInForm() {
                 priority
               />
             </div>
+
+            {justRegistered && (
+              <div className="mb-4 rounded-lg bg-indeks-green/10 border border-indeks-green/20 p-3">
+                <p className="text-sm text-center text-indeks-green">
+                  Account created! Please check your email to verify your account, then sign in.
+                </p>
+              </div>
+            )}
+
+            {isInviteFlow && !justRegistered && (
+              <div className="mb-4 rounded-lg bg-indeks-blue/10 border border-indeks-blue/20 p-3">
+                <p className="text-sm text-center text-indeks-blue">
+                  Sign in to accept your team invitation
+                </p>
+              </div>
+            )}
 
             <form onSubmit={handleSignIn} className="space-y-5">
               {error && (
@@ -258,7 +315,9 @@ function SignInForm() {
                 variant="outline"
                 className="w-full h-10 border-[#2A2A2A] hover:bg-[#0D0D0D] hover:text-white"
               >
-                <Link href="/auth/sign-up">Create an account</Link>
+                <Link href={redirectUrl ? `/auth/sign-up?redirect=${encodeURIComponent(redirectUrl)}` : "/auth/sign-up"}>
+                  Create an account
+                </Link>
               </Button>
             </form>
           </CardContent>

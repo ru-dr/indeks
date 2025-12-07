@@ -1,19 +1,45 @@
 import { Elysia, t } from "elysia";
 import { projectsController } from "@/server/controllers/projects.controller";
 import { auth } from "@/lib/auth";
+import { db } from "@/db/connect";
+import { member } from "@/db/schema/schema";
+import { eq, and } from "drizzle-orm";
 
 export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
 
   .post(
     "/",
-    async ({ body, request }) => {
+    async ({ body, request, set }) => {
       const session = await auth.api.getSession({ headers: request.headers });
 
       if (!session?.user) {
+        set.status = 401;
         return {
           error: "Unauthorized",
           message: "You must be logged in to create a project",
         };
+      }
+
+      // If creating in an organization, verify membership
+      if (body.organizationId) {
+        const [membership] = await db
+          .select()
+          .from(member)
+          .where(
+            and(
+              eq(member.organizationId, body.organizationId),
+              eq(member.userId, session.user.id)
+            )
+          )
+          .limit(1);
+
+        if (!membership) {
+          set.status = 403;
+          return {
+            error: "Forbidden",
+            message: "You don't have access to this organization",
+          };
+        }
       }
 
       try {
@@ -31,6 +57,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         };
       } catch (error) {
         console.error("Error creating project:", error);
+        set.status = 500;
         return {
           error: "Failed to create project",
           message: error instanceof Error ? error.message : "Unknown error",
@@ -48,10 +75,11 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     },
   )
 
-  .get("/", async ({ request, query }) => {
+  .get("/", async ({ request, query, set }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
+      set.status = 401;
       return {
         error: "Unauthorized",
         message: "You must be logged in to view projects",
@@ -61,6 +89,26 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     try {
       let projects;
       if (query?.organizationId) {
+        // Verify user is a member of this organization
+        const [membership] = await db
+          .select()
+          .from(member)
+          .where(
+            and(
+              eq(member.organizationId, query.organizationId as string),
+              eq(member.userId, session.user.id)
+            )
+          )
+          .limit(1);
+
+        if (!membership) {
+          set.status = 403;
+          return {
+            error: "Forbidden",
+            message: "You don't have access to this organization",
+          };
+        }
+
         projects = await projectsController.getOrganizationProjects(
           query.organizationId as string,
         );
@@ -74,6 +122,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       };
     } catch (error) {
       console.error("Error fetching projects:", error);
+      set.status = 500;
       return {
         error: "Failed to fetch projects",
         message: error instanceof Error ? error.message : "Unknown error",
@@ -81,10 +130,11 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
   })
 
-  .get("/:id", async ({ params, request }) => {
+  .get("/:id", async ({ params, request, set }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
+      set.status = 401;
       return {
         error: "Unauthorized",
         message: "You must be logged in to view this project",
@@ -98,18 +148,29 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       );
 
       if (!project) {
+        set.status = 404;
         return {
           error: "Not found",
           message: "Project not found",
         };
       }
 
+      // Get user's role for this project
+      const role = await projectsController.getUserProjectRole(
+        session.user.id,
+        params.id,
+      );
+
       return {
         success: true,
-        data: project,
+        data: {
+          ...project,
+          userRole: role,
+        },
       };
     } catch (error) {
       console.error("Error fetching project:", error);
+      set.status = 500;
       return {
         error: "Failed to fetch project",
         message: error instanceof Error ? error.message : "Unknown error",
@@ -119,10 +180,11 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
 
   .patch(
     "/:id",
-    async ({ params, body, request }) => {
+    async ({ params, body, request, set }) => {
       const session = await auth.api.getSession({ headers: request.headers });
 
       if (!session?.user) {
+        set.status = 401;
         return {
           error: "Unauthorized",
           message: "You must be logged in to update a project",
@@ -137,9 +199,10 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         );
 
         if (!updated) {
+          set.status = 404;
           return {
             error: "Not found",
-            message: "Project not found",
+            message: "Project not found or you don't have permission to update it",
           };
         }
 
@@ -149,6 +212,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         };
       } catch (error) {
         console.error("Error updating project:", error);
+        set.status = 500;
         return {
           error: "Failed to update project",
           message: error instanceof Error ? error.message : "Unknown error",
@@ -166,10 +230,11 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     },
   )
 
-  .delete("/:id", async ({ params, request }) => {
+  .delete("/:id", async ({ params, request, set }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
+      set.status = 401;
       return {
         error: "Unauthorized",
         message: "You must be logged in to delete a project",
@@ -183,9 +248,10 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       );
 
       if (!deleted) {
+        set.status = 404;
         return {
           error: "Not found",
-          message: "Project not found",
+          message: "Project not found or you don't have permission to delete it",
         };
       }
 
@@ -195,6 +261,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       };
     } catch (error) {
       console.error("Error deleting project:", error);
+      set.status = 500;
       return {
         error: "Failed to delete project",
         message: error instanceof Error ? error.message : "Unknown error",
@@ -202,10 +269,11 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
   })
 
-  .post("/:id/regenerate-key", async ({ params, request }) => {
+  .post("/:id/regenerate-key", async ({ params, request, set }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
+      set.status = 401;
       return {
         error: "Unauthorized",
         message: "You must be logged in to regenerate API key",
@@ -219,9 +287,10 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       );
 
       if (!updated) {
+        set.status = 404;
         return {
           error: "Not found",
-          message: "Project not found",
+          message: "Project not found or you don't have permission",
         };
       }
 
@@ -232,8 +301,197 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       };
     } catch (error) {
       console.error("Error regenerating API key:", error);
+      set.status = 500;
       return {
         error: "Failed to regenerate API key",
+        message: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  })
+
+  // Team Access Routes
+  .get("/:id/access", async ({ params, request, set }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    if (!session?.user) {
+      set.status = 401;
+      return {
+        error: "Unauthorized",
+        message: "You must be logged in",
+      };
+    }
+
+    try {
+      const accessList = await projectsController.getProjectAccessList(
+        session.user.id,
+        params.id,
+      );
+
+      if (!accessList) {
+        set.status = 404;
+        return {
+          error: "Not found",
+          message: "Project not found or you don't have access",
+        };
+      }
+
+      return {
+        success: true,
+        data: accessList,
+      };
+    } catch (error) {
+      console.error("Error fetching project access:", error);
+      set.status = 500;
+      return {
+        error: "Failed to fetch project access",
+        message: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  })
+
+  .post(
+    "/:id/access",
+    async ({ params, body, request, set }) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          error: "Unauthorized",
+          message: "You must be logged in",
+        };
+      }
+
+      try {
+        const result = await projectsController.addProjectAccess(
+          session.user.id,
+          params.id,
+          body,
+        );
+
+        if ("error" in result && "status" in result) {
+          set.status = result.status;
+          return {
+            error: result.error,
+            message: result.error,
+          };
+        }
+
+        return {
+          success: true,
+          data: result,
+          message: "Access granted successfully",
+        };
+      } catch (error) {
+        console.error("Error adding project access:", error);
+        set.status = 500;
+        return {
+          error: "Failed to add project access",
+          message: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    },
+    {
+      body: t.Object({
+        email: t.String({ format: "email" }),
+        role: t.Union([
+          t.Literal("admin"),
+          t.Literal("editor"),
+          t.Literal("viewer"),
+        ]),
+      }),
+    },
+  )
+
+  .patch(
+    "/:id/access/:accessId",
+    async ({ params, body, request, set }) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          error: "Unauthorized",
+          message: "You must be logged in",
+        };
+      }
+
+      try {
+        const result = await projectsController.updateProjectAccess(
+          session.user.id,
+          params.id,
+          params.accessId,
+          body,
+        );
+
+        if (!result || ("error" in result && "status" in result)) {
+          set.status = result && "status" in result ? result.status : 404;
+          return {
+            error: "Failed to update access",
+            message: result && "error" in result ? result.error : "Not found",
+          };
+        }
+
+        return {
+          success: true,
+          data: result,
+          message: "Access updated successfully",
+        };
+      } catch (error) {
+        console.error("Error updating project access:", error);
+        set.status = 500;
+        return {
+          error: "Failed to update project access",
+          message: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    },
+    {
+      body: t.Object({
+        role: t.Union([
+          t.Literal("admin"),
+          t.Literal("editor"),
+          t.Literal("viewer"),
+        ]),
+      }),
+    },
+  )
+
+  .delete("/:id/access/:accessId", async ({ params, request, set }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    if (!session?.user) {
+      set.status = 401;
+      return {
+        error: "Unauthorized",
+        message: "You must be logged in",
+      };
+    }
+
+    try {
+      const result = await projectsController.removeProjectAccess(
+        session.user.id,
+        params.id,
+        params.accessId,
+      );
+
+      if (!result || ("error" in result && "status" in result)) {
+        set.status = result && "status" in result ? result.status : 404;
+        return {
+          error: "Failed to remove access",
+          message: result && "error" in result ? result.error : "Not found",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Access removed successfully",
+      };
+    } catch (error) {
+      console.error("Error removing project access:", error);
+      set.status = 500;
+      return {
+        error: "Failed to remove project access",
         message: error instanceof Error ? error.message : "Unknown error",
       };
     }

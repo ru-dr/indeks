@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toastManager } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
+import { Settings, Trash2, Save } from "lucide-react";
 
 interface Organization {
   id: string;
@@ -116,95 +117,117 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Team Info */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Team Settings</h2>
+      <Card className="p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Settings className="h-5 w-5 text-[var(--color-indeks-blue)]" />
+          <h2 className="text-base sm:text-lg font-semibold">Team Settings</h2>
+        </div>
         <form onSubmit={handleUpdate} className="space-y-4">
-          <div>
-            <Label htmlFor="team-name">Team Name</Label>
-            <Input
-              id="team-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={isUpdating}
-            />
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="team-name">Team Name</Label>
+              <Input
+                id="team-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={isUpdating}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="team-slug">Team Slug</Label>
+              <Input
+                id="team-slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase())}
+                disabled={isUpdating}
+              />
+              <p className="text-xs text-muted-foreground">
+                Used in URLs and API references
+              </p>
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="team-slug">Team Slug</Label>
-            <Input
-              id="team-slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase())}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-4 border-t">
+            <Button
+              type="submit"
               disabled={isUpdating}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Used in URLs and API references
-            </p>
+              className="w-full sm:w-auto"
+            >
+              {isUpdating ? (
+                <Spinner className="h-4 w-4 mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
           </div>
-
-          <Button type="submit" disabled={isUpdating}>
-            {isUpdating ? <Spinner className="h-4 w-4 mr-2" /> : null}
-            Save Changes
-          </Button>
         </form>
       </Card>
 
       {/* Danger Zone */}
-      <Card className="p-6 border-destructive/50">
-        <h2 className="text-lg font-semibold text-destructive mb-4">
-          Danger Zone
-        </h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Once you delete a team, there is no going back. All projects and data
-          associated with this team will be permanently deleted.
-        </p>
-
-        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <AlertDialogTrigger>
-            <Button variant="destructive">Delete Team</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Team</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                team <strong>{organization.name}</strong> and all associated
-                projects and data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="px-6 py-4">
-              <Label htmlFor="delete-confirm">
-                Type <strong>{organization.name}</strong> to confirm
-              </Label>
-              <Input
-                id="delete-confirm"
-                value={deleteConfirmation}
-                onChange={(e) => setDeleteConfirmation(e.target.value)}
-                placeholder={organization.name}
-                className="mt-2"
-              />
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogClose>
-                <Button variant="outline" onClick={handleDialogClose}>
+      <Card className="p-4 sm:p-6 border-destructive/50">
+        <div className="flex items-center gap-2 mb-4">
+          <Trash2 className="h-5 w-5 text-destructive" />
+          <h2 className="text-base sm:text-lg font-semibold text-destructive">
+            Danger Zone
+          </h2>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+          <div>
+            <p className="text-sm font-medium">Delete Team</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Once you delete a team, there is no going back. All projects and
+              data associated with this team will be permanently deleted.
+            </p>
+          </div>
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground shadow-xs hover:bg-destructive/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 w-full sm:w-auto shrink-0">
+              Delete Team
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Team</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the
+                  team <strong>{organization.name}</strong> and all associated
+                  projects and data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-4 space-y-2">
+                <Label htmlFor="delete-confirm">
+                  Type <strong>{organization.name}</strong> to confirm
+                </Label>
+                <Input
+                  id="delete-confirm"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder={organization.name}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogClose
+                  className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50"
+                  onClick={handleDialogClose}
+                >
                   Cancel
+                </AlertDialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={
+                    deleteConfirmation !== organization.name || isDeleting
+                  }
+                >
+                  {isDeleting ? <Spinner className="h-4 w-4 mr-2" /> : null}
+                  Delete Team
                 </Button>
-              </AlertDialogClose>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={
-                  deleteConfirmation !== organization.name || isDeleting
-                }
-              >
-                {isDeleting ? <Spinner className="h-4 w-4 mr-2" /> : null}
-                Delete Team
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </Card>
     </div>
   );

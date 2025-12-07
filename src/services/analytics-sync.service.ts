@@ -155,8 +155,6 @@ export const analyticsSyncService = {
   },
 
   async syncProjectData(projectId: string, date: string): Promise<void> {
-    console.log(`Starting sync for project ${projectId} on ${date}`);
-
     const [syncLog] = await db
       .insert(analyticsSyncLog)
       .values({
@@ -191,7 +189,6 @@ export const analyticsSyncService = {
       const events = await eventsResult.json<EventRow>();
 
       if (events.length === 0) {
-        console.log(`No events found for project ${projectId} on ${date}`);
         await db
           .update(analyticsSyncLog)
           .set({
@@ -384,9 +381,6 @@ export const analyticsSyncService = {
           completedAt: new Date(),
         })
         .where(eq(analyticsSyncLog.id, syncLog.id));
-      console.log(
-        `Sync completed for project ${projectId}: ${events.length} events processed`,
-      );
     } catch (error) {
       console.error(`Sync failed for project ${projectId}:`, error);
       await db
@@ -1285,12 +1279,10 @@ export const analyticsSyncService = {
   },
 
   async syncAllProjects(date: string): Promise<void> {
-    console.log(`Starting sync for all projects on ${date}`);
     const activeProjects = await db
       .select({ id: projects.id })
       .from(projects)
       .where(eq(projects.isActive, true));
-    console.log(`Found ${activeProjects.length} active projects`);
     for (const project of activeProjects) {
       try {
         await this.syncProjectData(project.id, date);
@@ -1298,7 +1290,6 @@ export const analyticsSyncService = {
         console.error(`Failed to sync project ${project.id}:`, error);
       }
     }
-    console.log(`Completed sync for all projects on ${date}`);
   },
 
   async syncYesterday(): Promise<void> {

@@ -44,6 +44,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { JOLT } from "@/components/projects/JOLT";
 
 interface Project {
   id: string;
@@ -362,18 +363,12 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <Button variant="ghost" onClick={() => router.push("/projects")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Projects
-          </Button>
-          <Card className="p-12 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading project...</p>
-          </Card>
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">Loading project...</p>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
@@ -482,6 +477,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
+            <JOLT projectId={projectId} projectName={project.title} />
             <Button
               variant="outline"
               onClick={handleSync}

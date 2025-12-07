@@ -136,7 +136,7 @@ export const analyticsController = {
 
     const referrers = await db
       .select({
-        referrer: analyticsReferrers.referrer,
+        referrer: sql<string>`MIN(${analyticsReferrers.referrer})`,
         referrerDomain: analyticsReferrers.referrerDomain,
         totalVisits: sql<number>`SUM(${analyticsReferrers.visits})`,
         totalUniqueVisitors: sql<number>`SUM(${analyticsReferrers.uniqueVisitors})`,
@@ -149,7 +149,7 @@ export const analyticsController = {
           endDate ? lte(analyticsReferrers.date, endDate) : undefined,
         ),
       )
-      .groupBy(analyticsReferrers.referrer, analyticsReferrers.referrerDomain)
+      .groupBy(analyticsReferrers.referrerDomain)
       .orderBy(desc(sql`SUM(${analyticsReferrers.visits})`))
       .limit(parseInt(limit));
 
@@ -940,5 +940,107 @@ export const analyticsController = {
     );
 
     return { visitors, totals };
+  },
+
+  /**
+   * Get raw events stream from ClickHouse for JSON mode
+   */
+  async getRawEventsStream(
+    projectId: string,
+    options: { limit: number; offset: number },
+  ) {
+    const { clickhouse } = await import("@/db/clickhouse");
+    const { limit = 100, offset = 0 } = options;
+
+    try {
+      // Get total count
+      const countResult = await clickhouse.query({
+        query: `
+          SELECT count() as total
+          FROM events
+          WHERE project_id = {projectId:UUID}
+        `,
+        query_params: { projectId },
+        format: "JSONEachRow",
+      });
+      const countData = await countResult.json<{ total: string }[]>();
+      const total = parseInt(countData[0]?.total || "0");
+
+      // Get events
+      const result = await clickhouse.query({
+        query: `
+          SELECT
+            event_type,
+            url,
+            session_id,
+            user_id,
+            user_agent,
+            referrer,
+            metadata,
+            country,
+            city,
+            latitude,
+            longitude,
+            timestamp,
+            created_at
+          FROM events
+          WHERE project_id = {projectId:UUID}
+          ORDER BY timestamp DESC
+          LIMIT {limit:UInt32}
+          OFFSET {offset:UInt32}
+        `,
+        query_params: { projectId, limit, offset },
+        format: "JSONEachRow",
+      });
+
+      const events = await result.json<{
+        event_type: string;
+        url: string | null;
+        session_id: string | null;
+        user_id: string | null;
+        user_agent: string | null;
+        referrer: string | null;
+        metadata: string;
+        country: string | null;
+        city: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        timestamp: string;
+        created_at: string;
+      }[]>();
+
+      // Parse metadata JSON for each event
+      const parsedEvents = events.map((event) => {
+        let parsedMetadata = {};
+        try {
+          if (event.metadata) {
+            parsedMetadata = JSON.parse(event.metadata);
+          }
+        } catch {
+          // Keep empty object if parsing fails
+        }
+        return {
+          ...event,
+          metadata: parsedMetadata,
+        };
+      });
+
+      return {
+        events: parsedEvents,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + events.length < total,
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching raw events from ClickHouse:", error);
+      return {
+        events: [],
+        pagination: { total: 0, limit, offset, hasMore: false },
+        error: "Failed to fetch events",
+      };
+    }
   },
 };

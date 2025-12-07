@@ -22,35 +22,14 @@ import {
   Users,
   Eye,
 } from "lucide-react";
-import { Frame } from "@/components/ui/frame";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { RoleGate, AdminOnly, OwnerOnly } from "@/components/auth";
-import { useAuth, useAdminActions } from "@/hooks/use-auth";
-import { roleDisplayNames, roleHierarchy, Role } from "@/lib/permissions";
+import { RoleGate, OwnerOnly } from "@/components/auth";
+import { useAuth } from "@/hooks/use-auth";
+import { roleDisplayNames } from "@/lib/permissions";
 import { useState, useCallback, useEffect } from "react";
+import { TeamManagement } from "@/components/team/TeamManagement";
 
 export default function SettingsPage() {
-  const { user, role, isAdmin, isOwner } = useAuth();
-  const {
-    setRole,
-    removeUser,
-    isLoading: isAdminActionLoading,
-  } = useAdminActions();
-  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const { user, role } = useAuth();
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -79,12 +58,15 @@ export default function SettingsPage() {
     securityAlerts: true,
   });
 
-  const handleNotificationChange = useCallback((key: keyof typeof notifications) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  }, []);
+  const handleNotificationChange = useCallback(
+    (key: keyof typeof notifications) => {
+      setNotifications((prev) => ({
+        ...prev,
+        [key]: !prev[key],
+      }));
+    },
+    [],
+  );
 
   const apiKeys = [
     {
@@ -132,49 +114,6 @@ export default function SettingsPage() {
     { label: "Active Sessions", value: "3 devices", icon: Globe },
     { label: "Login History", value: "View recent activity", icon: Eye },
   ];
-
-  const teamMembers = [
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      role: "owner" as Role,
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "admin" as Role,
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Bob Johnson",
-      email: "bob@example.com",
-      role: "member" as Role,
-      status: "Active",
-    },
-  ];
-
-  const handleRoleChange = async (userId: string, newRole: Role) => {
-    try {
-      await setRole(userId, newRole);
-      setEditingMemberId(null);
-    } catch (error) {
-      console.error("Failed to update role:", error);
-    }
-  };
-
-  const handleRemoveMember = async (userId: string) => {
-    if (!confirm("Are you sure you want to remove this team member?")) return;
-
-    try {
-      await removeUser(userId);
-    } catch (error) {
-      console.error("Failed to remove member:", error);
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -274,7 +213,9 @@ export default function SettingsPage() {
               <label className="text-sm font-medium">Email Address</label>
               <Input
                 type="email"
-                value={profileForm.email || user?.email || "john.doe@example.com"}
+                value={
+                  profileForm.email || user?.email || "john.doe@example.com"
+                }
                 onChange={(e) =>
                   setProfileForm((prev) => ({ ...prev, email: e.target.value }))
                 }
@@ -285,7 +226,10 @@ export default function SettingsPage() {
               <Input
                 value={profileForm.company}
                 onChange={(e) =>
-                  setProfileForm((prev) => ({ ...prev, company: e.target.value }))
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    company: e.target.value,
+                  }))
                 }
               />
             </div>
@@ -294,7 +238,10 @@ export default function SettingsPage() {
               <Input
                 value={profileForm.timezone}
                 onChange={(e) =>
-                  setProfileForm((prev) => ({ ...prev, timezone: e.target.value }))
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    timezone: e.target.value,
+                  }))
                 }
               />
             </div>
@@ -367,7 +314,9 @@ export default function SettingsPage() {
                   </div>
                   <Switch
                     checked={notifications[setting.key]}
-                    onCheckedChange={() => handleNotificationChange(setting.key)}
+                    onCheckedChange={() =>
+                      handleNotificationChange(setting.key)
+                    }
                   />
                 </div>
               ))}
@@ -447,125 +396,8 @@ export default function SettingsPage() {
           </Card>
         </RoleGate>
 
-        {/* Team Members - Only visible to Admin+ */}
-        <RoleGate requiredRole="admin">
-          <Card className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-[var(--color-indeks-orange)]" />
-                <h3 className="text-base sm:text-lg font-semibold">
-                  Team Members
-                </h3>
-              </div>
-              <Button variant="outline" className="w-full sm:w-auto">
-                <Users className="h-4 w-4 mr-2" />
-                Invite Member
-              </Button>
-            </div>
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <div className="min-w-[500px] px-4 sm:px-0">
-                <Frame className="w-full">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Member</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {teamMembers.map((member) => (
-                        <TableRow key={member.id}>
-                          <TableCell>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {member.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {member.email}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {editingMemberId === member.id && isOwner ? (
-                              <Select
-                                defaultValue={member.role}
-                                onValueChange={(value) =>
-                                  handleRoleChange(member.id, value as Role)
-                                }
-                              >
-                                <SelectTrigger className="w-[120px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {roleHierarchy.map((r) => (
-                                    <SelectItem key={r} value={r}>
-                                      {roleDisplayNames[r]}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">
-                                {roleDisplayNames[member.role]}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="success" className="text-xs">
-                              {member.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-end gap-1 sm:gap-2">
-                              <OwnerOnly>
-                                {member.role !== "owner" && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 px-2 sm:px-3"
-                                    onClick={() =>
-                                      setEditingMemberId(
-                                        editingMemberId === member.id
-                                          ? null
-                                          : member.id,
-                                      )
-                                    }
-                                    disabled={isAdminActionLoading}
-                                  >
-                                    {editingMemberId === member.id
-                                      ? "Cancel"
-                                      : "Edit"}
-                                  </Button>
-                                )}
-                              </OwnerOnly>
-                              {member.role !== "owner" && (
-                                <AdminOnly>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-destructive h-8 px-2 sm:px-3"
-                                    onClick={() =>
-                                      handleRemoveMember(member.id)
-                                    }
-                                    disabled={isAdminActionLoading}
-                                  >
-                                    Remove
-                                  </Button>
-                                </AdminOnly>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Frame>
-              </div>
-            </div>
-          </Card>
-        </RoleGate>
+        {/* Team Management Section */}
+        <TeamManagement />
 
         {/* Danger Zone - Only visible to Owner */}
         <OwnerOnly>

@@ -30,6 +30,19 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthRoute && sessionToken) {
+    // Allow access to auth routes if redirecting to an invite page
+    // This lets users sign out and create a new account for team invitations
+    const redirectParam = request.nextUrl.searchParams.get("redirect");
+    if (redirectParam?.startsWith("/invite/")) {
+      return NextResponse.next();
+    }
+    
+    // Allow access if user just registered (they need to verify email)
+    const registeredParam = request.nextUrl.searchParams.get("registered");
+    if (registeredParam === "true") {
+      return NextResponse.next();
+    }
+    
     return NextResponse.redirect(new URL("/", request.url));
   }
 

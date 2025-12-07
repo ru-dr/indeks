@@ -18,7 +18,6 @@ export const testClickHouseConnection = async () => {
     });
 
     const data = await result.json();
-    console.log("ClickHouse connection successful:", data);
     return true;
   } catch (error) {
     console.error("ClickHouse connection failed:", error);
@@ -53,8 +52,6 @@ export const initializeClickHouseTables = async () => {
         TTL timestamp + INTERVAL 1 YEAR
       `,
     });
-
-    console.log("ClickHouse tables initialized successfully");
   } catch (error) {
     console.error("Failed to initialize ClickHouse tables:", error);
     throw error;

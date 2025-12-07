@@ -28,15 +28,6 @@ export const collectRoutes = new Elysia({ prefix: "/v1/collect" }).post(
       (forwardedFor ? forwardedFor.split(",")[0].trim() : null) ||
       null;
 
-    console.log("🔍 IP Headers:", {
-      cfConnectingIp,
-      trueClientIp,
-      vercelForwardedFor,
-      realIp,
-      forwardedFor,
-      resolvedIp: clientIp,
-    });
-
     try {
       const result = await collectController.collectEvents(
         apiKey,

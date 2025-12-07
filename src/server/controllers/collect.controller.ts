@@ -49,13 +49,11 @@ async function getGeoFromIp(ip: string | null): Promise<GeoData> {
     ip.startsWith("10.") ||
     ip.startsWith("172.")
   ) {
-    console.log(`🌍 Skipping geo lookup for local IP: ${ip}`);
     return defaultGeo;
   }
 
   const cached = geoCache.get(ip);
   if (cached && Date.now() - cached.timestamp < GEO_CACHE_TTL) {
-    console.log(`🌍 Using cached geo data for IP: ${ip}`);
     return cached.data;
   }
 
@@ -117,7 +115,6 @@ async function getGeoFromIp(ip: string | null): Promise<GeoData> {
 
       if (geoData.country || geoData.latitude) {
         geoCache.set(ip, { data: geoData, timestamp: Date.now() });
-        console.log(`🌍 Geo lookup success for IP ${ip}:`, geoData);
         return geoData;
       }
     } catch (error) {
@@ -167,14 +164,6 @@ export const collectController = {
     }
 
     const geoData = await getGeoFromIp(clientIp);
-
-    if (process.env.NODE_ENV === "development" && data.events.length > 0) {
-      console.log(
-        "📥 Received event from SDK:",
-        JSON.stringify(data.events[0], null, 2),
-      );
-      console.log("🌍 Geo data:", geoData);
-    }
 
     const processedEvents = data.events.map((event) => ({
       projectId: project.id,
@@ -239,23 +228,12 @@ export const collectController = {
       for (let i = 0; i < values.length; i += BATCH_SIZE) {
         const batch = values.slice(i, i + BATCH_SIZE);
 
-        if (process.env.NODE_ENV === "development" && batch.length > 0) {
-          console.log(
-            "📤 Sending to ClickHouse:",
-            JSON.stringify(batch[0], null, 2),
-          );
-        }
-
         await clickhouse.insert({
           table: "events",
           values: batch,
           format: "JSONEachRow",
         });
       }
-
-      console.log(
-        `Successfully inserted ${processedEvents.length} events for project ${project.id}`,
-      );
     } catch (storageError) {
       console.error("Failed to store events in ClickHouse:", storageError);
       console.error(

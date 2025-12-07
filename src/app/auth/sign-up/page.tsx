@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toastManager } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -20,7 +21,31 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const hasSignedOut = useRef(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+  const isInviteFlow = redirectUrl?.startsWith("/invite/");
+
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
+
+  // Handle initial session check and sign out if needed
+  useEffect(() => {
+    async function initialize() {
+      // Wait for session to load
+      if (sessionLoading) return;
+
+      // If user is logged in and this is an invite flow, sign them out (only once)
+      if (session?.user && isInviteFlow && !hasSignedOut.current) {
+        hasSignedOut.current = true;
+        await authClient.signOut();
+      }
+
+      setInitializing(false);
+    }
+    initialize();
+  }, [session, sessionLoading, isInviteFlow]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +53,9 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
+      // Sign out first to clear any existing session
+      await authClient.signOut();
+
       const { data, error } = await authClient.signUp.email({
         email,
         password,
@@ -41,13 +69,26 @@ export default function SignUpPage() {
       }
 
       if (data) {
+        // Sign out immediately after sign up to prevent auto-login with unverified email
+        await authClient.signOut();
+
         toastManager.add({
           title: "Success!",
           description:
             "Account created! Please check your email to verify your account.",
           type: "success",
         });
-        router.push(`/auth/sign-in?email=${encodeURIComponent(email)}`);
+
+        // Build the redirect URL
+        const signInUrl = new URL("/auth/sign-in", window.location.origin);
+        signInUrl.searchParams.set("email", email);
+        signInUrl.searchParams.set("registered", "true");
+        if (redirectUrl) {
+          signInUrl.searchParams.set("redirect", redirectUrl);
+        }
+
+        // Use replace to prevent back button issues
+        router.replace(signInUrl.pathname + signInUrl.search);
       }
     } catch {
       setError("An unexpected error occurred");
@@ -55,6 +96,15 @@ export default function SignUpPage() {
       setLoading(false);
     }
   };
+
+  // Show loading while initializing
+  if (initializing || sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -77,6 +127,14 @@ export default function SignUpPage() {
                 priority
               />
             </div>
+
+            {isInviteFlow && (
+              <div className="mb-4 rounded-lg bg-indeks-blue/10 border border-indeks-blue/20 p-3">
+                <p className="text-sm text-center text-indeks-blue">
+                  Create an account to accept your team invitation
+                </p>
+              </div>
+            )}
 
             <form onSubmit={handleSignUp} className="space-y-5">
               {error && (
@@ -215,7 +273,9 @@ export default function SignUpPage() {
                 variant="outline"
                 className="w-full h-10 border-[#2A2A2A] hover:bg-[#0D0D0D] hover:text-white"
               >
-                <Link href="/auth/sign-in">Already have an account?</Link>
+                <Link href={redirectUrl ? `/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}` : "/auth/sign-in"}>
+                  Already have an account?
+                </Link>
               </Button>
             </form>
           </CardContent>

@@ -81,6 +81,7 @@ export const auth = betterAuth({
     "http://10.0.0.126:3000",
     process.env.BETTER_AUTH_URL!,
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL!,
+    "https://indeks.bl0q.app",
   ].filter(Boolean),
   advanced: {
     crossSubDomainCookies: {
@@ -89,6 +90,8 @@ export const auth = betterAuth({
     defaultCookieAttributes: {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      path: "/",
     },
   },
 });

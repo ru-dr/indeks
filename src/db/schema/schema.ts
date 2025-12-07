@@ -553,3 +553,57 @@ export const analyticsVisitors = pgTable("analytics_visitors", {
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Project-specific team access (for projects outside organizations)
+export const projectAccess = pgTable(
+  "project_access",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").default("viewer").notNull(), // owner, admin, editor, viewer
+    grantedBy: text("granted_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("project_access_projectId_idx").on(table.projectId),
+    index("project_access_userId_idx").on(table.userId),
+  ],
+);
+
+export const projectAccessRelations = relations(projectAccess, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectAccess.projectId],
+    references: [projects.id],
+  }),
+  user: one(user, {
+    fields: [projectAccess.userId],
+    references: [user.id],
+  }),
+  granter: one(user, {
+    fields: [projectAccess.grantedBy],
+    references: [user.id],
+  }),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  owner: one(user, {
+    fields: [projects.userId],
+    references: [user.id],
+  }),
+  organization: one(organization, {
+    fields: [projects.organizationId],
+    references: [organization.id],
+  }),
+  accessList: many(projectAccess),
+}));

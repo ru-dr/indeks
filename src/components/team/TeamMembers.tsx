@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { toastManager } from "@/components/ui/toast";
 import { roleDisplayNames, roleHierarchy, type Role } from "@/lib/permissions";
+import { Clock, Mail, X, Users, UserPlus } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -41,9 +42,19 @@ interface TeamMember {
   };
 }
 
+interface Invitation {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  expiresAt: Date;
+  inviterId: string;
+}
+
 interface TeamMembersProps {
   organizationId: string;
   members: TeamMember[];
+  invitations?: Invitation[];
   currentUserId: string;
   currentUserRole: Role;
   onMembersChange?: () => void;
@@ -52,6 +63,7 @@ interface TeamMembersProps {
 export function TeamMembers({
   organizationId,
   members,
+  invitations: initialInvitations = [],
   currentUserId,
   currentUserRole,
   onMembersChange,
@@ -61,6 +73,16 @@ export function TeamMembers({
   const [isInviting, setIsInviting] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [cancellingInviteId, setCancellingInviteId] = useState<string | null>(
+    null,
+  );
+  const [invitations, setInvitations] =
+    useState<Invitation[]>(initialInvitations);
+
+  // Sync invitations when prop changes
+  useEffect(() => {
+    setInvitations(initialInvitations);
+  }, [initialInvitations]);
 
   const canManageMembers = ["owner", "admin"].includes(currentUserRole);
   const canChangeRoles = currentUserRole === "owner";
@@ -79,23 +101,37 @@ export function TeamMembers({
       return;
     }
 
+    const emailToInvite = inviteEmail.trim();
     setIsInviting(true);
     try {
       const { error } = await authClient.organization.inviteMember({
-        email: inviteEmail.trim(),
+        email: emailToInvite,
         role: inviteRole,
         organizationId,
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to send invitation" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to send invitation",
+        });
         return;
       }
 
-      toastManager.add({ type: "success", title: `Invitation sent to ${inviteEmail}` });
+      // Close dialog and reset form first
+      setIsInviteDialogOpen(false);
       setInviteEmail("");
       setInviteRole("member");
-      setIsInviteDialogOpen(false);
+      
+      // Defer toast to avoid flushSync during React render
+      setTimeout(() => {
+        toastManager.add({
+          type: "success",
+          title: `Invitation sent to ${emailToInvite}`,
+        });
+      }, 0);
+      
+      onMembersChange?.();
     } catch {
       toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
@@ -112,7 +148,10 @@ export function TeamMembers({
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to remove member" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to remove member",
+        });
         return;
       }
 
@@ -134,7 +173,10 @@ export function TeamMembers({
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to update role" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to update role",
+        });
         return;
       }
 
@@ -142,6 +184,30 @@ export function TeamMembers({
       onMembersChange?.();
     } catch {
       toastManager.add({ type: "error", title: "Something went wrong" });
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    setCancellingInviteId(invitationId);
+    try {
+      const { error } = await authClient.organization.cancelInvitation({
+        invitationId,
+      });
+
+      if (error) {
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to cancel invitation",
+        });
+        return;
+      }
+
+      toastManager.add({ type: "success", title: "Invitation cancelled" });
+      setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
+    } catch {
+      toastManager.add({ type: "error", title: "Something went wrong" });
+    } finally {
+      setCancellingInviteId(null);
     }
   };
 
@@ -156,18 +222,30 @@ export function TeamMembers({
     }
   };
 
+  const pendingInvitations = invitations.filter(
+    (inv) => inv.status === "pending",
+  );
+
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Team Members</h2>
+    <Card className="p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-[var(--color-indeks-green)]" />
+          <h2 className="text-base sm:text-lg font-semibold">Team Members</h2>
+        </div>
         {canManageMembers && (
           <Dialog
             open={isInviteDialogOpen}
             onOpenChange={setIsInviteDialogOpen}
           >
-            <DialogTrigger>
-              <Button size="sm">Invite Member</Button>
-            </DialogTrigger>
+            <DialogTrigger
+              render={(props) => (
+                <Button {...props} size="sm" className="w-full sm:w-auto">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite Member
+                </Button>
+              )}
+            />
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Invite Team Member</DialogTitle>
@@ -176,8 +254,8 @@ export function TeamMembers({
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleInvite}>
-                <div className="space-y-4 py-4">
-                  <div>
+                <div className="space-y-4 px-6 py-4">
+                  <div className="space-y-2">
                     <Label htmlFor="invite-email">Email Address</Label>
                     <Input
                       id="invite-email"
@@ -188,7 +266,7 @@ export function TeamMembers({
                       disabled={isInviting}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="invite-role">Role</Label>
                     <Select
                       value={inviteRole}
@@ -243,7 +321,7 @@ export function TeamMembers({
           return (
             <div
               key={member.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
@@ -255,20 +333,20 @@ export function TeamMembers({
                     </div>
                   )}
                 </Avatar>
-                <div>
-                  <p className="font-medium">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">
                     {member.user.name}
                     {isCurrentUser && (
                       <span className="text-muted-foreground ml-2">(you)</span>
                     )}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground truncate">
                     {member.user.email}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-13 sm:ml-0">
                 {canEdit ? (
                   <Select
                     value={memberRole}
@@ -316,11 +394,61 @@ export function TeamMembers({
         })}
 
         {members.length === 0 && (
-          <p className="text-muted-foreground text-center py-4">
+          <p className="text-muted-foreground text-center py-8">
             No team members yet
           </p>
         )}
       </div>
+
+      {/* Pending Invitations */}
+      {canManageMembers && pendingInvitations.length > 0 && (
+        <div className="mt-6 pt-6 border-t">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Pending Invitations ({pendingInvitations.length})
+          </h3>
+          <div className="space-y-3">
+            {pendingInvitations.map((invitation) => (
+              <div
+                key={invitation.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-muted/30 border border-dashed"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{invitation.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Invited as{" "}
+                      {roleDisplayNames[invitation.role as Role] ||
+                        invitation.role}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-13 sm:ml-0">
+                  <Badge variant="outline" className="text-xs">
+                    Pending
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCancelInvitation(invitation.id)}
+                    disabled={cancellingInviteId === invitation.id}
+                    className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
+                  >
+                    {cancellingInviteId === invitation.id ? (
+                      <Spinner className="h-4 w-4" />
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

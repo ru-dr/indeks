@@ -11,6 +11,7 @@ import { toastManager } from "@/components/ui/toast";
 type InvitationStatus =
   | "loading"
   | "pending"
+  | "needs-auth"
   | "accepted"
   | "rejected"
   | "expired"
@@ -38,17 +39,35 @@ export default function InvitePage() {
   const [status, setStatus] = useState<InvitationStatus>("loading");
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasActioned, setHasActioned] = useState(false);
 
   const { data: session, isPending: sessionLoading } = authClient.useSession();
 
   useEffect(() => {
     async function fetchInvitation() {
+      // If user is not logged in, show the "needs-auth" state
+      // The getInvitation endpoint requires authentication
+      if (!session?.user) {
+        setStatus("needs-auth");
+        return;
+      }
+
       try {
         const { data, error } = await authClient.organization.getInvitation({
           query: { id: invitationId },
         });
 
-        if (error || !data) {
+        if (error) {
+          // If unauthorized, show needs-auth instead of error
+          if (error.status === 403 || error.status === 401) {
+            setStatus("needs-auth");
+            return;
+          }
+          setStatus("error");
+          return;
+        }
+
+        if (!data) {
           setStatus("error");
           return;
         }
@@ -70,10 +89,11 @@ export default function InvitePage() {
       }
     }
 
-    if (invitationId) {
+    // Don't re-fetch if user has already accepted/rejected
+    if (invitationId && !sessionLoading && !hasActioned) {
       fetchInvitation();
     }
-  }, [invitationId]);
+  }, [invitationId, session, sessionLoading, hasActioned]);
 
   const handleAccept = async () => {
     if (!session) {
@@ -95,6 +115,7 @@ export default function InvitePage() {
         return;
       }
 
+      setHasActioned(true);
       toastManager.add({
         type: "success",
         title: `You've joined ${invitation?.organizationName ?? "the team"}!`,
@@ -116,6 +137,11 @@ export default function InvitePage() {
   };
 
   const handleReject = async () => {
+    if (!session) {
+      router.push(`/auth/sign-in?redirect=/invite/${invitationId}`);
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const { error } = await authClient.organization.rejectInvitation({
@@ -130,6 +156,7 @@ export default function InvitePage() {
         return;
       }
 
+      setHasActioned(true);
       toastManager.add({ type: "success", title: "Invitation declined" });
       setStatus("rejected");
       router.push("/");
@@ -144,6 +171,45 @@ export default function InvitePage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
+
+  // User needs to sign in first to view/accept the invitation
+  if (status === "needs-auth") {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <Card className="max-w-md p-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-semibold mb-2">
+              You&apos;ve Been Invited!
+            </h1>
+            <p className="text-muted-foreground">
+              Sign in or create an account to view and accept this team
+              invitation.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button
+              className="w-full"
+              onClick={() =>
+                router.push(`/auth/sign-in?redirect=/invite/${invitationId}`)
+              }
+            >
+              Sign In
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                router.push(`/auth/sign-up?redirect=/invite/${invitationId}`)
+              }
+            >
+              Create Account
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -209,6 +275,7 @@ export default function InvitePage() {
     );
   }
 
+  // status === "pending" - user is logged in and can see invitation details
   const roleDisplay = invitation
     ? invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)
     : "";
@@ -220,20 +287,13 @@ export default function InvitePage() {
           <h1 className="text-2xl font-semibold mb-2">
             Join {invitation?.organizationName ?? "the team"}
           </h1>
-          <p className="text-muted-foreground">
-            <strong>{invitation?.inviterEmail}</strong> has invited you to join
-            their team as a <strong>{roleDisplay}</strong>.
-          </p>
-        </div>
-
-        {!session && (
-          <div className="bg-muted/50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-muted-foreground">
-              You need to sign in or create an account to accept this
-              invitation.
+          {invitation && (
+            <p className="text-muted-foreground">
+              <strong>{invitation.inviterEmail}</strong> has invited you to join
+              their team as a <strong>{roleDisplay}</strong>.
             </p>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="flex gap-3">
           <Button
@@ -251,10 +311,8 @@ export default function InvitePage() {
           >
             {isProcessing ? (
               <Spinner className="h-4 w-4" />
-            ) : session ? (
-              "Accept Invitation"
             ) : (
-              "Sign in to Accept"
+              "Accept Invitation"
             )}
           </Button>
         </div>

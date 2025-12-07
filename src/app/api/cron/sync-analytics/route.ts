@@ -10,8 +10,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log("Starting scheduled analytics sync...");
-
     const searchParams = request.nextUrl.searchParams;
     const syncType = searchParams.get("type") || "yesterday";
 

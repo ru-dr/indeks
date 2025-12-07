@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui-components/react/alert-dialog";
 
 import { cn } from "@/lib/utils";
@@ -8,7 +9,11 @@ const AlertDialog = AlertDialogPrimitive.Root;
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
-function AlertDialogTrigger(props: AlertDialogPrimitive.Trigger.Props) {
+// AlertDialogTrigger now properly filters out asChild prop since Base UI uses render prop pattern
+function AlertDialogTrigger({
+  asChild: _asChild, // Ignore asChild - Base UI uses render prop instead
+  ...props
+}: AlertDialogPrimitive.Trigger.Props & { asChild?: boolean }) {
   return (
     <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
   );
@@ -130,7 +135,11 @@ function AlertDialogDescription({
   );
 }
 
-function AlertDialogClose(props: AlertDialogPrimitive.Close.Props) {
+// AlertDialogClose now properly filters out asChild prop since Base UI uses render prop pattern
+function AlertDialogClose({
+  asChild: _asChild, // Ignore asChild - Base UI uses render prop instead
+  ...props
+}: AlertDialogPrimitive.Close.Props & { asChild?: boolean }) {
   return (
     <AlertDialogPrimitive.Close data-slot="alert-dialog-close" {...props} />
   );

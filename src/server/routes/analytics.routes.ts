@@ -1,13 +1,32 @@
 import { Elysia, t } from "elysia";
 import { analyticsController } from "@/server/controllers/analytics.controller";
+import {
+  getAuthFromRequest,
+  verifyProjectAccess,
+  isUserAdmin,
+} from "@/server/middleware/auth.middleware";
 
 export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/overview",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate } = query;
+
+      // Auth check
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      // Authorization check
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         const result = await analyticsController.getOverview(projectId, {
@@ -40,9 +59,21 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/pages",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getTopPages(projectId, {
@@ -70,9 +101,21 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/referrers",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getReferrers(projectId, {
@@ -100,9 +143,21 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/devices",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getDevices(projectId, {
@@ -128,9 +183,21 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/events",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getEvents(projectId, {
@@ -158,9 +225,21 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/clicks",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getClickedElements(projectId, {
@@ -188,9 +267,21 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .post(
     "/:projectId/sync",
-    async ({ params, body, set }) => {
+    async ({ params, body, set, request }) => {
       const { projectId } = params;
       const { date } = body;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         const result = await analyticsController.triggerSync(projectId, date);
@@ -219,8 +310,20 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/realtime",
-    async ({ params, set }) => {
+    async ({ params, set, request }) => {
       const { projectId } = params;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getRealtimeStats(projectId);
@@ -239,8 +342,20 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/locations",
-    async ({ params, set }) => {
+    async ({ params, set, request }) => {
       const { projectId } = params;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getLocations(projectId);
@@ -259,9 +374,21 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/traffic-trend",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { months } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
 
       try {
         return await analyticsController.getTrafficTrend(projectId, months);
@@ -281,10 +408,24 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
     },
   )
 
+  // Global endpoints - Admin only
   .get(
     "/global/traffic-trend",
-    async ({ query, set }) => {
+    async ({ query, set, request }) => {
       const { months } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      // Global endpoints require admin access
+      const admin = await isUserAdmin(request);
+      if (!admin) {
+        set.status = 403;
+        return { error: "Forbidden", message: "Admin access required" };
+      }
 
       try {
         return await analyticsController.getGlobalTrafficTrend(months);
@@ -301,7 +442,20 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
     },
   )
 
-  .get("/global/locations", async ({ set }) => {
+  .get("/global/locations", async ({ set, request }) => {
+    const authContext = await getAuthFromRequest(request);
+    if (!authContext) {
+      set.status = 401;
+      return { error: "Unauthorized", message: "You must be logged in" };
+    }
+
+    // Global endpoints require admin access
+    const admin = await isUserAdmin(request);
+    if (!admin) {
+      set.status = 403;
+      return { error: "Forbidden", message: "Admin access required" };
+    }
+
     try {
       return await analyticsController.getGlobalLocations();
     } catch (error) {
@@ -313,9 +467,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/traffic-sources",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getTrafficSources(projectId, {
           startDate,
@@ -340,9 +507,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/forms",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getFormAnalytics(projectId, {
           startDate,
@@ -367,9 +547,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/engagement",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getEngagementIssues(projectId, {
           startDate,
@@ -394,9 +587,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/performance",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getPerformanceMetrics(projectId, {
           startDate,
@@ -421,9 +627,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/scroll-depth",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getScrollDepthAnalytics(projectId, {
           startDate,
@@ -448,9 +667,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/errors",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getErrorAnalytics(projectId, {
           startDate,
@@ -475,9 +707,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/media",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getMediaAnalytics(projectId, {
           startDate,
@@ -502,9 +747,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/outbound",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getOutboundAnalytics(projectId, {
           startDate,
@@ -529,9 +787,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/search",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getSearchAnalytics(projectId, {
           startDate,
@@ -556,9 +827,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/custom-events",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getCustomEvents(projectId, {
           startDate,
@@ -583,9 +867,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/sessions",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate, limit } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getSessionAnalytics(projectId, {
           startDate,
@@ -610,9 +907,22 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
 
   .get(
     "/:projectId/visitors",
-    async ({ params, query, set }) => {
+    async ({ params, query, set, request }) => {
       const { projectId } = params;
       const { startDate, endDate } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
       try {
         return await analyticsController.getVisitorAnalytics(projectId, {
           startDate,
@@ -629,6 +939,45 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       query: t.Object({
         startDate: t.Optional(t.String()),
         endDate: t.Optional(t.String()),
+      }),
+    },
+  )
+
+  // Raw events stream for JSON mode
+  .get(
+    "/:projectId/events-stream",
+    async ({ params, query, set, request }) => {
+      const { projectId } = params;
+      const { limit = "100", offset = "0" } = query;
+
+      const authContext = await getAuthFromRequest(request);
+      if (!authContext) {
+        set.status = 401;
+        return { error: "Unauthorized", message: "You must be logged in" };
+      }
+
+      const hasAccess = await verifyProjectAccess(authContext.user.id, projectId);
+      if (!hasAccess) {
+        set.status = 403;
+        return { error: "Forbidden", message: "You don't have access to this project" };
+      }
+
+      try {
+        return await analyticsController.getRawEventsStream(projectId, {
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+        });
+      } catch (error) {
+        console.error("Error fetching raw events:", error);
+        set.status = 500;
+        return { error: "Failed to fetch raw events" };
+      }
+    },
+    {
+      params: t.Object({ projectId: t.String() }),
+      query: t.Object({
+        limit: t.Optional(t.String()),
+        offset: t.Optional(t.String()),
       }),
     },
   );

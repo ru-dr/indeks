@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { toastManager } from "@/components/ui/toast";
+import { Users } from "lucide-react";
 
 interface CreateTeamFormProps {
   onSuccess?: (team: { id: string; name: string; slug: string }) => void;
@@ -53,7 +54,10 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       });
 
       if (slugCheck?.status === false) {
-        toastManager.add({ type: "error", title: "This slug is already taken" });
+        toastManager.add({
+          type: "error",
+          title: "This slug is already taken",
+        });
         return;
       }
 
@@ -63,12 +67,18 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to create team" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to create team",
+        });
         return;
       }
 
       if (data) {
-        toastManager.add({ type: "success", title: "Team created successfully!" });
+        toastManager.add({
+          type: "success",
+          title: "Team created successfully!",
+        });
 
         await authClient.organization.setActive({
           organizationId: data.id,
@@ -84,10 +94,13 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   };
 
   return (
-    <Card className="p-6">
-      <h2 className="text-lg font-semibold mb-4">Create a Team</h2>
+    <Card className="p-4 sm:p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Users className="h-5 w-5 text-[var(--color-indeks-blue)]" />
+        <h2 className="text-base sm:text-lg font-semibold">Create a Team</h2>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="team-name">Team Name</Label>
           <Input
             id="team-name"
@@ -98,7 +111,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="team-slug">Team Slug</Label>
           <Input
             id="team-slug"
@@ -107,15 +120,17 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             placeholder="my-awesome-team"
             disabled={isLoading}
           />
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground">
             Used in URLs and API references
           </p>
         </div>
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? <Spinner className="h-4 w-4 mr-2" /> : null}
-          Create Team
-        </Button>
+        <div className="pt-2">
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? <Spinner className="h-4 w-4 mr-2" /> : null}
+            Create Team
+          </Button>
+        </div>
       </form>
     </Card>
   );
