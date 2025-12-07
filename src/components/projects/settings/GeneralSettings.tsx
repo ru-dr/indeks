@@ -134,11 +134,11 @@ export function GeneralSettings({
           </Label>
           <Select
             value={category}
-            onValueChange={setCategory}
+            onValueChange={(value) => setCategory(value ?? "")}
             disabled={!canEdit || saving}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a category" />
+              <SelectValue>Select a category</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {CATEGORIES.map((cat) => (

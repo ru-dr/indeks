@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   authClient,
   useActiveOrganization,
@@ -97,9 +98,11 @@ export function TeamSwitcher() {
               )}
             >
               {org.logo && (
-                <img
+                <Image
                   src={org.logo}
                   alt={org.name}
+                  width={20}
+                  height={20}
                   className="h-5 w-5 rounded mr-2"
                 />
               )}

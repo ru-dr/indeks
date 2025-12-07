@@ -135,8 +135,8 @@ export function DangerZone({ project, onProjectDelete }: DangerZoneProps) {
                 <AlertTriangle className="h-5 w-5" />
                 Delete Project Permanently?
               </AlertDialogTitle>
-              <AlertDialogDescription asChild>
-                <div className="space-y-4">
+              <AlertDialogDescription>
+                <div className="space-y-4 text-left">
                   <p>
                     This will permanently delete{" "}
                     <span className="font-semibold text-foreground">

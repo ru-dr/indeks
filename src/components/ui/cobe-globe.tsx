@@ -586,12 +586,8 @@ function RealtimeGlobeInner({
 } & Omit<CobeProps, "variant" | "realtimeMarkers">) {
   const [markers, setMarkers] = useState<RealtimeMarker[]>([]);
   const [activeVisitors, setActiveVisitors] = useState(0);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(true);
   const markersRef = useRef<RealtimeMarker[]>([]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!mounted) return;

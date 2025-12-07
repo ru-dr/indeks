@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -238,9 +239,11 @@ export function CreateProjectDialog({
                       <SelectItem key={org.id} value={org.id ?? ""}>
                         <div className="flex items-center gap-2">
                           {org.logo ? (
-                            <img
+                            <Image
                               src={org.logo}
                               alt={org.name}
+                              width={16}
+                              height={16}
                               className="h-4 w-4 rounded"
                             />
                           ) : (

@@ -41,11 +41,7 @@ function ToastProvider({
   position = "bottom-right",
   ...props
 }: ToastProviderProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [mounted, setMounted] = useState(true);
 
   if (!mounted) {
     return <>{children}</>;
@@ -178,11 +174,7 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
 }
 
 function AnchoredToastProvider({ children, ...props }: Toast.Provider.Props) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [mounted, setMounted] = useState(true);
 
   if (!mounted) {
     return <>{children}</>;

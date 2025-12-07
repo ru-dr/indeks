@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -326,7 +327,12 @@ export function TeamMembers({
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   {member.user.image ? (
-                    <img src={member.user.image} alt={member.user.name} />
+                    <Image
+                      src={member.user.image}
+                      alt={member.user.name}
+                      width={40}
+                      height={40}
+                    />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center bg-primary text-primary-foreground text-sm font-medium">
                       {member.user.name?.charAt(0)?.toUpperCase() || "?"}

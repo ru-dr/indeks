@@ -33,22 +33,11 @@ export default function SettingsPage() {
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
-    name: "",
-    email: "",
+    name: user?.name || "John Doe",
+    email: user?.email || "john.doe@example.com",
     company: "Los Pollos Hermanos",
     timezone: "UTC-05:00 Eastern Time",
   });
-
-  // Initialize form with user data when available
-  useEffect(() => {
-    if (user) {
-      setProfileForm((prev) => ({
-        ...prev,
-        name: user.name || "John Doe",
-        email: user.email || "john.doe@example.com",
-      }));
-    }
-  }, [user]);
 
   // Notification settings state
   const [notifications, setNotifications] = useState({

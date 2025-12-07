@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -13,6 +13,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -22,8 +23,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
+  // Close sidebar on pathname change
   useEffect(() => {
-    setSidebarOpen(false);
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      setSidebarOpen(false);
+    }
   }, [pathname]);
 
   useEffect(() => {

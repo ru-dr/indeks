@@ -58,19 +58,33 @@ export function usePermission(permissions: PermissionCheck) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!role) {
-      setHasPermission(false);
-      setIsLoading(false);
-      return;
-    }
+    let isMounted = true;
 
-    const result = authClient.admin.checkRolePermission({
-      permissions: permissions as Record<string, string[]>,
-      role,
-    });
+    const checkPermissions = async () => {
+      if (!role) {
+        if (isMounted) {
+          setHasPermission(false);
+          setIsLoading(false);
+        }
+        return;
+      }
 
-    setHasPermission(result);
-    setIsLoading(false);
+      const result = authClient.admin.checkRolePermission({
+        permissions: permissions as Record<string, string[]>,
+        role,
+      });
+
+      if (isMounted) {
+        setHasPermission(result);
+        setIsLoading(false);
+      }
+    };
+
+    checkPermissions();
+
+    return () => {
+      isMounted = false;
+    };
   }, [role, permissions]);
 
   return { hasPermission, isLoading };

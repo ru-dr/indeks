@@ -533,15 +533,24 @@ export function GlobalSearch({
     handleCreateProject,
   ]);
 
+  const prevOpenRef = useRef(open);
+  const prevQueryRef = useRef(query);
+
+  // Reset state when dialog closes
   useEffect(() => {
-    if (!open) {
+    if (prevOpenRef.current && !open) {
       setQuery("");
       setSelectedIndex(0);
     }
+    prevOpenRef.current = open;
   }, [open]);
 
+  // Reset selected index when query changes
   useEffect(() => {
-    setSelectedIndex(0);
+    if (prevQueryRef.current !== query) {
+      prevQueryRef.current = query;
+      setSelectedIndex(0);
+    }
   }, [query]);
 
   const sharedProps = {
