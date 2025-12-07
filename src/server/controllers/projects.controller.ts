@@ -21,14 +21,14 @@ interface UpdateProjectDto {
 
 interface AddProjectAccessDto {
   email: string;
-  role: "admin" | "editor" | "viewer";
+  role: "admin" | "member" | "viewer";
 }
 
 interface UpdateProjectAccessDto {
-  role: "admin" | "editor" | "viewer";
+  role: "admin" | "member" | "viewer";
 }
 
-export type ProjectRole = "owner" | "admin" | "editor" | "viewer";
+export type ProjectRole = "owner" | "admin" | "member" | "viewer";
 
 function generatePublicKey(): string {
   const randomPart = randomBytes(16).toString("hex");
@@ -64,7 +64,6 @@ async function getUserProjectAccessIds(userId: string): Promise<string[]> {
 
     return access.map((a) => a.projectId);
   } catch (error: any) {
-    // If table doesn't exist yet (during migration), return empty array
     if (error?.cause?.code === "42P01") {
       console.warn("project_access table does not exist yet, skipping...");
       return [];
@@ -125,13 +124,12 @@ export const projectsController = {
       .from(projects)
       .where(
         or(
-          // Personal projects owned by user
           and(eq(projects.userId, userId), isNull(projects.organizationId)),
-          // Organization projects
+
           orgIds.length > 0
             ? inArray(projects.organizationId, orgIds)
             : undefined,
-          // Projects with granted access
+
           accessProjectIds.length > 0
             ? inArray(projects.id, accessProjectIds)
             : undefined,
@@ -194,13 +192,12 @@ export const projectsController = {
         and(
           eq(projects.id, projectId),
           or(
-            // Project creator (owner)
             eq(projects.userId, userId),
-            // Organization member
+
             orgIds.length > 0
               ? inArray(projects.organizationId, orgIds)
               : undefined,
-            // Has explicit access
+
             accessProjectIds.includes(projectId)
               ? eq(projects.id, projectId)
               : undefined,
@@ -219,20 +216,16 @@ export const projectsController = {
     userId: string,
     projectId: string,
   ): Promise<ProjectRole | null> {
-    // Check if user is owner (project creator)
     const [ownedProject] = await db
       .select({ id: projects.id, organizationId: projects.organizationId })
       .from(projects)
       .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
       .limit(1);
 
-    // For personal projects (no org), the creator is always the owner
-    // For org projects, the creator still has owner-level access
     if (ownedProject) {
       return "owner";
     }
 
-    // Check organization membership
     const [project] = await db
       .select({ organizationId: projects.organizationId })
       .from(projects)
@@ -256,7 +249,6 @@ export const projectsController = {
       }
     }
 
-    // Check explicit project access
     const [access] = await db
       .select({ role: projectAccess.role })
       .from(projectAccess)
@@ -300,7 +292,6 @@ export const projectsController = {
       return null;
     }
 
-    // Get project owner
     const [project] = await db
       .select({
         userId: projects.userId,
@@ -325,7 +316,6 @@ export const projectsController = {
       grantedAt: Date | null;
     }[] = [];
 
-    // Add owner
     const [owner] = await db
       .select({
         id: user.id,
@@ -350,7 +340,6 @@ export const projectsController = {
       });
     }
 
-    // If organization project, add org members
     if (project.organizationId) {
       const orgMembers = await db
         .select({
@@ -381,7 +370,6 @@ export const projectsController = {
       }
     }
 
-    // Add explicit project access
     const explicitAccess = await db
       .select({
         id: projectAccess.id,
@@ -425,7 +413,6 @@ export const projectsController = {
       return { error: "Forbidden", status: 403 };
     }
 
-    // Find user by email
     const [targetUser] = await db
       .select({ id: user.id })
       .from(user)
@@ -436,7 +423,6 @@ export const projectsController = {
       return { error: "User not found", status: 404 };
     }
 
-    // Check if user already has access
     const existingAccess = await this.getUserProjectRole(
       targetUser.id,
       projectId,
@@ -445,7 +431,6 @@ export const projectsController = {
       return { error: "User already has access", status: 400 };
     }
 
-    // Add access
     const [access] = await db
       .insert(projectAccess)
       .values({
@@ -539,7 +524,6 @@ export const projectsController = {
   },
 
   async deleteProject(userId: string, projectId: string) {
-    // Only owner can delete
     const role = await this.getUserProjectRole(userId, projectId);
     if (role !== "owner") {
       return null;

@@ -727,7 +727,6 @@ export function JOLT({ projectId, projectName }: JOLTProps) {
     return `${hash}_${eventIdCounterRef.current}`;
   }, []);
 
-  // Core fetch function - merges new events without clearing existing ones
   const doFetch = useCallback(
     async (isInitial = false) => {
       try {
@@ -743,19 +742,16 @@ export function JOLT({ projectId, projectName }: JOLTProps) {
           const newEventsMap = new Map<string, TrackedEvent>();
 
           for (const event of result.events as RawEvent[]) {
-            // Skip events before clear timestamp
             if (clearedAt && event.timestamp <= clearedAt) continue;
 
             const contentHash = hashEvent(event);
 
-            // Check if we already have this event
             if (seenEventsRef.current.has(contentHash)) {
               newEventsMap.set(
                 contentHash,
                 seenEventsRef.current.get(contentHash)!,
               );
             } else {
-              // New event
               const trackedEvent: TrackedEvent = {
                 ...event,
                 _uniqueId: generateEventId(event),
@@ -765,7 +761,6 @@ export function JOLT({ projectId, projectName }: JOLTProps) {
             }
           }
 
-          // Convert map to array, maintaining order from API (newest first typically)
           const eventsArray = Array.from(newEventsMap.values());
           setEvents(eventsArray);
         }
@@ -783,19 +778,16 @@ export function JOLT({ projectId, projectName }: JOLTProps) {
     [projectId, generateEventId],
   );
 
-  // Auto-fetch that respects isPaused
   const fetchEvents = useCallback(async () => {
     if (isPaused) return;
     await doFetch(false);
   }, [isPaused, doFetch]);
 
-  // Manual refresh - always works regardless of pause state
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await doFetch(false);
   }, [doFetch]);
 
-  // Handle visibility change - refresh when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && isOpen && !isPaused) {
@@ -808,16 +800,13 @@ export function JOLT({ projectId, projectName }: JOLTProps) {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [isOpen, isPaused, doFetch]);
 
-  // Main polling effect
   useEffect(() => {
     if (isOpen) {
-      // Initial fetch
       if (!hasLoadedOnce.current) {
         setInitialLoading(true);
         doFetch(true);
       }
 
-      // Set up polling interval
       if (!isPaused) {
         intervalRef.current = setInterval(() => {
           if (document.visibilityState === "visible") {
@@ -835,7 +824,6 @@ export function JOLT({ projectId, projectName }: JOLTProps) {
     }
   }, [isOpen, isPaused, doFetch, fetchEvents]);
 
-  // Reset state when dialog closes
   useEffect(() => {
     if (!isOpen) {
       hasLoadedOnce.current = false;
@@ -843,7 +831,6 @@ export function JOLT({ projectId, projectName }: JOLTProps) {
     }
   }, [isOpen]);
 
-  // Countdown timer effect
   useEffect(() => {
     if (isOpen && !isPaused) {
       countdownRef.current = setInterval(() => {

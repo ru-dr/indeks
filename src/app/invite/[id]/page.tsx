@@ -17,7 +17,6 @@ type InvitationStatus =
   | "expired"
   | "error";
 
-// Match the actual API response structure
 interface InvitationData {
   id: string;
   email: string;
@@ -45,8 +44,6 @@ export default function InvitePage() {
 
   useEffect(() => {
     async function fetchInvitation() {
-      // If user is not logged in, show the "needs-auth" state
-      // The getInvitation endpoint requires authentication
       if (!session?.user) {
         setStatus("needs-auth");
         return;
@@ -58,7 +55,6 @@ export default function InvitePage() {
         });
 
         if (error) {
-          // If unauthorized, show needs-auth instead of error
           if (error.status === 403 || error.status === 401) {
             setStatus("needs-auth");
             return;
@@ -89,7 +85,6 @@ export default function InvitePage() {
       }
     }
 
-    // Don't re-fetch if user has already accepted/rejected
     if (invitationId && !sessionLoading && !hasActioned) {
       fetchInvitation();
     }
@@ -175,7 +170,6 @@ export default function InvitePage() {
     );
   }
 
-  // User needs to sign in first to view/accept the invitation
   if (status === "needs-auth") {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
@@ -275,7 +269,6 @@ export default function InvitePage() {
     );
   }
 
-  // status === "pending" - user is logged in and can see invitation details
   const roleDisplay = invitation
     ? invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)
     : "";

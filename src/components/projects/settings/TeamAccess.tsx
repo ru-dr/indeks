@@ -35,7 +35,6 @@ import {
   Mail,
   Building2,
   Settings,
-  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import type { Project } from "./ProjectSettings";
@@ -59,7 +58,7 @@ interface TeamAccessProps {
 }
 
 const ROLE_OPTIONS: {
-  value: "admin" | "editor" | "viewer";
+  value: "admin" | "member" | "viewer";
   label: string;
   icon: React.ReactNode;
   description: string;
@@ -71,8 +70,8 @@ const ROLE_OPTIONS: {
     description: "Can manage project settings and team members",
   },
   {
-    value: "editor",
-    label: "Editor",
+    value: "member",
+    label: "member",
     icon: <Edit3 className="h-4 w-4" />,
     description: "Can view and export analytics data",
   },
@@ -92,7 +91,7 @@ export function TeamAccess({
   const [members, setMembers] = useState<AccessMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "editor" | "viewer">(
+  const [inviteRole, setInviteRole] = useState<"admin" | "member" | "viewer">(
     "viewer",
   );
   const [inviting, setInviting] = useState(false);
@@ -193,7 +192,7 @@ export function TeamAccess({
 
   const handleRoleChange = async (
     accessId: string,
-    newRole: "admin" | "editor" | "viewer",
+    newRole: "admin" | "member" | "viewer",
   ) => {
     try {
       const response = await fetch(
@@ -321,7 +320,7 @@ export function TeamAccess({
                       <Select
                         value={inviteRole}
                         onValueChange={(v) =>
-                          setInviteRole(v as "admin" | "editor" | "viewer")
+                          setInviteRole(v as "admin" | "member" | "viewer")
                         }
                         disabled={inviting}
                       >
@@ -371,7 +370,7 @@ export function TeamAccess({
         <div className="space-y-2">
           {members.map((member) => {
             const isCurrentUser = member.userId === currentUserId;
-            // For org projects, only allow modifications through org settings
+
             const canModify =
               canManageTeam &&
               !member.isOwner &&
@@ -416,7 +415,7 @@ export function TeamAccess({
                       onValueChange={(v) =>
                         handleRoleChange(
                           member.id,
-                          v as "admin" | "editor" | "viewer",
+                          v as "admin" | "member" | "viewer",
                         )
                       }
                     >

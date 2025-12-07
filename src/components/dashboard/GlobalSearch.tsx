@@ -536,7 +536,6 @@ export function GlobalSearch({
   const prevOpenRef = useRef(open);
   const prevQueryRef = useRef(query);
 
-  // Reset state when dialog closes
   useEffect(() => {
     if (prevOpenRef.current && !open) {
       setQuery("");
@@ -545,7 +544,6 @@ export function GlobalSearch({
     prevOpenRef.current = open;
   }, [open]);
 
-  // Reset selected index when query changes
   useEffect(() => {
     if (prevQueryRef.current !== query) {
       prevQueryRef.current = query;

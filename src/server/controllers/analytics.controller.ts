@@ -522,6 +522,52 @@ export const analyticsController = {
     };
   },
 
+  /**
+   * Get traffic trend for all projects the user has access to
+   */
+  async getUserTrafficTrend(userId: string, months: string = "8") {
+    const monthCount = parseInt(months);
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - monthCount);
+    const startDateStr = startDate.toISOString().split("T")[0];
+
+    
+    const userProjects = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(eq(projects.userId, userId));
+
+    const projectIds = userProjects.map((p) => p.id);
+
+    if (projectIds.length === 0) {
+      return { dailyData: [] };
+    }
+
+    
+    const dailyData = await db
+      .select({
+        date: analyticsDaily.date,
+        totalCount: sql<number>`SUM(${analyticsDaily.pageViews}) + SUM(${analyticsDaily.sessions})`,
+      })
+      .from(analyticsDaily)
+      .where(
+        and(
+          gte(analyticsDaily.date, startDateStr),
+          sql`${analyticsDaily.projectId} IN ${projectIds}`,
+        ),
+      )
+      .groupBy(analyticsDaily.date)
+      .orderBy(analyticsDaily.date);
+
+    return {
+      dailyData: dailyData.map((d) => ({
+        date: d.date,
+        count: d.totalCount || 0,
+      })),
+    };
+  },
+
   async getGlobalLocations() {
     const { clickhouse } = await import("@/db/clickhouse");
 
@@ -953,7 +999,6 @@ export const analyticsController = {
     const { limit = 100, offset = 0 } = options;
 
     try {
-      // Get total count
       const countResult = await clickhouse.query({
         query: `
           SELECT count() as total
@@ -968,7 +1013,6 @@ export const analyticsController = {
         (Array.isArray(countData) ? countData[0]?.total : "0") || "0",
       );
 
-      // Get events
       const result = await clickhouse.query({
         query: `
           SELECT
@@ -1014,16 +1058,13 @@ export const analyticsController = {
       const eventsData = await result.json<RawEvent>();
       const events = Array.isArray(eventsData) ? eventsData : [];
 
-      // Parse metadata JSON for each event
       const parsedEvents = events.map((event) => {
         let parsedMetadata = {};
         try {
           if (event.metadata) {
             parsedMetadata = JSON.parse(event.metadata);
           }
-        } catch {
-          // Keep empty object if parsing fails
-        }
+        } catch {}
         return {
           ...event,
           metadata: parsedMetadata,

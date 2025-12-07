@@ -34,6 +34,9 @@ export const authClient = createAuthClient({
         member: roles.member,
         viewer: roles.viewer,
       },
+      teams: {
+        enabled: true,
+      },
     }),
   ],
 });

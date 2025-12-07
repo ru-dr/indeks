@@ -30,13 +30,10 @@ function SignUpForm() {
 
   const { data: session, isPending: sessionLoading } = authClient.useSession();
 
-  // Handle initial session check and sign out if needed
   useEffect(() => {
     async function initialize() {
-      // Wait for session to load
       if (sessionLoading) return;
 
-      // If user is logged in and this is an invite flow, sign them out (only once)
       if (session?.user && isInviteFlow && !hasSignedOut.current) {
         hasSignedOut.current = true;
         await authClient.signOut();
@@ -53,7 +50,6 @@ function SignUpForm() {
     setLoading(true);
 
     try {
-      // Sign out first to clear any existing session
       await authClient.signOut();
 
       const { data, error } = await authClient.signUp.email({
@@ -69,7 +65,6 @@ function SignUpForm() {
       }
 
       if (data) {
-        // Sign out immediately after sign up to prevent auto-login with unverified email
         await authClient.signOut();
 
         toastManager.add({
@@ -79,7 +74,6 @@ function SignUpForm() {
           type: "success",
         });
 
-        // Build the redirect URL
         const signInUrl = new URL("/auth/sign-in", window.location.origin);
         signInUrl.searchParams.set("email", email);
         signInUrl.searchParams.set("registered", "true");
@@ -87,7 +81,6 @@ function SignUpForm() {
           signInUrl.searchParams.set("redirect", redirectUrl);
         }
 
-        // Use replace to prevent back button issues
         router.replace(signInUrl.pathname + signInUrl.search);
       }
     } catch {
@@ -97,7 +90,6 @@ function SignUpForm() {
     }
   };
 
-  // Show loading while initializing
   if (initializing || sessionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

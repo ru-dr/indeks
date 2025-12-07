@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { projectsRoutes } from "./routes/projects.routes";
 import { collectRoutes } from "./routes/collect.routes";
 import { analyticsRoutes } from "./routes/analytics.routes";
+import { profileRoutes } from "./routes/profile.routes";
+import { organizationRoutes } from "./routes/organization.routes";
 import { initializeClickHouseTables } from "@/db/clickhouse";
 
 initializeClickHouseTables().catch((error) => {
@@ -49,6 +51,8 @@ export const app = new Elysia({ prefix: "/api" })
   }))
 
   .all("/auth/*", ({ request }) => auth.handler(request))
+  .use(profileRoutes)
+  .use(organizationRoutes)
   .use(projectsRoutes)
   .use(collectRoutes)
   .use(analyticsRoutes);

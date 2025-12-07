@@ -30,12 +30,15 @@ interface Organization {
   createdAt: Date;
 }
 
-interface TeamSettingsProps {
+interface OrganizationSettingsProps {
   organization: Organization;
   onUpdate?: () => void;
 }
 
-export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
+export function OrganizationSettings({
+  organization,
+  onUpdate,
+}: OrganizationSettingsProps) {
   const router = useRouter();
   const [name, setName] = useState(organization.name);
   const [slug, setSlug] = useState(organization.slug);
@@ -48,7 +51,10 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
     e.preventDefault();
 
     if (!name.trim()) {
-      toastManager.add({ type: "error", title: "Team name is required" });
+      toastManager.add({
+        type: "error",
+        title: "Organization name is required",
+      });
       return;
     }
 
@@ -64,12 +70,12 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
       if (error) {
         toastManager.add({
           type: "error",
-          title: error.message || "Failed to update team",
+          title: error.message || "Failed to update organization",
         });
         return;
       }
 
-      toastManager.add({ type: "success", title: "Team updated" });
+      toastManager.add({ type: "success", title: "Organization updated" });
       onUpdate?.();
     } catch {
       toastManager.add({ type: "error", title: "Something went wrong" });
@@ -82,7 +88,7 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
     if (deleteConfirmation !== organization.name) {
       toastManager.add({
         type: "error",
-        title: "Please type the team name to confirm",
+        title: "Please type the organization name to confirm",
       });
       return;
     }
@@ -96,12 +102,12 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
       if (error) {
         toastManager.add({
           type: "error",
-          title: error.message || "Failed to delete team",
+          title: error.message || "Failed to delete organization",
         });
         return;
       }
 
-      toastManager.add({ type: "success", title: "Team deleted" });
+      toastManager.add({ type: "success", title: "Organization deleted" });
       setIsDialogOpen(false);
       router.push("/projects");
     } catch {
@@ -118,18 +124,20 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Team Info */}
+      {/* Organization Info */}
       <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <Settings className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-          <h2 className="text-base sm:text-lg font-semibold">Team Settings</h2>
+          <h2 className="text-base sm:text-lg font-semibold">
+            Organization Settings
+          </h2>
         </div>
         <form onSubmit={handleUpdate} className="space-y-4">
           <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="team-name">Team Name</Label>
+              <Label htmlFor="org-name">Organization Name</Label>
               <Input
-                id="team-name"
+                id="org-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isUpdating}
@@ -137,9 +145,9 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="team-slug">Team Slug</Label>
+              <Label htmlFor="org-slug">Organization Slug</Label>
               <Input
-                id="team-slug"
+                id="org-slug"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value.toLowerCase())}
                 disabled={isUpdating}
@@ -177,23 +185,24 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
           <div>
-            <p className="text-sm font-medium">Delete Team</p>
+            <p className="text-sm font-medium">Delete Organization</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Once you delete a team, there is no going back. All projects and
-              data associated with this team will be permanently deleted.
+              Once you delete an organization, there is no going back. All
+              projects and data associated with this organization will be
+              permanently deleted.
             </p>
           </div>
           <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground shadow-xs hover:bg-destructive/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 w-full sm:w-auto shrink-0">
-              Delete Team
+              Delete Organization
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Team</AlertDialogTitle>
+                <AlertDialogTitle>Delete Organization</AlertDialogTitle>
                 <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete the
-                  team <strong>{organization.name}</strong> and all associated
-                  projects and data.
+                  organization <strong>{organization.name}</strong> and all
+                  associated projects and data.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="py-4 space-y-2">
@@ -222,7 +231,7 @@ export function TeamSettings({ organization, onUpdate }: TeamSettingsProps) {
                   }
                 >
                   {isDeleting ? <Spinner className="h-4 w-4 mr-2" /> : null}
-                  Delete Team
+                  Delete Organization
                 </Button>
               </AlertDialogFooter>
             </AlertDialogContent>

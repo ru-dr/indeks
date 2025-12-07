@@ -51,10 +51,8 @@ export function CreateProjectDialog({
     refetch: refetchOrgs,
   } = useListOrganizations();
 
-  // Get first org ID safely
   const firstOrgId = organizations?.[0]?.id ?? "";
 
-  // Auto-select organization if user has exactly one
   useEffect(() => {
     if (organizations?.length === 1 && !formData.organizationId && firstOrgId) {
       setFormData((prev) => ({ ...prev, organizationId: firstOrgId }));
@@ -75,10 +73,8 @@ export function CreateProjectDialog({
         throw new Error(result.error.message || "Failed to create workspace");
       }
 
-      // Refetch organizations
       await refetchOrgs();
 
-      // Set the new org as selected
       const newOrgId = result.data?.id;
       if (newOrgId) {
         setFormData((prev) => ({
@@ -100,7 +96,6 @@ export function CreateProjectDialog({
     setLoading(true);
     setError(null);
 
-    // If no organization exists, create a default one first
     if (!organizations || organizations.length === 0) {
       setError("Please create a workspace first to organize your projects");
       setLoading(false);
@@ -232,7 +227,14 @@ export function CreateProjectDialog({
                   disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select a workspace">
+                      {formData.organizationId && (
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          {organizations.find((org) => org.id === formData.organizationId)?.name}
+                        </div>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {organizations.map((org) => (

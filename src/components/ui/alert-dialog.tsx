@@ -9,9 +9,8 @@ const AlertDialog = AlertDialogPrimitive.Root;
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
-// AlertDialogTrigger now properly filters out asChild prop since Base UI uses render prop pattern
 function AlertDialogTrigger({
-  asChild: _asChild, // Ignore asChild - Base UI uses render prop instead
+  asChild: _asChild,
   ...props
 }: AlertDialogPrimitive.Trigger.Props & { asChild?: boolean }) {
   return (
@@ -42,7 +41,7 @@ function AlertDialogViewport({
   return (
     <AlertDialogPrimitive.Viewport
       className={cn(
-        "fixed inset-0 z-50 grid grid-rows-[1fr_auto] justify-items-center pt-6 sm:grid-rows-[1fr_auto_3fr] sm:p-4",
+        "fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6",
         className,
       )}
       data-slot="alert-dialog-viewport"
@@ -61,7 +60,7 @@ function AlertDialogPopup({
       <AlertDialogViewport>
         <AlertDialogPrimitive.Popup
           className={cn(
-            "sm:-translate-y-[calc(1.25rem*var(--nested-dialogs))] relative row-start-2 grid max-h-full w-full min-w-0 border-t bg-popover bg-clip-padding text-popover-foreground opacity-[calc(1-0.1*var(--nested-dialogs))] shadow-lg transition-[scale,opacity,translate] duration-200 ease-in-out will-change-transform before:pointer-events-none before:absolute before:inset-0 before:shadow-[0_1px_--theme(--color-black/4%)] data-nested-dialog-open:origin-top data-ending-style:opacity-0 data-starting-style:opacity-0 max-sm:opacity-[calc(1-min(var(--nested-dialogs),1))] max-sm:data-ending-style:translate-y-4 max-sm:data-starting-style:translate-y-4 max-sm:before:hidden sm:max-w-lg sm:data-nested:data-ending-style:translate-y-8 sm:data-nested:data-starting-style:translate-y-8 sm:scale-[calc(1-0.1*var(--nested-dialogs))] sm:rounded-2xl sm:border sm:data-ending-style:scale-98 sm:data-starting-style:scale-98 sm:before:rounded-[calc(var(--radius-2xl)-1px)] dark:bg-clip-border dark:before:shadow-[0_-1px_--theme(--color-white/8%)]",
+            "relative flex max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] min-h-0 w-full min-w-0 max-w-[calc(100vw-2rem)] flex-col rounded-2xl border bg-popover bg-clip-padding text-popover-foreground shadow-lg transition-all duration-200 data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95 sm:max-w-lg dark:bg-clip-border",
             className,
           )}
           data-slot="alert-dialog-popup"
@@ -79,10 +78,23 @@ function AlertDialogHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 p-6 not-has-[+[data-slot=alert-dialog-footer]]:pb-4 text-center max-sm:pb-4 sm:text-left",
+        "flex flex-col gap-2 px-6 pt-6 pb-4 text-center sm:text-left",
         className,
       )}
       data-slot="alert-dialog-header"
+      {...props}
+    />
+  );
+}
+
+function AlertDialogBody({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn("px-6 pb-4", className)}
+      data-slot="alert-dialog-body"
       {...props}
     />
   );
@@ -135,9 +147,8 @@ function AlertDialogDescription({
   );
 }
 
-// AlertDialogClose now properly filters out asChild prop since Base UI uses render prop pattern
 function AlertDialogClose({
-  asChild: _asChild, // Ignore asChild - Base UI uses render prop instead
+  asChild: _asChild,
   ...props
 }: AlertDialogPrimitive.Close.Props & { asChild?: boolean }) {
   return (
@@ -154,6 +165,7 @@ export {
   AlertDialogPopup,
   AlertDialogPopup as AlertDialogContent,
   AlertDialogHeader,
+  AlertDialogBody,
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,

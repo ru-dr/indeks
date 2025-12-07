@@ -6,103 +6,251 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectPopup,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   User,
-  Shield,
   Bell,
   Key,
   Lock,
-  Copy,
-  RefreshCw,
   Trash2,
   Save,
-  ChevronRight,
   Download,
-  Globe,
-  Users,
-  Eye,
+  Check,
+  Calendar,
+  Link as LinkIcon,
+  AtSign,
+  Camera,
 } from "lucide-react";
-import { RoleGate, OwnerOnly } from "@/components/auth";
+import { OwnerOnly } from "@/components/auth";
 import { useAuth } from "@/hooks/use-auth";
+import { authClient } from "@/lib/auth-client";
 import { roleDisplayNames } from "@/lib/permissions";
 import { useState, useCallback, useEffect } from "react";
-import { TeamManagement } from "@/components/team/TeamManagement";
+import { OrganizationManagement } from "@/components/organization/OrganizationManagement";
+import { toastManager } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+
+const timezones = [
+  { value: "UTC-05:00", label: "Eastern Time (UTC-05:00)" },
+  { value: "UTC-06:00", label: "Central Time (UTC-06:00)" },
+  { value: "UTC-07:00", label: "Mountain Time (UTC-07:00)" },
+  { value: "UTC-08:00", label: "Pacific Time (UTC-08:00)" },
+  { value: "UTC+00:00", label: "UTC (UTC+00:00)" },
+  { value: "UTC+01:00", label: "Central European (UTC+01:00)" },
+  { value: "UTC+05:30", label: "India Standard Time (UTC+05:30)" },
+  { value: "UTC+09:00", label: "Japan Standard Time (UTC+09:00)" },
+];
 
 export default function SettingsPage() {
   const { user, role } = useAuth();
+  const { data: organizations } = authClient.useListOrganizations();
+  const { data: activeOrg } = authClient.useActiveOrganization();
 
-  // Profile form state
+  const [isLoading, setIsLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [profileForm, setProfileForm] = useState({
-    name: user?.name || "John Doe",
-    email: user?.email || "john.doe@example.com",
-    company: "Los Pollos Hermanos",
-    timezone: "UTC-05:00 Eastern Time",
+    name: "",
+    email: "",
+    image: "",
+    username: "",
+    displayUsername: "",
+    organizationId: "",
   });
-
-  // Notification settings state
+  const [originalProfile, setOriginalProfile] = useState({
+    name: "",
+    image: "",
+    username: "",
+    displayUsername: "",
+  });
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [showImageUrlInput, setShowImageUrlInput] = useState(false);
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     productUpdates: true,
     weeklyReports: false,
     securityAlerts: true,
+    usageAlerts: true,
+    orgActivity: false,
   });
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Fetch profile from our custom API
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setProfileLoading(true);
+      try {
+        const response = await fetch("/api/v1/profile", {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            const profile = result.data;
+            setProfileForm((prev) => ({
+              ...prev,
+              name: profile.name || "",
+              email: profile.email || "",
+              image: profile.image || "",
+              username: profile.username || "",
+              displayUsername: profile.displayUsername || "",
+            }));
+            setOriginalProfile({
+              name: profile.name || "",
+              image: profile.image || "",
+              username: profile.username || "",
+              displayUsername: profile.displayUsername || "",
+            });
+            setImageUrlInput(profile.image || "");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (activeOrg) {
+      setProfileForm((prev) => ({
+        ...prev,
+        organizationId: activeOrg.id,
+      }));
+    }
+  }, [activeOrg]);
 
   const handleNotificationChange = useCallback(
     (key: keyof typeof notifications) => {
-      setNotifications((prev) => ({
-        ...prev,
-        [key]: !prev[key],
-      }));
+      setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
     },
-    [],
+    []
   );
 
-  const apiKeys = [
-    {
-      name: "Production API Key",
-      key: "ind_prod_••••••••••••4a2f",
-      created: "Created Jan 15, 2025",
-      lastUsed: "Last used 2 hours ago",
-      status: "Active",
-    },
-    {
-      name: "Development API Key",
-      key: "ind_dev_••••••••••••8b9c",
-      created: "Created Oct 8, 2024",
-      lastUsed: "Last used 3 days ago",
-      status: "Active",
-    },
-  ];
+  const handleImageUrlChange = (url: string) => {
+    setImageUrlInput(url);
+    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+      setProfileForm((prev) => ({ ...prev, image: url }));
+    } else if (!url) {
+      setProfileForm((prev) => ({ ...prev, image: "" }));
+    }
+  };
 
-  const notificationSettings = [
-    {
-      key: "emailNotifications" as const,
-      label: "Email notifications",
-      description: "Receive email updates about your account",
-    },
-    {
-      key: "productUpdates" as const,
-      label: "Product updates",
-      description: "News about new features and improvements",
-    },
-    {
-      key: "weeklyReports" as const,
-      label: "Weekly reports",
-      description: "Weekly analytics summary via email",
-    },
-    {
-      key: "securityAlerts" as const,
-      label: "Security alerts",
-      description: "Notifications about security events",
-    },
-  ];
+  const handleApplyImageUrl = () => {
+    if (imageUrlInput && (imageUrlInput.startsWith("http://") || imageUrlInput.startsWith("https://"))) {
+      setProfileForm((prev) => ({ ...prev, image: imageUrlInput }));
+      setShowImageUrlInput(false);
+      toastManager.add({ type: "success", title: "Image URL applied" });
+    } else if (!imageUrlInput) {
+      setProfileForm((prev) => ({ ...prev, image: "" }));
+      setShowImageUrlInput(false);
+    } else {
+      toastManager.add({ type: "error", title: "Please enter a valid URL starting with http:// or https://" });
+    }
+  };
 
-  const securitySettings = [
-    { label: "Two-Factor Authentication", value: "Enabled", icon: Lock },
-    { label: "Password", value: "Last changed 45 days ago", icon: Key },
-    { label: "Active Sessions", value: "3 devices", icon: Globe },
-    { label: "Login History", value: "View recent activity", icon: Eye },
-  ];
+  const handleOrganizationChange = async (orgId: string) => {
+    try {
+      await authClient.organization.setActive({ organizationId: orgId });
+      setProfileForm((prev) => ({ ...prev, organizationId: orgId }));
+      toastManager.add({ type: "success", title: "Organization updated" });
+    } catch {
+      toastManager.add({ type: "error", title: "Failed to update organization" });
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setIsLoading(true);
+    try {
+      const updateData: { name?: string; image?: string; username?: string; displayUsername?: string } = {};
+
+      if (profileForm.name !== originalProfile.name) {
+        updateData.name = profileForm.name;
+      }
+
+      if (profileForm.image !== originalProfile.image) {
+        updateData.image = profileForm.image;
+      }
+
+      if (profileForm.username !== originalProfile.username) {
+        updateData.username = profileForm.username;
+        updateData.displayUsername = profileForm.displayUsername || profileForm.username;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        toastManager.add({ type: "info", title: "No changes to save" });
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch("/api/v1/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(updateData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toastManager.add({ type: "error", title: result.message || "Failed to update profile" });
+        return;
+      }
+
+      setOriginalProfile({
+        name: profileForm.name,
+        image: profileForm.image,
+        username: profileForm.username,
+        displayUsername: profileForm.displayUsername,
+      });
+
+      toastManager.add({ type: "success", title: "Profile updated successfully" });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toastManager.add({ type: "error", title: "Something went wrong" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const userInitials = profileForm.name
+    ? profileForm.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "U";
+
+  const hasChanges =
+    profileForm.name !== originalProfile.name ||
+    profileForm.image !== originalProfile.image ||
+    profileForm.username !== originalProfile.username;
 
   return (
     <DashboardLayout>
@@ -110,326 +258,424 @@ export default function SettingsPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Settings
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Manage your account settings and preferences
+              Manage your account, security, and preferences
             </p>
           </div>
           {role && (
             <Badge variant="outline" className="w-fit">
-              Role: {roleDisplayNames[role]}
+              {roleDisplayNames[role]}
             </Badge>
           )}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
-          <Card className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Team Members
-                </p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
-                  3
-                </h3>
+        {/* Profile Section - Reorganized */}
+        <Card className="p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg bg-[var(--color-indeks-blue)]/10">
+              <User className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-blue)]" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold">Profile Information</h3>
+              <p className="text-xs text-muted-foreground">Update your personal details and avatar</p>
+            </div>
+          </div>
+
+          {profileLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Spinner className="h-8 w-8" />
+            </div>
+          ) : (
+            <>
+              {/* Profile Header - Avatar and Basic Info */}
+              <div className="flex flex-col lg:flex-row gap-6 pb-6 border-b">
+                {/* Avatar Section */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
+                      {profileForm.image ? (
+                        <AvatarImage src={profileForm.image} alt={profileForm.name || "Profile"} />
+                      ) : null}
+                      <AvatarFallback className="text-2xl sm:text-3xl bg-[var(--color-indeks-blue)]/10 text-[var(--color-indeks-blue)]">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={() => setShowImageUrlInput(!showImageUrlInput)}
+                      className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {showImageUrlInput && (
+                    <div className="w-full max-w-xs space-y-2">
+                      <Input
+                        value={imageUrlInput}
+                        onChange={(e) => handleImageUrlChange(e.target.value)}
+                        placeholder="https://example.com/avatar.jpg"
+                        className="text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowImageUrlInput(false)}>
+                          Cancel
+                        </Button>
+                        <Button size="sm" className="flex-1" onClick={handleApplyImageUrl}>
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Profile Summary */}
+                <div className="flex-1 flex flex-col justify-center text-center lg:text-left">
+                  <h2 className="text-2xl sm:text-3xl font-bold">{profileForm.name || "Your Name"}</h2>
+                  {profileForm.username && (
+                    <p className="text-base text-muted-foreground flex items-center justify-center lg:justify-start gap-1 mt-1">
+                      <AtSign className="h-4 w-4" />
+                      {profileForm.displayUsername || profileForm.username}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-1">{profileForm.email}</p>
+                  <div className="flex items-center justify-center lg:justify-start gap-2 mt-3">
+                    {user?.emailVerified && (
+                      <Badge variant="success" className="text-xs">
+                        <Check className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    )}
+                    {user?.createdAt && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Member since{" "}
+                        {new Date(user.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
+
+              {/* Profile Form */}
+              <div className="pt-6">
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Edit Profile</h4>
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input
+                      id="name"
+                      value={profileForm.name}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter your name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="username"
+                        value={profileForm.username}
+                        onChange={(e) => {
+                          const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                          setProfileForm((prev) => ({
+                            ...prev,
+                            username: value,
+                            displayUsername: e.target.value.replace(/[^a-zA-Z0-9_]/g, ""),
+                          }));
+                        }}
+                        placeholder="username"
+                        className="pl-9"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Letters, numbers, and underscores only</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input id="email" type="email" value={profileForm.email} disabled className="bg-muted" />
+                    <p className="text-xs text-muted-foreground">Email cannot be changed here</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="organization">Active Organization</Label>
+                    {(() => {
+                      const orgItems = organizations?.map((org) => ({ label: org.name, value: org.id })) || [];
+                      const selectedOrg = orgItems.find((item) => item.value === profileForm.organizationId) || null;
+                      return (
+                        <Select
+                          value={selectedOrg}
+                          onValueChange={(val: { label: string; value: string } | null) => {
+                            if (val) handleOrganizationChange(val.value);
+                          }}
+                        >
+                          <SelectTrigger id="organization">
+                            <SelectValue placeholder="Select organization" />
+                          </SelectTrigger>
+                          <SelectPopup alignItemWithTrigger={false}>
+                            {orgItems.map((item) => (
+                              <SelectItem key={item.value} value={item}>
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectPopup>
+                        </Select>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 mt-6 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        name: originalProfile.name,
+                        image: originalProfile.image,
+                        username: originalProfile.username,
+                        displayUsername: originalProfile.displayUsername,
+                      }));
+                      setImageUrlInput(originalProfile.image);
+                    }}
+                    disabled={!hasChanges}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={isLoading || !hasChanges}
+                    className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)] w-full sm:w-auto"
+                  >
+                    {isLoading ? <Spinner className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </Card>
+
+        {/* Security Section */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
+              <div className="p-2 rounded-lg bg-[var(--color-indeks-green)]/10">
+                <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-green)]" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold">Two-Factor Authentication</h3>
+                <p className="text-xs text-muted-foreground">Extra security for your account</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">
+                  {twoFactorEnabled ? "2FA is enabled" : "Enable 2FA"}
+                </span>
+                <Switch checked={twoFactorEnabled} onCheckedChange={setTwoFactorEnabled} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {twoFactorEnabled
+                  ? "Your account is protected with two-factor authentication"
+                  : "Add an extra layer of security to your account"}
+              </p>
             </div>
           </Card>
+
           <Card className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  API Keys
-                </p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
-                  2
-                </h3>
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
+              <div className="p-2 rounded-lg bg-[var(--color-indeks-blue)]/10">
+                <Key className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-blue)]" />
               </div>
-              <Key className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold">Password</h3>
+                <p className="text-xs text-muted-foreground">Manage your password</p>
+              </div>
             </div>
-          </Card>
-          <Card className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Active Sessions
-                </p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
-                  3
-                </h3>
+
+            <div className="p-4 rounded-lg border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Change Password</span>
+                <Badge variant="outline" className="text-xs">Set</Badge>
               </div>
-              <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
-            </div>
-          </Card>
-          <Card className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  2FA Status
-                </p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
-                  On
-                </h3>
-              </div>
-              <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-orange)]" />
+              <p className="text-xs text-muted-foreground mb-3">
+                Update your password to keep your account secure
+              </p>
+              <Button variant="outline" size="sm" className="w-full">
+                Change Password
+              </Button>
             </div>
           </Card>
         </div>
 
-        {/* Profile Section */}
+        {/* Notifications Section */}
         <Card className="p-4 sm:p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <User className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-            <h3 className="text-base sm:text-lg font-semibold">
-              Profile Information
-            </h3>
-          </div>
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Full Name</label>
-              <Input
-                value={profileForm.name || user?.name || "John Doe"}
-                onChange={(e) =>
-                  setProfileForm((prev) => ({ ...prev, name: e.target.value }))
-                }
-              />
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <div className="p-2 rounded-lg bg-[var(--color-indeks-yellow)]/10">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-yellow)]" />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email Address</label>
-              <Input
-                type="email"
-                value={
-                  profileForm.email || user?.email || "john.doe@example.com"
-                }
-                onChange={(e) =>
-                  setProfileForm((prev) => ({ ...prev, email: e.target.value }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Company</label>
-              <Input
-                value={profileForm.company}
-                onChange={(e) =>
-                  setProfileForm((prev) => ({
-                    ...prev,
-                    company: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Time Zone</label>
-              <Input
-                value={profileForm.timezone}
-                onChange={(e) =>
-                  setProfileForm((prev) => ({
-                    ...prev,
-                    timezone: e.target.value,
-                  }))
-                }
-              />
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold">Notification Preferences</h3>
+              <p className="text-xs text-muted-foreground">Choose what updates you receive</p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 mt-4 sm:mt-6 pt-4 border-t">
-            <Button variant="outline" className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)] w-full sm:w-auto">
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
+
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-muted-foreground">Email Notifications</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="text-sm font-medium">Account Updates</p>
+                    <p className="text-xs text-muted-foreground">Receive updates about your account</p>
+                  </div>
+                  <Switch
+                    checked={notifications.emailNotifications}
+                    onCheckedChange={() => handleNotificationChange("emailNotifications")}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="text-sm font-medium">Security Alerts</p>
+                    <p className="text-xs text-muted-foreground">Important security notifications</p>
+                  </div>
+                  <Switch
+                    checked={notifications.securityAlerts}
+                    onCheckedChange={() => handleNotificationChange("securityAlerts")}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="text-sm font-medium">Weekly Reports</p>
+                    <p className="text-xs text-muted-foreground">Analytics summary via email</p>
+                  </div>
+                  <Switch
+                    checked={notifications.weeklyReports}
+                    onCheckedChange={() => handleNotificationChange("weeklyReports")}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-muted-foreground">Product & Activity</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="text-sm font-medium">Product Updates</p>
+                    <p className="text-xs text-muted-foreground">News about new features</p>
+                  </div>
+                  <Switch
+                    checked={notifications.productUpdates}
+                    onCheckedChange={() => handleNotificationChange("productUpdates")}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="text-sm font-medium">Usage Alerts</p>
+                    <p className="text-xs text-muted-foreground">When approaching limits</p>
+                  </div>
+                  <Switch
+                    checked={notifications.usageAlerts}
+                    onCheckedChange={() => handleNotificationChange("usageAlerts")}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="text-sm font-medium">Organization Activity</p>
+                    <p className="text-xs text-muted-foreground">Updates from organization members</p>
+                  </div>
+                  <Switch
+                    checked={notifications.orgActivity}
+                    onCheckedChange={() => handleNotificationChange("orgActivity")}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
 
-        {/* Security & Notifications */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-          <Card className="p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-5 w-5 text-[var(--color-indeks-green)]" />
-              <h3 className="text-base sm:text-lg font-semibold">Security</h3>
-            </div>
-            <div className="space-y-3">
-              {securitySettings.map((setting, index) => {
-                const Icon = setting.icon;
-                return (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{setting.label}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {setting.value}
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-            <Button variant="outline" className="w-full mt-4">
-              Change Password
-            </Button>
-          </Card>
-
-          <Card className="p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Bell className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-              <h3 className="text-base sm:text-lg font-semibold">
-                Notifications
-              </h3>
-            </div>
-            <div className="space-y-4">
-              {notificationSettings.map((setting) => (
-                <div
-                  key={setting.key}
-                  className="flex items-start justify-between py-3 border-b last:border-0"
-                >
-                  <div className="flex-1 pr-4">
-                    <p className="text-sm font-medium">{setting.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {setting.description}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications[setting.key]}
-                    onCheckedChange={() =>
-                      handleNotificationChange(setting.key)
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* API Keys - Only visible to Admin+ */}
-        <RoleGate requiredRole="admin">
-          <Card className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Key className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                <h3 className="text-base sm:text-lg font-semibold">API Keys</h3>
-              </div>
-              <Button variant="outline" className="w-full sm:w-auto">
-                <Key className="h-4 w-4 mr-2" />
-                Create New Key
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {apiKeys.map((api, index) => (
-                <div
-                  key={index}
-                  className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <h4 className="font-medium text-sm sm:text-base">
-                          {api.name}
-                        </h4>
-                        <Badge variant="success" className="text-xs">
-                          {api.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <code className="text-xs bg-muted px-2 sm:px-3 py-1 sm:py-1.5 rounded font-mono truncate max-w-[200px] sm:max-w-none">
-                          {api.key}
-                        </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 shrink-0"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground flex-wrap">
-                        <span>{api.created}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span>{api.lastUsed}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 sm:flex-none"
-                      >
-                        <RefreshCw className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Rotate</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive hover:bg-destructive/10 flex-1 sm:flex-none"
-                      >
-                        <Trash2 className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Revoke</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </RoleGate>
-
-        {/* Team Management Section */}
-        <TeamManagement />
+        {/* Organization Management Section */}
+        <OrganizationManagement />
 
         {/* Danger Zone - Only visible to Owner */}
         <OwnerOnly>
           <Card className="p-4 sm:p-6 border-destructive/50">
-            <div className="flex items-center gap-2 mb-4">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              <h3 className="text-base sm:text-lg font-semibold text-destructive">
-                Danger Zone
-              </h3>
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold text-destructive">Danger Zone</h3>
+                <p className="text-xs text-muted-foreground">Irreversible actions</p>
+              </div>
             </div>
+
             <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
                 <div>
                   <p className="text-sm font-medium">Export Account Data</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Download all your data in JSON format
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                >
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
                 <div>
-                  <p className="text-sm font-medium text-destructive">
-                    Delete Account
-                  </p>
+                  <p className="text-sm font-medium text-destructive">Delete Account</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Permanently delete your account and all data
                   </p>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                >
-                  Delete
-                </Button>
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground shadow-xs hover:bg-destructive/90 w-full sm:w-auto">
+                    Delete
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your account and
+                        remove all your data from our servers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogBody className="space-y-2">
+                      <Label htmlFor="delete-confirm">
+                        Type <strong>delete my account</strong> to confirm
+                      </Label>
+                      <Input
+                        id="delete-confirm"
+                        value={deleteConfirmation}
+                        onChange={(e) => setDeleteConfirmation(e.target.value)}
+                        placeholder="delete my account"
+                      />
+                    </AlertDialogBody>
+                    <AlertDialogFooter>
+                      <AlertDialogClose
+                        onClick={() => {
+                          setDeleteConfirmation("");
+                          setIsDeleteDialogOpen(false);
+                        }}
+                        className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground"
+                      >
+                        Cancel
+                      </AlertDialogClose>
+                      <Button variant="destructive" disabled={deleteConfirmation !== "delete my account"}>
+                        Delete Account
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </Card>

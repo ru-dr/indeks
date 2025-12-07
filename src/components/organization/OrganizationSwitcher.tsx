@@ -17,7 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-export function TeamSwitcher() {
+export function OrganizationSwitcher() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const { data: activeOrg, isPending: activeOrgLoading } =
@@ -27,7 +27,7 @@ export function TeamSwitcher() {
 
   const isLoading = activeOrgLoading || orgsLoading;
 
-  const handleSwitchTeam = async (orgId: string) => {
+  const handleSwitchOrganization = async (orgId: string) => {
     await authClient.organization.setActive({
       organizationId: orgId,
     });
@@ -50,9 +50,9 @@ export function TeamSwitcher() {
         variant="outline"
         size="sm"
         className="w-full justify-start"
-        onClick={() => router.push("/settings?tab=team")}
+        onClick={() => router.push("/settings")}
       >
-        Create Team
+        Create Organization
       </Button>
     );
   }
@@ -67,7 +67,7 @@ export function TeamSwitcher() {
           className="w-full justify-between"
         >
           <span className="truncate">
-            {activeOrg?.name || "Select team..."}
+            {activeOrg?.name || "Select organization..."}
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +91,7 @@ export function TeamSwitcher() {
           {organizations.map((org) => (
             <button
               key={org.id}
-              onClick={() => handleSwitchTeam(org.id)}
+              onClick={() => handleSwitchOrganization(org.id)}
               className={cn(
                 "flex w-full items-center px-3 py-2 text-sm hover:bg-muted transition-colors",
                 activeOrg?.id === org.id && "bg-muted",
@@ -130,7 +130,7 @@ export function TeamSwitcher() {
           <button
             onClick={() => {
               setOpen(false);
-              router.push("/settings?tab=team");
+              router.push("/settings");
             }}
             className="flex w-full items-center px-3 py-2 text-sm hover:bg-muted transition-colors rounded"
           >
@@ -149,7 +149,7 @@ export function TeamSwitcher() {
               <path d="M5 12h14" />
               <path d="M12 5v14" />
             </svg>
-            Create Team
+            Create Organization
           </button>
         </div>
       </PopoverContent>

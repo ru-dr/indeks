@@ -5,6 +5,7 @@ import { db } from "@/db/connect";
 import * as schema from "@/db/schema/schema";
 import { emailService } from "@/lib/email";
 import { ac, roles } from "@/lib/permissions";
+import { nanoid } from "nanoid";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -40,7 +41,11 @@ export const auth = betterAuth({
         admin: roles.admin,
         owner: roles.owner,
       },
-      defaultRole: "viewer",
+      // Default role is NOT set here - this is for SYSTEM admin role
+      // The user.role field is for system-level permissions only
+      // "admin" in user.role means SYSTEM ADMIN (platform admin of Indeks)
+      // Regular users should have no system role (null/undefined)
+      defaultRole: false, // Don't set a default system role
     }),
     organization({
       ac,
@@ -49,6 +54,12 @@ export const auth = betterAuth({
         admin: roles.admin,
         member: roles.member,
         viewer: roles.viewer,
+      },
+
+      
+      teams: {
+        enabled: true,
+        maximumTeams: 10,
       },
 
       creatorRole: "owner",
@@ -74,6 +85,50 @@ export const auth = betterAuth({
       },
     }),
   ],
+  // Auto-create a default organization for new users
+  user: {
+    additionalFields: {},
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          // Create a default "Personal" organization for new users
+          const slug = `personal-${user.id.slice(0, 8)}`;
+          const orgId = nanoid();
+
+          try {
+            // Create the organization
+            await db.insert(schema.organization).values({
+              id: orgId,
+              name: `${user.name || "Personal"}'s Workspace`,
+              slug,
+              createdAt: new Date(),
+            });
+
+            // Add the user as owner of the organization
+            await db.insert(schema.member).values({
+              id: nanoid(),
+              organizationId: orgId,
+              userId: user.id,
+              role: "owner", // User is OWNER of their default org
+              createdAt: new Date(),
+            });
+
+            console.log(
+              `Created default organization "${slug}" for user ${user.id}`
+            );
+          } catch (error) {
+            console.error(
+              `Failed to create default organization for user ${user.id}:`,
+              error
+            );
+            // Don't throw - user creation should still succeed
+          }
+        },
+      },
+    },
+  },
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL!,
   trustedOrigins: [

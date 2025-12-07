@@ -23,7 +23,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  // Close sidebar on pathname change
   useEffect(() => {
     if (prevPathnameRef.current !== pathname) {
       prevPathnameRef.current = pathname;

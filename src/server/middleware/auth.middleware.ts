@@ -53,7 +53,15 @@ export async function verifyProjectAccess(
 }
 
 /**
- * Check if user is an admin (for global endpoints)
+ * Check if user is a SYSTEM ADMIN (Indeks platform admin)
+ * This is different from org-level admin roles.
+ * System admins have platform-wide access to all organizations and global analytics.
+ *
+ * NOTE: The user.role field is for system-level permissions:
+ * - "admin" = System admin (platform admin of Indeks)
+ * - null/undefined = Regular user
+ *
+ * Org-level roles (owner, admin, member, viewer) are stored in the member table.
  */
 export async function isUserAdmin(request: Request): Promise<boolean> {
   try {
@@ -63,3 +71,8 @@ export async function isUserAdmin(request: Request): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Alias for clarity - checks if user is a system admin
+ */
+export const isSystemAdmin = isUserAdmin;

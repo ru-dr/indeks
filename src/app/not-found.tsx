@@ -64,12 +64,6 @@ export default function NotFound() {
             >
               Settings
             </Link>
-            <Link
-              href="/profile"
-              className="text-xs px-3 py-1.5 rounded-full border hover:bg-accent transition-colors"
-            >
-              Profile
-            </Link>
           </div>
         </div>
       </div>

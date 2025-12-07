@@ -20,7 +20,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         };
       }
 
-      // If creating in an organization, verify membership
       if (body.organizationId) {
         const [membership] = await db
           .select()
@@ -89,7 +88,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     try {
       let projects;
       if (query?.organizationId) {
-        // Verify user is a member of this organization
         const [membership] = await db
           .select()
           .from(member)
@@ -155,7 +153,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         };
       }
 
-      // Get user's role for this project
       const role = await projectsController.getUserProjectRole(
         session.user.id,
         params.id,
@@ -311,7 +308,6 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
   })
 
-  // Team Access Routes
   .get("/:id/access", async ({ params, request, set }) => {
     const session = await auth.api.getSession({ headers: request.headers });
 
@@ -398,7 +394,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         email: t.String({ format: "email" }),
         role: t.Union([
           t.Literal("admin"),
-          t.Literal("editor"),
+          t.Literal("member"),
           t.Literal("viewer"),
         ]),
       }),
@@ -452,7 +448,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
       body: t.Object({
         role: t.Union([
           t.Literal("admin"),
-          t.Literal("editor"),
+          t.Literal("member"),
           t.Literal("viewer"),
         ]),
       }),

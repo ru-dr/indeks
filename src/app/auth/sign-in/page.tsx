@@ -30,13 +30,10 @@ function SignInForm() {
 
   const { data: session, isPending: sessionLoading } = authClient.useSession();
 
-  // Handle initial session check and sign out if needed
   useEffect(() => {
     async function initialize() {
-      // Wait for session to load
       if (sessionLoading) return;
 
-      // If user is logged in and this is an invite flow, sign them out (only once)
       if (session?.user && isInviteFlow && !hasSignedOut.current) {
         hasSignedOut.current = true;
         await authClient.signOut();
@@ -152,7 +149,6 @@ function SignInForm() {
 
         const redirectPath = redirectUrl || "/";
 
-        // Force a refresh to ensure the session is properly recognized
         router.refresh();
         router.push(redirectPath);
       }
@@ -163,7 +159,6 @@ function SignInForm() {
     }
   };
 
-  // Show loading while initializing
   if (initializing || sessionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

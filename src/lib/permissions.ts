@@ -3,6 +3,15 @@ import { createAccessControl } from "better-auth/plugins/access";
 /**
  * Define custom permissions for Indeks
  *
+ * ROLE HIERARCHY:
+ * - viewer: Read-only access (lowest)
+ * - member: Can work on projects
+ * - admin: Org admin - can manage org members and settings
+ * - owner: Org owner - full org access including danger zone
+ *
+ * NOTE: The Better Auth "admin" role (user.role = "admin") is for SYSTEM ADMINS
+ * who have platform-wide access to Indeks. This is separate from org-level roles.
+ *
  * Default organization plugin statements:
  * - organization: ["update", "delete"]
  * - member: ["create", "update", "delete"]
@@ -12,12 +21,16 @@ export const statement = {
   organization: ["update", "delete"],
   member: ["create", "update", "delete"],
   invitation: ["create", "cancel"],
+  team: ["create", "update", "delete"],
 
   project: ["create", "read", "update", "delete", "view-analytics"],
 
   analytics: ["view", "export", "configure"],
 
   settings: ["view", "update", "manage-api-keys", "danger-zone"],
+
+  // System-level permissions (for Indeks platform admins)
+  system: ["view-all-users", "manage-users", "view-all-orgs", "manage-orgs", "view-global-analytics"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -53,6 +66,7 @@ export const admin = ac.newRole({
   organization: ["update"],
   member: ["create", "update", "delete"],
   invitation: ["create", "cancel"],
+  team: ["create", "update", "delete"],
 });
 
 /**
@@ -66,6 +80,7 @@ export const owner = ac.newRole({
   organization: ["update", "delete"],
   member: ["create", "update", "delete"],
   invitation: ["create", "cancel"],
+  team: ["create", "update", "delete"],
 });
 
 export const roles = {

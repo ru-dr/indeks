@@ -14,14 +14,12 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       const { projectId } = params;
       const { startDate, endDate } = query;
 
-      // Auth check
       const authContext = await getAuthFromRequest(request);
       if (!authContext) {
         set.status = 401;
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      // Authorization check
       const hasAccess = await verifyProjectAccess(
         authContext.user.id,
         projectId,
@@ -468,7 +466,6 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
     },
   )
 
-  // Global endpoints - Admin only
   .get(
     "/global/traffic-trend",
     async ({ query, set, request }) => {
@@ -480,15 +477,9 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
         return { error: "Unauthorized", message: "You must be logged in" };
       }
 
-      // Global endpoints require admin access
-      const admin = await isUserAdmin(request);
-      if (!admin) {
-        set.status = 403;
-        return { error: "Forbidden", message: "Admin access required" };
-      }
-
       try {
-        return await analyticsController.getGlobalTrafficTrend(months);
+        
+        return await analyticsController.getUserTrafficTrend(authContext.user.id, months);
       } catch (error) {
         console.error("Error fetching global traffic trend:", error);
         set.status = 500;
@@ -509,7 +500,6 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       return { error: "Unauthorized", message: "You must be logged in" };
     }
 
-    // Global endpoints require admin access
     const admin = await isUserAdmin(request);
     if (!admin) {
       set.status = 403;
@@ -1075,7 +1065,6 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
     },
   )
 
-  // Raw events stream for JSON mode
   .get(
     "/:projectId/events-stream",
     async ({ params, query, set, request }) => {

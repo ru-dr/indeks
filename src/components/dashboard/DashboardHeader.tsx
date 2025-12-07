@@ -95,7 +95,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
         {/* User Profile */}
         <Link
-          href="/profile"
+          href="/settings"
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-accent"
         >
           <Avatar className="h-8 w-8 shrink-0">
