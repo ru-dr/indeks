@@ -103,6 +103,8 @@ function SignInForm() {
     try {
       const isEmail = emailOrUsername.includes("@");
 
+      console.log("[Auth] Attempting sign in...", { isEmail, emailOrUsername });
+
       const { data, error } = isEmail
         ? await authClient.signIn.email({
             email: emailOrUsername,
@@ -113,13 +115,20 @@ function SignInForm() {
             password,
           });
 
+      console.log("[Auth] Sign in response:", { data, error });
+
       if (error) {
+        console.error("[Auth] Sign in error:", error);
         setError(error.message || "Failed to sign in");
         return;
       }
 
       if (data) {
+        console.log("[Auth] Sign in successful, user:", data.user);
+        console.log("[Auth] Email verified:", data.user.emailVerified);
+
         if (!data.user.emailVerified) {
+          console.log("[Auth] Email not verified, signing out...");
           await authClient.signOut();
 
           setError(
@@ -147,11 +156,17 @@ function SignInForm() {
           type: "success",
         });
 
-        // Refetch session to update client state, then redirect
-        await authClient.getSession({ fetchOptions: { cache: "no-store" } });
+        // Check cookies before redirect
+        console.log("[Auth] Cookies after sign in:", document.cookie);
+        
+        // Use hard navigation to ensure cookies are sent with the request
+        // router.push() won't work because:
+        // 1. It does client-side navigation without full page reload
+        // 2. Server components in (main)/layout.tsx check session on server
+        // 3. With client nav, the auth cookie may not be sent with the cached RSC request
         const redirectPath = redirectUrl || "/";
-        router.refresh();
-        router.push(redirectPath);
+        console.log("[Auth] Redirecting to:", redirectPath);
+        window.location.href = redirectPath;
       }
     } catch {
       setError("An unexpected error occurred");

@@ -140,5 +140,6 @@ export const auth = betterAuth({
       httpOnly: true,
       path: "/",
     },
+    useSecureCookies: process.env.NODE_ENV === "production",
   },
 });
