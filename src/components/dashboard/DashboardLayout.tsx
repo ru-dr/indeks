@@ -13,10 +13,10 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const prevPathname = useRef(pathname);
+  const [prevPathname, setPrevPathname] = useState(pathname);
 
-  if (prevPathname.current !== pathname) {
-    prevPathname.current = pathname;
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     if (sidebarOpen) {
       setSidebarOpen(false);
     }
