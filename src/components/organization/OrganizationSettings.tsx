@@ -47,6 +47,8 @@ export function OrganizationSettings({
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const hasChanges = name !== organization.name || slug !== organization.slug;
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -160,8 +162,20 @@ export function OrganizationSettings({
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-4 border-t">
             <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setName(organization.name);
+                setSlug(organization.slug);
+              }}
+              disabled={!hasChanges || isUpdating}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
               type="submit"
-              disabled={isUpdating}
+              disabled={!hasChanges || isUpdating}
               className="w-full sm:w-auto"
             >
               {isUpdating ? (
@@ -176,16 +190,21 @@ export function OrganizationSettings({
       </Card>
 
       {/* Danger Zone */}
-      <Card className="p-4 sm:p-6 border-destructive/50">
-        <div className="flex items-center gap-2 mb-4">
-          <Trash2 className="h-5 w-5 text-destructive" />
-          <h2 className="text-base sm:text-lg font-semibold text-destructive">
-            Danger Zone
-          </h2>
-        </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+      <Card className="p-4 sm:p-6 border-red-500/50 dark:border-red-500/40">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+          <div className="p-2 rounded-lg bg-red-500/15 dark:bg-red-500/20">
+            <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
+          </div>
           <div>
-            <p className="text-sm font-medium">Delete Organization</p>
+            <h2 className="text-base sm:text-lg font-semibold text-red-600 dark:text-red-400">
+              Danger Zone
+            </h2>
+            <p className="text-xs text-muted-foreground">Irreversible actions</p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-red-500/30 dark:border-red-500/25 bg-red-50 dark:bg-red-950/30">
+          <div>
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">Delete Organization</p>
             <p className="text-xs text-muted-foreground mt-1">
               Once you delete an organization, there is no going back. All
               projects and data associated with this organization will be
@@ -193,8 +212,8 @@ export function OrganizationSettings({
             </p>
           </div>
           <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground shadow-xs hover:bg-destructive/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 w-full sm:w-auto shrink-0">
-              Delete Organization
+            <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 px-3 py-1.5 text-sm font-medium text-white shadow-xs w-full sm:w-auto shrink-0">
+              Delete
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>

@@ -147,8 +147,9 @@ function SignInForm() {
           type: "success",
         });
 
+        // Refetch session to update client state, then redirect
+        await authClient.getSession({ fetchOptions: { cache: "no-store" } });
         const redirectPath = redirectUrl || "/";
-
         router.refresh();
         router.push(redirectPath);
       }

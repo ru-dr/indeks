@@ -11,9 +11,16 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const prevPathnameRef = useRef(pathname);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const prevPathname = useRef(pathname);
+
+  if (prevPathname.current !== pathname) {
+    prevPathname.current = pathname;
+    if (sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  }
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -22,13 +29,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
-
-  useEffect(() => {
-    if (prevPathnameRef.current !== pathname) {
-      prevPathnameRef.current = pathname;
-      setSidebarOpen(false);
-    }
-  }, [pathname]);
 
   useEffect(() => {
     if (sidebarOpen) {

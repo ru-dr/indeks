@@ -34,34 +34,27 @@ export const auth = betterAuth({
   plugins: [
     username(),
     admin({
-      ac,
-      roles: {
-        viewer: roles.viewer,
-        member: roles.member,
-        admin: roles.admin,
-        owner: roles.owner,
-      },
-      // Default role is NOT set here - this is for SYSTEM admin role
-      // The user.role field is for system-level permissions only
-      // "admin" in user.role means SYSTEM ADMIN (platform admin of Indeks)
-      // Regular users should have no system role (null/undefined)
-      defaultRole: false, // Don't set a default system role
+      // Admin plugin is for PLATFORM-level super admin
+      // user.role = "admin" means they have FULL control over EVERYTHING
+      // This supersedes all org-level roles including owner
+      defaultRole: "user", // Regular users get 'user' role by default
     }),
     organization({
       ac,
       roles: {
+        // Organization/Team roles: owner, member, viewer
+        // Admin role is handled at platform level via user.role
         owner: roles.owner,
-        admin: roles.admin,
         member: roles.member,
         viewer: roles.viewer,
       },
 
-      
       teams: {
         enabled: true,
         maximumTeams: 10,
       },
 
+      // Creator of org becomes owner
       creatorRole: "owner",
 
       allowUserToCreateOrganization: true,
@@ -85,7 +78,6 @@ export const auth = betterAuth({
       },
     }),
   ],
-  // Auto-create a default organization for new users
   user: {
     additionalFields: {},
   },

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
-import { Role, roleHierarchy, statement } from "@/lib/permissions";
+import { Role, OrgRole, roleHierarchy, statement, isRoleAtLeast as checkRoleAtLeast, getEffectiveRole } from "@/lib/permissions";
 
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
@@ -13,39 +13,55 @@ type PermissionCheck = {
 
 /**
  * Hook to get the current user's session and role information
+ * 
+ * Role hierarchy: viewer < member < owner < admin
+ * 
+ * - Platform admin (user.role === "admin") has FULL control over everything
+ * - Org roles (owner, member, viewer) are stored in member.role
  */
 export function useAuth() {
   const { data: session, isPending, error } = authClient.useSession();
+  const { data: activeOrg } = authClient.useActiveOrganization();
 
   const user = session?.user;
-  const role = (user?.role as Role) || null;
+  
+  // Platform-level role (admin or null)
+  const platformRole = user?.role as string | null;
+  
+  // Org-level role from active organization membership
+  const orgRole = (activeOrg?.members?.find(m => m.userId === user?.id)?.role as OrgRole) || null;
+  
+  // Effective role considering both platform and org level
+  const role = getEffectiveRole(platformRole, orgRole) as Role;
+  
+  // Check if user is platform admin
+  const isPlatformAdmin = platformRole === "admin";
 
   const isRoleAtLeast = useCallback(
     (requiredRole: Role): boolean => {
-      if (!role) return false;
-
-      const userRoleIndex = roleHierarchy.indexOf(role);
-      const requiredRoleIndex = roleHierarchy.indexOf(requiredRole);
-
-      if (userRoleIndex === -1) return false;
-
-      return userRoleIndex >= requiredRoleIndex;
+      // Platform admin can do anything
+      if (isPlatformAdmin) return true;
+      
+      return checkRoleAtLeast(role, requiredRole);
     },
-    [role],
+    [role, isPlatformAdmin],
   );
 
   return {
     session,
     user,
-    role,
+    role,               // Effective role (considering platform admin status)
+    orgRole,            // Org-level role only
+    platformRole,       // Platform-level role (admin or null)
     isLoading: isPending,
     isAuthenticated: !!session,
-    isAdmin: isRoleAtLeast("admin"),
-    isOwner: role === "owner",
+    isAdmin: isPlatformAdmin,  // Platform super admin
+    isOwner: role === "owner" || isPlatformAdmin,  // Admin can act as owner
     isMember: isRoleAtLeast("member"),
     isViewer: isRoleAtLeast("viewer"),
     isRoleAtLeast,
     error,
+    activeOrganization: activeOrg,
   };
 }
 
@@ -53,7 +69,7 @@ export function useAuth() {
  * Hook to check if the current user has a specific permission
  */
 export function usePermission(permissions: PermissionCheck) {
-  const { role } = useAuth();
+  const { role, isAdmin } = useAuth();
   const [hasPermission, setHasPermission] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,6 +77,15 @@ export function usePermission(permissions: PermissionCheck) {
     let isMounted = true;
 
     const checkPermissions = async () => {
+      // Platform admin has ALL permissions
+      if (isAdmin) {
+        if (isMounted) {
+          setHasPermission(true);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       if (!role) {
         if (isMounted) {
           setHasPermission(false);
@@ -69,9 +94,12 @@ export function usePermission(permissions: PermissionCheck) {
         return;
       }
 
+      // Map org roles to admin roles for permission checking
+      const adminRole = (role === "owner" || role === "member" || role === "viewer") ? "admin" : role as "user" | "admin";
+      
       const result = authClient.admin.checkRolePermission({
         permissions: permissions as Record<string, string[]>,
-        role,
+        role: adminRole,
       });
 
       if (isMounted) {
@@ -85,7 +113,7 @@ export function usePermission(permissions: PermissionCheck) {
     return () => {
       isMounted = false;
     };
-  }, [role, permissions]);
+  }, [role, permissions, isAdmin]);
 
   return { hasPermission, isLoading };
 }
@@ -158,6 +186,7 @@ export function useUsers(options?: {
 
 /**
  * Hook for admin operations
+ * Only platform admins can use these
  */
 export function useAdminActions() {
   const [isLoading, setIsLoading] = useState(false);
@@ -168,9 +197,14 @@ export function useAdminActions() {
     setError(null);
 
     try {
+      // Map to valid admin roles ("user" | "admin")
+      const adminRole = Array.isArray(role) 
+        ? role.map(r => r === "admin" ? "admin" : "user") as ("user" | "admin")[]
+        : (role === "admin" ? "admin" : "user") as "user" | "admin";
+      
       const result = await authClient.admin.setRole({
         userId,
-        role,
+        role: adminRole,
       });
 
       if (result.error) {

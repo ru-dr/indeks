@@ -3,6 +3,7 @@ export {
   PermissionGate,
   AdminOnly,
   OwnerOnly,
+  SystemAdminOrOwnerOnly,
   MemberOnly,
   AuthenticatedOnly,
   ImpersonationBanner,

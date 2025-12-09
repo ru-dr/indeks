@@ -43,14 +43,10 @@ function ToastProvider({
 }: ToastProviderProps) {
   const [mounted, setMounted] = useState(true);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <Toast.Provider toastManager={toastManager} {...props}>
       {children}
-      <Toasts position={position} />
+      {mounted && <Toasts position={position} />}
     </Toast.Provider>
   );
 }
@@ -176,14 +172,10 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
 function AnchoredToastProvider({ children, ...props }: Toast.Provider.Props) {
   const [mounted, setMounted] = useState(true);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <Toast.Provider toastManager={anchoredToastManager} {...props}>
       {children}
-      <AnchoredToasts />
+      {mounted && <AnchoredToasts />}
     </Toast.Provider>
   );
 }

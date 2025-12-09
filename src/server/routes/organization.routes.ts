@@ -1,193 +1,745 @@
 import { Elysia, t } from "elysia";
 import { auth } from "@/lib/auth";
-import { db } from "@/db/connect";
-import { member, user } from "@/db/schema/schema";
-import { eq, and } from "drizzle-orm";
+import { organizationController } from "@/server/controllers/organization.controller";
 
-/**
- * Organization routes with server-side validation
- * 
- * Key security rules:
- * - Only SYSTEM admins (user.role = "admin") can assign the "admin" org role
- * - Org owners can only assign viewer/member roles
- * - Nobody can directly assign "owner" role (must use ownership transfer)
- */
-export const organizationRoutes = new Elysia({ prefix: "/v1/organization" })
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string | null;
+  role?: string | null;
+}
+
+export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
   /**
-   * Update member role with proper validation
-   * Only system admins can assign "admin" role
+   * Get all organizations for the current user
    */
-  .patch(
-    "/members/:memberId/role",
-    async ({ params, body, request, set }) => {
+  .get("/", async ({ request, set }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    if (!session?.user) {
+      set.status = 401;
+      return {
+        success: false,
+        error: "Unauthorized",
+        data: null,
+      };
+    }
+
+    try {
+      const organizations = await organizationController.getUserOrganizations(
+        session.user.id
+      );
+
+      return {
+        success: true,
+        data: organizations,
+      };
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      set.status = 500;
+      return {
+        success: false,
+        error: "Failed to fetch organizations",
+        data: null,
+      };
+    }
+  })
+
+  /**
+   * Get organization details
+   */
+  .get(
+    "/:organizationId",
+    async ({ params, request, set }) => {
+      const { organizationId } = params;
+
       const session = await auth.api.getSession({ headers: request.headers });
 
       if (!session?.user) {
         set.status = 401;
         return {
+          success: false,
           error: "Unauthorized",
-          message: "You must be logged in",
+          data: null,
         };
       }
 
-      const { memberId } = params;
-      const { role, organizationId } = body;
+      const currentUser: AuthUser = {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: session.user.role,
+      };
 
-      // Validate role value
-      const validRoles = ["viewer", "member", "admin", "owner"];
-      if (!validRoles.includes(role)) {
-        set.status = 400;
-        return {
-          error: "Bad request",
-          message: "Invalid role",
-        };
-      }
+      const membership = await organizationController.getUserMembership(
+        currentUser.id,
+        organizationId
+      );
 
-      // Cannot directly assign owner role
-      if (role === "owner") {
+      const isSystemAdmin = currentUser.role === "admin";
+
+      if (!membership && !isSystemAdmin) {
         set.status = 403;
         return {
-          error: "Forbidden",
-          message: "Cannot directly assign owner role. Use ownership transfer instead.",
+          success: false,
+          error: "You are not a member of this organization",
+          data: null,
         };
       }
 
-      // Check if current user is a SYSTEM admin
-      const isSystemAdmin = session.user.role === "admin";
-
-      // Only SYSTEM admins can assign "admin" org role
-      if (role === "admin" && !isSystemAdmin) {
-        set.status = 403;
-        return {
-          error: "Forbidden",
-          message: "Only system administrators can assign the admin role",
-        };
-      }
-
-      // Get current user's membership in this org
-      const [currentUserMembership] = await db
-        .select({
-          role: member.role,
-        })
-        .from(member)
-        .where(
-          and(
-            eq(member.userId, session.user.id),
-            eq(member.organizationId, organizationId)
-          )
-        )
-        .limit(1);
-
-      // If not a system admin, must be owner to change roles
-      if (!isSystemAdmin) {
-        if (!currentUserMembership || currentUserMembership.role !== "owner") {
-          set.status = 403;
-          return {
-            error: "Forbidden",
-            message: "Only organization owners can change member roles",
-          };
-        }
-      }
-
-      // Get target member info
-      const [targetMember] = await db
-        .select({
-          id: member.id,
-          role: member.role,
-          userId: member.userId,
-        })
-        .from(member)
-        .where(eq(member.id, memberId))
-        .limit(1);
-
-      if (!targetMember) {
-        set.status = 404;
-        return {
-          error: "Not found",
-          message: "Member not found",
-        };
-      }
-
-      // Cannot change owner's role (must transfer ownership)
-      if (targetMember.role === "owner") {
-        set.status = 403;
-        return {
-          error: "Forbidden",
-          message: "Cannot change owner's role. Use ownership transfer instead.",
-        };
-      }
-
-      // Cannot change your own role
-      if (targetMember.userId === session.user.id) {
-        set.status = 403;
-        return {
-          error: "Forbidden",
-          message: "Cannot change your own role",
-        };
-      }
-
-      // Non-system-admins cannot assign roles higher than their own
-      if (!isSystemAdmin) {
-        const roleHierarchy = ["viewer", "member", "admin", "owner"];
-        const currentRoleIndex = roleHierarchy.indexOf(currentUserMembership!.role);
-        const newRoleIndex = roleHierarchy.indexOf(role);
-        
-        if (newRoleIndex >= currentRoleIndex) {
-          set.status = 403;
-          return {
-            error: "Forbidden",
-            message: "Cannot assign a role equal to or higher than your own",
-          };
-        }
-      }
-
-      // Update the member's role
       try {
-        await db
-          .update(member)
-          .set({ role })
-          .where(eq(member.id, memberId));
+        const organization = await organizationController.getOrganization(
+          organizationId
+        );
+
+        if (!organization) {
+          set.status = 404;
+          return {
+            success: false,
+            error: "Organization not found",
+            data: null,
+          };
+        }
 
         return {
           success: true,
-          message: `Role updated to ${role}`,
+          data: {
+            ...organization,
+            userRole: membership?.role,
+          },
         };
       } catch (error) {
-        console.error("Error updating member role:", error);
+        console.error("Error fetching organization:", error);
         set.status = 500;
         return {
-          error: "Internal error",
-          message: "Failed to update role",
+          success: false,
+          error: "Failed to fetch organization",
+          data: null,
         };
       }
     },
     {
       params: t.Object({
-        memberId: t.String(),
-      }),
-      body: t.Object({
-        role: t.String(),
         organizationId: t.String(),
       }),
     }
   )
 
   /**
-   * Check if current user is a system admin
+   * Get all members of an organization
    */
-  .get("/is-system-admin", async ({ request, set }) => {
-    const session = await auth.api.getSession({ headers: request.headers });
+  .get(
+    "/:organizationId/members",
+    async ({ params, request, set }) => {
+      const { organizationId } = params;
 
-    if (!session?.user) {
-      set.status = 401;
-      return {
-        error: "Unauthorized",
-        message: "You must be logged in",
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const currentUser: AuthUser = {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: session.user.role,
       };
-    }
 
-    return {
-      isSystemAdmin: session.user.role === "admin",
-    };
-  });
+      const membership = await organizationController.getUserMembership(
+        currentUser.id,
+        organizationId
+      );
+
+      const isSystemAdmin = currentUser.role === "admin";
+
+      if (!membership && !isSystemAdmin) {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You are not a member of this organization",
+          data: null,
+        };
+      }
+
+      try {
+        const members = await organizationController.getOrganizationMembers(
+          organizationId
+        );
+
+        return {
+          success: true,
+          data: members,
+        };
+      } catch (error) {
+        console.error("Error fetching organization members:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to fetch organization members",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+      }),
+    }
+  )
+
+  /**
+   * Get all teams for an organization with member counts
+   */
+  .get(
+    "/:organizationId/teams",
+    async ({ params, request, set }) => {
+      const { organizationId } = params;
+
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const currentUser: AuthUser = {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: session.user.role,
+      };
+
+      const membership = await organizationController.getUserMembership(
+        currentUser.id,
+        organizationId
+      );
+
+      const isSystemAdmin = currentUser.role === "admin";
+
+      if (!membership && !isSystemAdmin) {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You are not a member of this organization",
+          data: null,
+        };
+      }
+
+      try {
+        const teams = await organizationController.getOrganizationTeams(
+          organizationId
+        );
+
+        return {
+          success: true,
+          data: teams,
+        };
+      } catch (error) {
+        console.error("Error fetching organization teams:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to fetch organization teams",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+      }),
+    }
+  )
+
+  /**
+   * Create a new team in an organization
+   */
+  .post(
+    "/:organizationId/teams",
+    async ({ params, body, request, set }) => {
+      const { organizationId } = params;
+
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const canManage = await organizationController.canManageOrganization(
+        session.user.id,
+        organizationId
+      );
+
+      if (!canManage && session.user.role !== "admin") {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You don't have permission to create teams",
+          data: null,
+        };
+      }
+
+      try {
+        const newTeam = await organizationController.createTeam(
+          organizationId,
+          body.name
+        );
+
+        return {
+          success: true,
+          data: newTeam,
+        };
+      } catch (error) {
+        console.error("Error creating team:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to create team",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+      }),
+      body: t.Object({
+        name: t.String({ minLength: 1, maxLength: 255 }),
+      }),
+    }
+  )
+
+  /**
+   * Get team members for a team
+   * This endpoint allows org owners/admins to view team members
+   * even if they are not members of that specific team
+   */
+  .get(
+    "/:organizationId/teams/:teamId/members",
+    async ({ params, request, set }) => {
+      const { organizationId, teamId } = params;
+
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const currentUser: AuthUser = {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: session.user.role,
+      };
+
+      const membership = await organizationController.getUserMembership(
+        currentUser.id,
+        organizationId
+      );
+
+      const isSystemAdmin = currentUser.role === "admin";
+
+      if (!membership && !isSystemAdmin) {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You are not a member of this organization",
+          data: null,
+        };
+      }
+
+      // Verify the team belongs to this organization
+      const teamRecord = await organizationController.verifyTeamInOrganization(
+        teamId,
+        organizationId
+      );
+
+      if (!teamRecord) {
+        set.status = 404;
+        return {
+          success: false,
+          error: "Team not found in this organization",
+          data: null,
+        };
+      }
+
+      try {
+        const teamMembers = await organizationController.getTeamMembers(teamId);
+
+        return {
+          success: true,
+          data: teamMembers,
+        };
+      } catch (error) {
+        console.error("Error fetching team members:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to fetch team members",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+        teamId: t.String(),
+      }),
+    }
+  )
+
+  /**
+   * Add a member to a team
+   */
+  .post(
+    "/:organizationId/teams/:teamId/members",
+    async ({ params, body, request, set }) => {
+      const { organizationId, teamId } = params;
+
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const canManage = await organizationController.canManageOrganization(
+        session.user.id,
+        organizationId
+      );
+
+      if (!canManage && session.user.role !== "admin") {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You don't have permission to manage team members",
+          data: null,
+        };
+      }
+
+      // Verify the team belongs to this organization
+      const teamRecord = await organizationController.verifyTeamInOrganization(
+        teamId,
+        organizationId
+      );
+
+      if (!teamRecord) {
+        set.status = 404;
+        return {
+          success: false,
+          error: "Team not found in this organization",
+          data: null,
+        };
+      }
+
+      try {
+        const result = await organizationController.addTeamMember(
+          teamId,
+          body.userId
+        );
+
+        if ("error" in result) {
+          set.status = result.status;
+          return {
+            success: false,
+            error: result.error,
+            data: null,
+          };
+        }
+
+        return {
+          success: true,
+          data: result,
+        };
+      } catch (error) {
+        console.error("Error adding team member:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to add team member",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+        teamId: t.String(),
+      }),
+      body: t.Object({
+        userId: t.String(),
+      }),
+    }
+  )
+
+  /**
+   * Remove a member from a team
+   */
+  .delete(
+    "/:organizationId/teams/:teamId/members/:memberId",
+    async ({ params, request, set }) => {
+      const { organizationId, teamId, memberId } = params;
+
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const canManage = await organizationController.canManageOrganization(
+        session.user.id,
+        organizationId
+      );
+
+      if (!canManage && session.user.role !== "admin") {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You don't have permission to manage team members",
+          data: null,
+        };
+      }
+
+      // Verify the team belongs to this organization
+      const teamRecord = await organizationController.verifyTeamInOrganization(
+        teamId,
+        organizationId
+      );
+
+      if (!teamRecord) {
+        set.status = 404;
+        return {
+          success: false,
+          error: "Team not found in this organization",
+          data: null,
+        };
+      }
+
+      try {
+        const deleted = await organizationController.removeTeamMember(
+          teamId,
+          memberId
+        );
+
+        if (!deleted) {
+          set.status = 404;
+          return {
+            success: false,
+            error: "Team member not found",
+            data: null,
+          };
+        }
+
+        return {
+          success: true,
+          message: "Team member removed successfully",
+        };
+      } catch (error) {
+        console.error("Error removing team member:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to remove team member",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+        teamId: t.String(),
+        memberId: t.String(),
+      }),
+    }
+  )
+
+  /**
+   * Update a team
+   */
+  .patch(
+    "/:organizationId/teams/:teamId",
+    async ({ params, body, request, set }) => {
+      const { organizationId, teamId } = params;
+
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const canManage = await organizationController.canManageOrganization(
+        session.user.id,
+        organizationId
+      );
+
+      if (!canManage && session.user.role !== "admin") {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You don't have permission to update teams",
+          data: null,
+        };
+      }
+
+      // Verify the team belongs to this organization
+      const teamRecord = await organizationController.verifyTeamInOrganization(
+        teamId,
+        organizationId
+      );
+
+      if (!teamRecord) {
+        set.status = 404;
+        return {
+          success: false,
+          error: "Team not found in this organization",
+          data: null,
+        };
+      }
+
+      try {
+        const updated = await organizationController.updateTeam(
+          teamId,
+          body.name
+        );
+
+        return {
+          success: true,
+          data: updated,
+        };
+      } catch (error) {
+        console.error("Error updating team:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to update team",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+        teamId: t.String(),
+      }),
+      body: t.Object({
+        name: t.String({ minLength: 1, maxLength: 255 }),
+      }),
+    }
+  )
+
+  /**
+   * Delete a team
+   */
+  .delete(
+    "/:organizationId/teams/:teamId",
+    async ({ params, request, set }) => {
+      const { organizationId, teamId } = params;
+
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return {
+          success: false,
+          error: "Unauthorized",
+          data: null,
+        };
+      }
+
+      const canManage = await organizationController.canManageOrganization(
+        session.user.id,
+        organizationId
+      );
+
+      if (!canManage && session.user.role !== "admin") {
+        set.status = 403;
+        return {
+          success: false,
+          error: "You don't have permission to delete teams",
+          data: null,
+        };
+      }
+
+      // Verify the team belongs to this organization
+      const teamRecord = await organizationController.verifyTeamInOrganization(
+        teamId,
+        organizationId
+      );
+
+      if (!teamRecord) {
+        set.status = 404;
+        return {
+          success: false,
+          error: "Team not found in this organization",
+          data: null,
+        };
+      }
+
+      try {
+        const deleted = await organizationController.deleteTeam(teamId);
+
+        if (!deleted) {
+          set.status = 404;
+          return {
+            success: false,
+            error: "Team not found",
+            data: null,
+          };
+        }
+
+        return {
+          success: true,
+          message: "Team deleted successfully",
+        };
+      } catch (error) {
+        console.error("Error deleting team:", error);
+        set.status = 500;
+        return {
+          success: false,
+          error: "Failed to delete team",
+          data: null,
+        };
+      }
+    },
+    {
+      params: t.Object({
+        organizationId: t.String(),
+        teamId: t.String(),
+      }),
+    }
+  );

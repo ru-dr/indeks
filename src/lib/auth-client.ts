@@ -18,19 +18,15 @@ export const authClient = createAuthClient({
   plugins: [
     usernameClient(),
     adminClient({
-      ac,
-      roles: {
-        viewer: roles.viewer,
-        member: roles.member,
-        admin: roles.admin,
-        owner: roles.owner,
-      },
+      // Admin client for platform-level super admin operations
+      // user.role = "admin" grants FULL control over everything
     }),
     organizationClient({
       ac,
       roles: {
+        // Organization/Team roles: owner, member, viewer
+        // These are the same roles for both org and team contexts
         owner: roles.owner,
-        admin: roles.admin,
         member: roles.member,
         viewer: roles.viewer,
       },

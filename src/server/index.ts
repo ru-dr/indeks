@@ -52,7 +52,7 @@ export const app = new Elysia({ prefix: "/api" })
 
   .all("/auth/*", ({ request }) => auth.handler(request))
   .use(profileRoutes)
-  .use(organizationRoutes)
   .use(projectsRoutes)
   .use(collectRoutes)
-  .use(analyticsRoutes);
+  .use(analyticsRoutes)
+  .use(organizationRoutes)

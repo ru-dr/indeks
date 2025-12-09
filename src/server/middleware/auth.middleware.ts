@@ -6,9 +6,12 @@ export interface AuthContext {
     id: string;
     email: string;
     name: string | null;
+    role?: string | null;
   };
   session: {
     id: string;
+    activeOrganizationId?: string | null;
+    activeTeamId?: string | null;
   };
 }
 
@@ -31,9 +34,12 @@ export async function getAuthFromRequest(
         id: session.user.id,
         email: session.user.email,
         name: session.user.name,
+        role: session.user.role,
       },
       session: {
         id: session.session.id,
+        activeOrganizationId: session.session.activeOrganizationId,
+        activeTeamId: session.session.activeTeamId,
       },
     };
   } catch {
@@ -53,15 +59,18 @@ export async function verifyProjectAccess(
 }
 
 /**
- * Check if user is a SYSTEM ADMIN (Indeks platform admin)
- * This is different from org-level admin roles.
- * System admins have platform-wide access to all organizations and global analytics.
+ * Check if user is a PLATFORM ADMIN (Indeks super admin)
+ * Platform admins have FULL control over EVERYTHING - all organizations, 
+ * all users, all projects, and all system-level operations.
  *
- * NOTE: The user.role field is for system-level permissions:
- * - "admin" = System admin (platform admin of Indeks)
- * - null/undefined = Regular user
+ * NOTE: The user.role field is for platform-level permissions:
+ * - "admin" = Platform super admin with FULL access
+ * - null/undefined = Regular user (uses org-level roles)
  *
- * Org-level roles (owner, admin, member, viewer) are stored in the member table.
+ * Org/Team roles (owner, member, viewer) are stored in the member table.
+ * 
+ * Hierarchy: viewer < member < owner < admin (platform)
+ * Platform admin supersedes ALL org/team roles.
  */
 export async function isUserAdmin(request: Request): Promise<boolean> {
   try {
@@ -73,6 +82,7 @@ export async function isUserAdmin(request: Request): Promise<boolean> {
 }
 
 /**
- * Alias for clarity - checks if user is a system admin
+ * Alias for clarity - checks if user is a platform admin
  */
-export const isSystemAdmin = isUserAdmin;
+export const isPlatformAdmin = isUserAdmin;
+export const isSystemAdmin = isUserAdmin; // backwards compatibility

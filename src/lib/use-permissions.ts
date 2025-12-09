@@ -1,4 +1,5 @@
 import { authClient } from "@/lib/auth-client";
+import { Role, OrgRole } from "@/lib/permissions";
 
 /**
  * Hook to check if the current user has a specific permission
@@ -15,11 +16,14 @@ export function useHasPermission(permissions: Record<string, string[]>) {
  * Does NOT check the current user's permissions - just checks role definitions
  */
 export function checkRolePermission(
-  role: "viewer" | "member" | "admin" | "owner",
+  role: Role,
   permissions: Record<string, string[]>,
 ) {
+  // Map org roles to admin roles
+  const adminRole = (role === "owner" || role === "member" || role === "viewer") ? "admin" : role as "user" | "admin";
+  
   return authClient.admin.checkRolePermission({
-    role,
+    role: adminRole,
     permissions,
   });
 }
@@ -47,6 +51,7 @@ export const {
   setUserPassword,
 } = authClient.admin;
 
-export type Role = "viewer" | "member" | "admin" | "owner";
+// Re-export types from permissions
+export type { Role, OrgRole } from "@/lib/permissions";
 
-export type PermissionResource = "user" | "session" | "project" | "analytics";
+export type PermissionResource = "user" | "session" | "project" | "analytics" | "organization" | "member" | "team" | "system";

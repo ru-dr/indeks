@@ -106,15 +106,6 @@ const navigationItems: SearchItem[] = [
     category: "Navigation",
     type: "navigation",
   },
-  {
-    id: "profile",
-    title: "Profile",
-    description: "View your profile",
-    icon: User,
-    href: "/profile",
-    category: "Navigation",
-    type: "navigation",
-  },
 ];
 
 const projectItems: SearchItem[] = [
@@ -464,6 +455,7 @@ export function GlobalSearch({
     (item: SearchItem) => {
       setOpen(false);
       setQuery("");
+      setSelectedIndex(0);
 
       if (item.type === "command" && item.action) {
         item.action();
@@ -477,12 +469,14 @@ export function GlobalSearch({
   const handleCreateProject = useCallback(() => {
     setOpen(false);
     setQuery("");
+    setSelectedIndex(0);
     window.location.href = "/projects?create=true";
   }, []);
 
   const handleClose = useCallback(() => {
     setOpen(false);
     setQuery("");
+    setSelectedIndex(0);
   }, []);
 
   useEffect(() => {
@@ -519,6 +513,7 @@ export function GlobalSearch({
         e.preventDefault();
         setOpen(false);
         setQuery("");
+        setSelectedIndex(0);
       }
     };
 
@@ -533,27 +528,14 @@ export function GlobalSearch({
     handleCreateProject,
   ]);
 
-  const prevOpenRef = useRef(open);
-  const prevQueryRef = useRef(query);
-
-  useEffect(() => {
-    if (prevOpenRef.current && !open) {
-      setQuery("");
-      setSelectedIndex(0);
-    }
-    prevOpenRef.current = open;
-  }, [open]);
-
-  useEffect(() => {
-    if (prevQueryRef.current !== query) {
-      prevQueryRef.current = query;
-      setSelectedIndex(0);
-    }
-  }, [query]);
+  const handleQueryChange = (q: string) => {
+    setQuery(q);
+    setSelectedIndex(0);
+  };
 
   const sharedProps = {
     query,
-    setQuery,
+    setQuery: handleQueryChange,
     filteredItems,
     groupedItems,
     selectedIndex,
@@ -615,7 +597,16 @@ export function GlobalSearch({
       )}
 
       {/* Desktop: Centered Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(val) => {
+          setOpen(val);
+          if (!val) {
+            setQuery("");
+            setSelectedIndex(0);
+          }
+        }}
+      >
         <DialogPopup
           className="hidden sm:flex sm:flex-col sm:max-w-2xl p-0 overflow-hidden"
           showCloseButton={false}

@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Role, roleHierarchy, statement } from "@/lib/permissions";
+import { Role, OrgRole, roleHierarchy, statement, isRoleAtLeast as checkRoleAtLeast, getEffectiveRole } from "@/lib/permissions";
 
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
@@ -37,25 +37,43 @@ export async function requireAuth() {
 }
 
 /**
- * Get the current user's role
+ * Get the current user's platform role (admin or null)
+ */
+export async function getPlatformRole(): Promise<"admin" | null> {
+  const session = await getSession();
+  if (session?.user?.role === "admin") return "admin";
+  return null;
+}
+
+/**
+ * Get the current user's effective role (considering both platform and org)
+ * Platform admin supersedes all org roles
  */
 export async function getUserRole(): Promise<Role | null> {
   const session = await getSession();
-  if (!session?.user?.role) return null;
-  return session.user.role as Role;
+  if (!session?.user) return null;
+  
+  // Platform admin has highest role
+  if (session.user.role === "admin") return "admin";
+  
+  // For org role, we'd need to check the member table
+  // For now, return the stored role or default to viewer
+  return (session.user.role as Role) || null;
 }
 
 /**
  * Check if the current user has a specific role or higher
+ * Platform admin always returns true for any role check
  */
 export async function hasRole(requiredRole: Role): Promise<boolean> {
-  const userRole = await getUserRole();
-  if (!userRole) return false;
-
-  const userRoleIndex = roleHierarchy.indexOf(userRole);
-  const requiredRoleIndex = roleHierarchy.indexOf(requiredRole);
-
-  return userRoleIndex >= requiredRoleIndex;
+  const session = await getSession();
+  if (!session?.user) return false;
+  
+  // Platform admin can do anything
+  if (session.user.role === "admin") return true;
+  
+  const userRole = session.user.role as Role;
+  return checkRoleAtLeast(userRole, requiredRole);
 }
 
 /**
@@ -66,24 +84,25 @@ export function isRoleAtLeast(
   requiredRole: Role,
 ): boolean {
   if (!userRole) return false;
-
-  const userRoleIndex = roleHierarchy.indexOf(userRole as Role);
-  const requiredRoleIndex = roleHierarchy.indexOf(requiredRole);
-
-  if (userRoleIndex === -1) return false;
-
-  return userRoleIndex >= requiredRoleIndex;
+  
+  // Platform admin supersedes all
+  if (userRole === "admin") return true;
+  
+  return checkRoleAtLeast(userRole as Role, requiredRole);
 }
 
 /**
  * Check if the current user has specific permission(s)
- * Uses Better Auth's permission system
+ * Platform admin has ALL permissions
  */
 export async function hasPermission(
   permissions: PermissionCheck,
 ): Promise<boolean> {
   const session = await getSession();
   if (!session) return false;
+  
+  // Platform admin has all permissions
+  if (session.user.role === "admin") return true;
 
   try {
     const result = await auth.api.userHasPermission({
@@ -125,17 +144,26 @@ export async function requirePermission(permissions: PermissionCheck) {
 }
 
 /**
- * Check if user is an admin (admin or owner role)
+ * Check if user is a PLATFORM ADMIN (super admin with FULL control)
+ * This is the highest authority in the system
  */
-export async function isAdmin(): Promise<boolean> {
-  return hasRole("admin");
+export async function isPlatformAdmin(): Promise<boolean> {
+  const session = await getSession();
+  return session?.user?.role === "admin";
 }
 
 /**
- * Check if user is the owner
+ * Check if user is an owner OR platform admin
+ * Platform admin can do anything an owner can do
  */
 export async function isOwner(): Promise<boolean> {
-  return hasRole("owner");
+  const session = await getSession();
+  if (!session?.user) return false;
+  
+  // Platform admin supersedes owner
+  if (session.user.role === "admin") return true;
+  
+  return session.user.role === "owner";
 }
 
 /**
@@ -148,10 +176,17 @@ export async function getAuthenticatedUser() {
     return null;
   }
 
+  const isPlatAdmin = session.user.role === "admin";
+
   return {
     ...session.user,
     role: (session.user.role as Role) || "viewer",
-    isAdmin: isRoleAtLeast(session.user.role, "admin"),
-    isOwner: session.user.role === "owner",
+    platformRole: isPlatAdmin ? "admin" : null,
+    isPlatformAdmin: isPlatAdmin,
+    isAdmin: isPlatAdmin, // Alias for backwards compatibility
+    isOwner: isPlatAdmin || session.user.role === "owner",
   };
 }
+
+// Backwards compatibility alias
+export const isAdmin = isPlatformAdmin;

@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { useAuth, useRole, usePermission } from "@/hooks/use-auth";
-import { Role, statement } from "@/lib/permissions";
+import { Role, OrgRole, statement } from "@/lib/permissions";
 
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
@@ -20,6 +20,7 @@ interface RoleGateProps {
 
 /**
  * Component that only renders children if user has the required role
+ * Platform admin (user.role === "admin") passes all role checks
  */
 export function RoleGate({
   children,
@@ -53,6 +54,7 @@ interface PermissionGateProps {
 
 /**
  * Component that only renders children if user has the required permissions
+ * Platform admin has ALL permissions
  */
 export function PermissionGate({
   children,
@@ -83,14 +85,22 @@ interface AdminOnlyProps {
 }
 
 /**
- * Convenience component that only renders for admin users
+ * Component that only renders for PLATFORM ADMIN users
+ * This is the highest authority - full control over everything
+ * user.role === "admin"
  */
 export function AdminOnly({ children, fallback = null }: AdminOnlyProps) {
-  return (
-    <RoleGate requiredRole="admin" fallback={fallback}>
-      {children}
-    </RoleGate>
-  );
+  const { isAdmin, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return null;
+  }
+  
+  if (!isAdmin) {
+    return <>{fallback}</>;
+  }
+  
+  return <>{children}</>;
 }
 
 interface OwnerOnlyProps {
@@ -99,14 +109,45 @@ interface OwnerOnlyProps {
 }
 
 /**
- * Convenience component that only renders for owner users
+ * Component that only renders for owner users (org level) OR platform admin
+ * Platform admin can do anything an owner can do
  */
 export function OwnerOnly({ children, fallback = null }: OwnerOnlyProps) {
-  return (
-    <RoleGate requiredRole="owner" fallback={fallback}>
-      {children}
-    </RoleGate>
-  );
+  const { isOwner, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return null;
+  }
+  
+  if (!isOwner) {
+    return <>{fallback}</>;
+  }
+  
+  return <>{children}</>;
+}
+
+interface AdminOrOwnerOnlyProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+/**
+ * Component that renders for either platform admins OR org owners
+ * This is essentially the same as OwnerOnly since admin supersedes owner
+ */
+export function AdminOrOwnerOnly({ children, fallback = null }: AdminOrOwnerOnlyProps) {
+  const { isOwner, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return null;
+  }
+  
+  // isOwner includes platform admin
+  if (!isOwner) {
+    return <>{fallback}</>;
+  }
+  
+  return <>{children}</>;
 }
 
 interface MemberOnlyProps {
@@ -115,7 +156,7 @@ interface MemberOnlyProps {
 }
 
 /**
- * Convenience component that only renders for member+ users
+ * Component that only renders for member+ users (member, owner, or admin)
  */
 export function MemberOnly({ children, fallback = null }: MemberOnlyProps) {
   return (
@@ -187,3 +228,6 @@ export function ImpersonationBanner({ className }: ImpersonationBannerProps) {
     </div>
   );
 }
+
+// Backwards compatibility aliases
+export { AdminOrOwnerOnly as SystemAdminOrOwnerOnly };

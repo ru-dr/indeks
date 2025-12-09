@@ -39,28 +39,20 @@ import {
   Link as LinkIcon,
   AtSign,
   Camera,
+  LogOut,
 } from "lucide-react";
-import { OwnerOnly } from "@/components/auth";
+import { SystemAdminOrOwnerOnly } from "@/components/auth";
 import { useAuth } from "@/hooks/use-auth";
 import { authClient } from "@/lib/auth-client";
 import { roleDisplayNames } from "@/lib/permissions";
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { OrganizationManagement } from "@/components/organization/OrganizationManagement";
 import { toastManager } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
 
-const timezones = [
-  { value: "UTC-05:00", label: "Eastern Time (UTC-05:00)" },
-  { value: "UTC-06:00", label: "Central Time (UTC-06:00)" },
-  { value: "UTC-07:00", label: "Mountain Time (UTC-07:00)" },
-  { value: "UTC-08:00", label: "Pacific Time (UTC-08:00)" },
-  { value: "UTC+00:00", label: "UTC (UTC+00:00)" },
-  { value: "UTC+01:00", label: "Central European (UTC+01:00)" },
-  { value: "UTC+05:30", label: "India Standard Time (UTC+05:30)" },
-  { value: "UTC+09:00", label: "Japan Standard Time (UTC+09:00)" },
-];
-
 export default function SettingsPage() {
+  const router = useRouter();
   const { user, role } = useAuth();
   const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrg } = authClient.useActiveOrganization();
@@ -161,16 +153,96 @@ export default function SettingsPage() {
     }
   };
 
-  const handleApplyImageUrl = () => {
+  const handleApplyImageUrl = async () => {
     if (imageUrlInput && (imageUrlInput.startsWith("http://") || imageUrlInput.startsWith("https://"))) {
+      // Update local state immediately
       setProfileForm((prev) => ({ ...prev, image: imageUrlInput }));
       setShowImageUrlInput(false);
-      toastManager.add({ type: "success", title: "Image URL applied" });
+      
+      // Auto-save the image URL to the server
+      try {
+        const response = await fetch("/api/v1/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ image: imageUrlInput }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          // toast({ type: "destructive", title: result.message || "Failed to update profile image" });
+          // // Revert on error
+          toastManager.add({
+            title: "Failed to update profile image",
+            description: result.message || "Please try again.",
+          })
+          setProfileForm((prev) => ({ ...prev, image: originalProfile.image }));
+          setImageUrlInput(originalProfile.image);
+          return;
+        }
+
+        // Update original profile to reflect the saved state
+        setOriginalProfile((prev) => ({ ...prev, image: imageUrlInput }));
+        toastManager.add({
+          title: "Profile image updated",
+          type: "success",
+        });
+      } catch (error) {
+        console.error("Profile image update error:", error);
+        toastManager.add({
+          title: "Something went wrong",
+          type: "error",
+        });
+        // Revert on error
+        setProfileForm((prev) => ({ ...prev, image: originalProfile.image }));
+        setImageUrlInput(originalProfile.image);
+      }
     } else if (!imageUrlInput) {
+      // Clear the image
       setProfileForm((prev) => ({ ...prev, image: "" }));
       setShowImageUrlInput(false);
+      
+      // Auto-save the cleared image
+      try {
+        const response = await fetch("/api/v1/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ image: "" }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          toastManager.add({
+            title: "Failed to update profile image",
+            description: result.message || "Please try again.",
+          });
+          setProfileForm((prev) => ({ ...prev, image: originalProfile.image }));
+          setImageUrlInput(originalProfile.image);
+          return;
+        }
+
+        setOriginalProfile((prev) => ({ ...prev, image: "" }));
+        toastManager.add({
+          title: "Profile image removed",
+          type: "success",
+        });
+      } catch (error) {
+        console.error("Profile image update error:", error);
+        toastManager.add({
+          title: "Something went wrong",
+          type: "error",
+        });
+        setProfileForm((prev) => ({ ...prev, image: originalProfile.image }));
+        setImageUrlInput(originalProfile.image);
+      }
     } else {
-      toastManager.add({ type: "error", title: "Please enter a valid URL starting with http:// or https://" });
+      toastManager.add({
+        title: "Please enter a valid URL starting with http:// or https://",
+        type: "error",
+      });
     }
   };
 
@@ -178,9 +250,15 @@ export default function SettingsPage() {
     try {
       await authClient.organization.setActive({ organizationId: orgId });
       setProfileForm((prev) => ({ ...prev, organizationId: orgId }));
-      toastManager.add({ type: "success", title: "Organization updated" });
+      toastManager.add({
+        title: "Organization updated",
+        type: "success",
+      });
     } catch {
-      toastManager.add({ type: "error", title: "Failed to update organization" });
+      toastManager.add({
+        title: "Failed to update organization",
+        type: "error",
+      });
     }
   };
 
@@ -203,7 +281,10 @@ export default function SettingsPage() {
       }
 
       if (Object.keys(updateData).length === 0) {
-        toastManager.add({ type: "info", title: "No changes to save" });
+        toastManager.add({
+          title: "No changes to save",
+          type: "info",
+        });
         setIsLoading(false);
         return;
       }
@@ -218,7 +299,10 @@ export default function SettingsPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        toastManager.add({ type: "error", title: result.message || "Failed to update profile" });
+        toastManager.add({
+          title: "Failed to update profile",
+          description: result.message || "Please try again.",
+        });
         return;
       }
 
@@ -229,12 +313,30 @@ export default function SettingsPage() {
         displayUsername: profileForm.displayUsername,
       });
 
-      toastManager.add({ type: "success", title: "Profile updated successfully" });
+      toastManager.add({
+        title: "Profile updated successfully",
+        type: "success",
+      });
     } catch (error) {
       console.error("Profile update error:", error);
-      toastManager.add({ type: "error", title: "Something went wrong" });
+      toastManager.add({
+        title: "Something went wrong",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authClient.signOut();
+      router.push("/auth/sign-in");
+    } catch {
+      toastManager.add({
+        title: "Failed to sign out",
+        type: "error",
+      });
     }
   };
 
@@ -272,14 +374,20 @@ export default function SettingsPage() {
 
         {/* Profile Section - Reorganized */}
         <Card className="p-4 sm:p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-[var(--color-indeks-blue)]/10">
-              <User className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-blue)]" />
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-[var(--color-indeks-blue)]/10">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-blue)]" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold">Profile Information</h3>
+                <p className="text-xs text-muted-foreground">Update your personal details and avatar</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold">Profile Information</h3>
-              <p className="text-xs text-muted-foreground">Update your personal details and avatar</p>
-            </div>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
 
           {profileLoading ? (
@@ -301,13 +409,13 @@ export default function SettingsPage() {
                         {userInitials}
                       </AvatarFallback>
                     </Avatar>
-                    <button
-                      type="button"
+                    <Button
+                      variant="outline"
                       onClick={() => setShowImageUrlInput(!showImageUrlInput)}
                       className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md"
                     >
                       <Camera className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                   {showImageUrlInput && (
                     <div className="w-full max-w-xs space-y-2">
@@ -412,7 +520,7 @@ export default function SettingsPage() {
                           }}
                         >
                           <SelectTrigger id="organization">
-                            <SelectValue placeholder="Select organization" />
+                            <SelectValue aria-placeholder="select organization" />
                           </SelectTrigger>
                           <SelectPopup alignItemWithTrigger={false}>
                             {orgItems.map((item) => (
@@ -448,7 +556,7 @@ export default function SettingsPage() {
                   <Button
                     onClick={handleSaveProfile}
                     disabled={isLoading || !hasChanges}
-                    className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)] w-full sm:w-auto"
+                    className={`w-full sm:w-auto ${hasChanges ? 'bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]' : ''}`}
                   >
                     {isLoading ? <Spinner className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                     Save Changes
@@ -603,42 +711,42 @@ export default function SettingsPage() {
         {/* Organization Management Section */}
         <OrganizationManagement />
 
-        {/* Danger Zone - Only visible to Owner */}
-        <OwnerOnly>
-          <Card className="p-4 sm:p-6 border-destructive/50">
+        {/* Danger Zone - Visible to System Admins and Org Owners */}
+        <SystemAdminOrOwnerOnly>
+          <Card className="p-4 sm:p-6 border-red-500/50 dark:border-red-500/40">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
+              <div className="p-2 rounded-lg bg-red-500/15 dark:bg-red-500/20">
+                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold text-destructive">Danger Zone</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-red-600 dark:text-red-400">Danger Zone</h3>
                 <p className="text-xs text-muted-foreground">Irreversible actions</p>
               </div>
             </div>
 
             <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-red-500/30 dark:border-red-500/25 bg-red-50 dark:bg-red-950/30">
                 <div>
-                  <p className="text-sm font-medium">Export Account Data</p>
+                  <p className="text-sm font-medium text-foreground">Export Account Data</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Download all your data in JSON format
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto border-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-950">
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-red-500/30 dark:border-red-500/25 bg-red-50 dark:bg-red-950/30">
                 <div>
-                  <p className="text-sm font-medium text-destructive">Delete Account</p>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-300">Delete Account</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Permanently delete your account and all data
                   </p>
                 </div>
                 <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                  <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground shadow-xs hover:bg-destructive/90 w-full sm:w-auto">
+                  <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 px-3 py-1.5 text-sm font-medium text-white shadow-xs w-full sm:w-auto">
                     Delete
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -679,7 +787,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
-        </OwnerOnly>
+        </SystemAdminOrOwnerOnly>
       </div>
     </DashboardLayout>
   );

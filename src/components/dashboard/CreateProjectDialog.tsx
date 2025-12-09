@@ -227,7 +227,7 @@ export function CreateProjectDialog({
                   disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a workspace">
+                    <SelectValue>
                       {formData.organizationId && (
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
