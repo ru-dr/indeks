@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/dashboard/GlobalSearch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { NotificationCenter } from "@/components/dashboard/NotificationCenter";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -81,17 +82,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </div>
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          aria-label="Notifications"
-        >
-          <Bell
-            className="h-5 w-5"
-            style={{ color: "var(--color-indeks-yellow)" }}
-          />
-        </Button>
+        <NotificationCenter />
 
         {/* User Profile */}
         <Link

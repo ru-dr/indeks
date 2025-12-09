@@ -260,9 +260,8 @@ export function TeamAccess({
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm">Organization Project</p>
               <p className="text-sm text-muted-foreground mt-1">
-                This project belongs to an organization. Team members are
-                managed through organization settings. All organization members
-                have access to this project based on their org role.
+                This project belongs to an organization. Use the team members
+                section below to grant access to specific organization members.
               </p>
             </div>
             <Link href="/settings?tab=team">
@@ -284,7 +283,7 @@ export function TeamAccess({
             <Badge variant="secondary">{members.length}</Badge>
           </div>
 
-          {canManageTeam && !isOrgProject && (
+          {canManageTeam && (
             <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
               <DialogTrigger
                 render={(props) => (
@@ -374,8 +373,7 @@ export function TeamAccess({
             const canModify =
               canManageTeam &&
               !member.isOwner &&
-              !isCurrentUser &&
-              !isOrgProject;
+              !isCurrentUser;
 
             return (
               <div
@@ -458,14 +456,9 @@ export function TeamAccess({
             <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
               <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
               <p className="font-medium text-sm">No team members yet</p>
-              {canManageTeam && !isOrgProject && (
+              {canManageTeam && (
                 <p className="text-xs mt-1">
                   Click &quot;Add Member&quot; to invite someone to collaborate
-                </p>
-              )}
-              {isOrgProject && (
-                <p className="text-xs mt-1">
-                  Add members to your organization to give them access
                 </p>
               )}
             </div>

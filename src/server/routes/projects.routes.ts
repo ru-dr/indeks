@@ -86,8 +86,14 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
 
     try {
-      let projects;
+      // Always use getUserProjects which respects explicit project access
+      // This ensures users only see projects they own or have been granted access to
+      const projects = await projectsController.getUserProjects(session.user.id);
+
+      // If organizationId is provided, filter to only that org's projects
+      let filteredProjects = projects;
       if (query?.organizationId) {
+        // Verify user is a member of the organization
         const [membership] = await db
           .select()
           .from(member)
@@ -107,16 +113,14 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
           };
         }
 
-        projects = await projectsController.getOrganizationProjects(
-          query.organizationId as string,
+        filteredProjects = projects.filter(
+          (p) => p.organizationId === query.organizationId
         );
-      } else {
-        projects = await projectsController.getUserProjects(session.user.id);
       }
 
       return {
         success: true,
-        data: projects,
+        data: filteredProjects,
       };
     } catch (error) {
       console.error("Error fetching projects:", error);

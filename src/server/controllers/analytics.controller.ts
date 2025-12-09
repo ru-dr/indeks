@@ -19,8 +19,10 @@ import {
   analyticsCustomEvents,
   analyticsSessions,
   analyticsVisitors,
+  member,
+  projectAccess,
 } from "@/db/schema/schema";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql, or, inArray, isNull } from "drizzle-orm";
 import { analyticsSyncService } from "@/services/analytics-sync.service";
 
 interface DateRangeQuery {
@@ -524,6 +526,10 @@ export const analyticsController = {
 
   /**
    * Get traffic trend for all projects the user has access to
+   * This includes:
+   * - Projects owned by the user (personal projects)
+   * - Projects in organizations the user is a member of
+   * - Projects explicitly shared with the user
    */
   async getUserTrafficTrend(userId: string, months: string = "8") {
     const monthCount = parseInt(months);
@@ -532,10 +538,51 @@ export const analyticsController = {
     startDate.setMonth(startDate.getMonth() - monthCount);
     const startDateStr = startDate.toISOString().split("T")[0];
 
+    
+    const userMemberships = await db
+      .select({ organizationId: member.organizationId })
+      .from(member)
+      .where(eq(member.userId, userId));
+    const orgIds = userMemberships.map((m) => m.organizationId);
+
+    
+    let accessProjectIds: string[] = [];
+    try {
+      const accessRecords = await db
+        .select({ projectId: projectAccess.projectId })
+        .from(projectAccess)
+        .where(eq(projectAccess.userId, userId));
+      accessProjectIds = accessRecords.map((a) => a.projectId);
+    } catch (error: any) {
+      
+      if (error?.cause?.code !== "42P01") {
+        throw error;
+      }
+    }
+
+    
+    const conditions = [];
+
+    
+    conditions.push(
+      and(eq(projects.userId, userId), isNull(projects.organizationId)),
+    );
+
+    
+    if (orgIds.length > 0) {
+      conditions.push(inArray(projects.organizationId, orgIds));
+    }
+
+    
+    if (accessProjectIds.length > 0) {
+      conditions.push(inArray(projects.id, accessProjectIds));
+    }
+
+    
     const userProjects = await db
       .select({ id: projects.id })
       .from(projects)
-      .where(eq(projects.userId, userId));
+      .where(or(...conditions));
 
     const projectIds = userProjects.map((p) => p.id);
 
@@ -552,7 +599,7 @@ export const analyticsController = {
       .where(
         and(
           gte(analyticsDaily.date, startDateStr),
-          sql`${analyticsDaily.projectId} IN ${projectIds}`,
+          inArray(analyticsDaily.projectId, projectIds),
         ),
       )
       .groupBy(analyticsDaily.date)

@@ -6,6 +6,7 @@ import * as schema from "@/db/schema/schema";
 import { emailService } from "@/lib/email";
 import { ac, roles } from "@/lib/permissions";
 import { nanoid } from "nanoid";
+import { eq, and, inArray } from "drizzle-orm";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -104,6 +105,66 @@ export const auth = betterAuth({
           } catch (error) {
             console.error(
               `Failed to create default organization for user ${user.id}:`,
+              error,
+            );
+          }
+        },
+      },
+    },
+    
+    member: {
+      delete: {
+        after: async (member) => {
+          try {
+            
+            const orgProjects = await db
+              .select({ id: schema.projects.id })
+              .from(schema.projects)
+              .where(eq(schema.projects.organizationId, member.organizationId));
+
+            if (orgProjects.length > 0) {
+              const projectIds = orgProjects.map((p) => p.id);
+
+              
+              await db
+                .delete(schema.projectAccess)
+                .where(
+                  and(
+                    eq(schema.projectAccess.userId, member.userId),
+                    inArray(schema.projectAccess.projectId, projectIds),
+                  ),
+                );
+
+              console.log(
+                `Revoked project access for user ${member.userId} in org ${member.organizationId}`,
+              );
+            }
+
+            
+            const orgTeams = await db
+              .select({ id: schema.team.id })
+              .from(schema.team)
+              .where(eq(schema.team.organizationId, member.organizationId));
+
+            if (orgTeams.length > 0) {
+              const teamIds = orgTeams.map((t) => t.id);
+
+              await db
+                .delete(schema.teamMember)
+                .where(
+                  and(
+                    eq(schema.teamMember.userId, member.userId),
+                    inArray(schema.teamMember.teamId, teamIds),
+                  ),
+                );
+
+              console.log(
+                `Removed user ${member.userId} from all teams in org ${member.organizationId}`,
+              );
+            }
+          } catch (error) {
+            console.error(
+              `Error cleaning up access for removed member ${member.userId}:`,
               error,
             );
           }

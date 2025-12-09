@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   User,
-  Bell,
   Key,
   Lock,
   Trash2,
@@ -36,7 +35,6 @@ import {
   Download,
   Check,
   Calendar,
-  Link as LinkIcon,
   AtSign,
   Camera,
   LogOut,
@@ -45,9 +43,10 @@ import { SystemAdminOrOwnerOnly } from "@/components/auth";
 import { useAuth } from "@/hooks/use-auth";
 import { authClient } from "@/lib/auth-client";
 import { roleDisplayNames } from "@/lib/permissions";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { OrganizationManagement } from "@/components/organization/OrganizationManagement";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { toastManager } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -75,14 +74,6 @@ export default function SettingsPage() {
   });
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [showImageUrlInput, setShowImageUrlInput] = useState(false);
-  const [notifications, setNotifications] = useState({
-    emailNotifications: true,
-    productUpdates: true,
-    weeklyReports: false,
-    securityAlerts: true,
-    usageAlerts: true,
-    orgActivity: false,
-  });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -135,13 +126,6 @@ export default function SettingsPage() {
       }));
     }
   }, [activeOrg]);
-
-  const handleNotificationChange = useCallback(
-    (key: keyof typeof notifications) => {
-      setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
-    },
-    [],
-  );
 
   const handleImageUrlChange = (url: string) => {
     setImageUrlInput(url);
@@ -425,7 +409,7 @@ export default function SettingsPage() {
                       onClick={() => setShowImageUrlInput(!showImageUrlInput)}
                       className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md"
                     >
-                      <Camera className="h-4 w-4" />
+                      <Camera className="h-4 w-4 text-(--color-indeks-white)" />
                     </Button>
                   </div>
                   {showImageUrlInput && (
@@ -692,123 +676,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Notifications Section */}
-        <Card className="p-4 sm:p-6">
-          <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <div className="p-2 rounded-lg bg-[var(--color-indeks-yellow)]/10">
-              <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-yellow)]" />
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold">
-                Notification Preferences
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Choose what updates you receive
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Email Notifications
-              </h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium">Account Updates</p>
-                    <p className="text-xs text-muted-foreground">
-                      Receive updates about your account
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.emailNotifications}
-                    onCheckedChange={() =>
-                      handleNotificationChange("emailNotifications")
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium">Security Alerts</p>
-                    <p className="text-xs text-muted-foreground">
-                      Important security notifications
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.securityAlerts}
-                    onCheckedChange={() =>
-                      handleNotificationChange("securityAlerts")
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium">Weekly Reports</p>
-                    <p className="text-xs text-muted-foreground">
-                      Analytics summary via email
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.weeklyReports}
-                    onCheckedChange={() =>
-                      handleNotificationChange("weeklyReports")
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                Product & Activity
-              </h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium">Product Updates</p>
-                    <p className="text-xs text-muted-foreground">
-                      News about new features
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.productUpdates}
-                    onCheckedChange={() =>
-                      handleNotificationChange("productUpdates")
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium">Usage Alerts</p>
-                    <p className="text-xs text-muted-foreground">
-                      When approaching limits
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.usageAlerts}
-                    onCheckedChange={() =>
-                      handleNotificationChange("usageAlerts")
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium">Organization Activity</p>
-                    <p className="text-xs text-muted-foreground">
-                      Updates from organization members
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.orgActivity}
-                    onCheckedChange={() =>
-                      handleNotificationChange("orgActivity")
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
+        <NotificationSettings />
 
         {/* Organization Management Section */}
         <OrganizationManagement />

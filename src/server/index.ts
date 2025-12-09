@@ -7,6 +7,8 @@ import { collectRoutes } from "./routes/collect.routes";
 import { analyticsRoutes } from "./routes/analytics.routes";
 import { profileRoutes } from "./routes/profile.routes";
 import { organizationRoutes } from "./routes/organization.routes";
+import { notificationsRoutes } from "./routes/notifications.routes";
+import { uptimeRoutes } from "./routes/uptime.routes";
 import { initializeClickHouseTables } from "@/db/clickhouse";
 
 initializeClickHouseTables().catch((error) => {
@@ -55,4 +57,6 @@ export const app = new Elysia({ prefix: "/api" })
   .use(projectsRoutes)
   .use(collectRoutes)
   .use(analyticsRoutes)
-  .use(organizationRoutes);
+  .use(organizationRoutes)
+  .use(notificationsRoutes)
+  .use(uptimeRoutes);

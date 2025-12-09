@@ -1,6 +1,6 @@
 import { db } from "@/db/connect";
 import { projects, member, projectAccess, user } from "@/db/schema/schema";
-import { eq, and, or, inArray, isNull } from "drizzle-orm";
+import { eq, and, or, inArray } from "drizzle-orm";
 import { createHash, randomBytes } from "crypto";
 
 interface CreateProjectDto {
@@ -40,19 +40,7 @@ function generateKeyHash(publicKey: string): string {
 }
 
 /**
- * Get all organization IDs that a user is a member of
- */
-async function getUserOrganizationIds(userId: string): Promise<string[]> {
-  const memberships = await db
-    .select({ organizationId: member.organizationId })
-    .from(member)
-    .where(eq(member.userId, userId));
-
-  return memberships.map((m) => m.organizationId);
-}
-
-/**
- * Get project access IDs where user has been granted access
+ * Get project access IDs where user has been granted explicit access
  * Returns empty array if table doesn't exist yet
  */
 async function getUserProjectAccessIds(userId: string): Promise<string[]> {
@@ -99,13 +87,27 @@ export const projectsController = {
 
   /**
    * Get projects for a user
-   * - Personal projects (no organizationId, owned by user)
-   * - Organization projects (user is a member of the organization)
-   * - Projects where user has been granted access
+   * Access is granted through:
+   * - Projects owned by the user (userId matches)
+   * - Projects where user has been granted explicit access via projectAccess table
+   *
+   * NOTE: Being an organization member does NOT automatically grant access to all org projects.
+   * The project owner must explicitly grant access to team members via the projectAccess table.
+   * This ensures proper access control even within organizations.
    */
   async getUserProjects(userId: string) {
-    const orgIds = await getUserOrganizationIds(userId);
     const accessProjectIds = await getUserProjectAccessIds(userId);
+
+    // Build conditions array
+    const conditions = [];
+
+    // Include projects owned by user (regardless of whether they're in an org)
+    conditions.push(eq(projects.userId, userId));
+
+    // Include explicitly shared projects (via projectAccess table)
+    if (accessProjectIds.length > 0) {
+      conditions.push(inArray(projects.id, accessProjectIds));
+    }
 
     const userProjects = await db
       .select({
@@ -122,19 +124,7 @@ export const projectsController = {
         userId: projects.userId,
       })
       .from(projects)
-      .where(
-        or(
-          and(eq(projects.userId, userId), isNull(projects.organizationId)),
-
-          orgIds.length > 0
-            ? inArray(projects.organizationId, orgIds)
-            : undefined,
-
-          accessProjectIds.length > 0
-            ? inArray(projects.id, accessProjectIds)
-            : undefined,
-        ),
-      )
+      .where(or(...conditions))
       .orderBy(projects.createdAt);
 
     return userProjects;
@@ -142,6 +132,7 @@ export const projectsController = {
 
   /**
    * Get projects for a specific organization
+   * This returns ALL projects in the org - use for admin views only
    */
   async getOrganizationProjects(organizationId: string) {
     const orgProjects = await db
@@ -167,12 +158,16 @@ export const projectsController = {
 
   /**
    * Get a single project
-   * User must either own it (creator), be a member of its organization, or have explicit access
+   * User must either own it or have explicit access via projectAccess table
    */
   async getProject(userId: string, projectId: string) {
-    const orgIds = await getUserOrganizationIds(userId);
-    const accessProjectIds = await getUserProjectAccessIds(userId);
+    // First check if user has any access at all
+    const role = await this.getUserProjectRole(userId, projectId);
+    if (!role) {
+      return null; // No access
+    }
 
+    // User has access, fetch the project
     const [project] = await db
       .select({
         id: projects.id,
@@ -188,22 +183,7 @@ export const projectsController = {
         userId: projects.userId,
       })
       .from(projects)
-      .where(
-        and(
-          eq(projects.id, projectId),
-          or(
-            eq(projects.userId, userId),
-
-            orgIds.length > 0
-              ? inArray(projects.organizationId, orgIds)
-              : undefined,
-
-            accessProjectIds.includes(projectId)
-              ? eq(projects.id, projectId)
-              : undefined,
-          ),
-        ),
-      )
+      .where(eq(projects.id, projectId))
       .limit(1);
 
     return project;
@@ -211,59 +191,66 @@ export const projectsController = {
 
   /**
    * Get user's role for a project
+   * This is the core access control function - it determines if and how a user can access a project
+   *
+   * Access hierarchy:
+   * 1. Project owner (userId matches project.userId) -> "owner"
+   * 2. Explicit project access (entry in projectAccess table) -> access role
+   * 3. No access -> null
+   *
+   * NOTE: Organization membership alone does NOT grant project access.
+   * The project owner must explicitly grant access via the projectAccess table.
    */
   async getUserProjectRole(
     userId: string,
     projectId: string,
   ): Promise<ProjectRole | null> {
-    const [ownedProject] = await db
-      .select({ id: projects.id, organizationId: projects.organizationId })
-      .from(projects)
-      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
-      .limit(1);
-
-    if (ownedProject) {
-      return "owner";
-    }
-
+    // First, get the project to check ownership
     const [project] = await db
-      .select({ organizationId: projects.organizationId })
+      .select({
+        id: projects.id,
+        userId: projects.userId,
+        organizationId: projects.organizationId,
+      })
       .from(projects)
       .where(eq(projects.id, projectId))
       .limit(1);
 
-    if (project?.organizationId) {
-      const [membership] = await db
-        .select({ role: member.role })
-        .from(member)
+    // Project doesn't exist
+    if (!project) {
+      return null;
+    }
+
+    // Check 1: Is the user the project owner?
+    if (project.userId === userId) {
+      return "owner";
+    }
+
+    // Check 2: Does the user have explicit project access?
+    // This is the ONLY way non-owners can access a project
+    try {
+      const [access] = await db
+        .select({ role: projectAccess.role })
+        .from(projectAccess)
         .where(
           and(
-            eq(member.organizationId, project.organizationId),
-            eq(member.userId, userId),
+            eq(projectAccess.projectId, projectId),
+            eq(projectAccess.userId, userId),
           ),
         )
         .limit(1);
 
-      if (membership) {
-        return membership.role as ProjectRole;
+      if (access) {
+        return access.role as ProjectRole;
+      }
+    } catch (error: any) {
+      // Handle case where projectAccess table doesn't exist yet
+      if (error?.cause?.code !== "42P01") {
+        throw error;
       }
     }
 
-    const [access] = await db
-      .select({ role: projectAccess.role })
-      .from(projectAccess)
-      .where(
-        and(
-          eq(projectAccess.projectId, projectId),
-          eq(projectAccess.userId, userId),
-        ),
-      )
-      .limit(1);
-
-    if (access) {
-      return access.role as ProjectRole;
-    }
-
+    // No access - organization membership alone does NOT grant access
     return null;
   },
 
@@ -285,6 +272,8 @@ export const projectsController = {
 
   /**
    * Get all users with access to a project
+   * Shows: owner + explicit projectAccess entries
+   * Does NOT automatically include all org members (since org membership doesn't grant access)
    */
   async getProjectAccessList(userId: string, projectId: string) {
     const hasAccess = await this.hasProjectAccess(userId, projectId);
@@ -316,6 +305,7 @@ export const projectsController = {
       grantedAt: Date | null;
     }[] = [];
 
+    // Add the owner
     const [owner] = await db
       .select({
         id: user.id,
@@ -340,36 +330,7 @@ export const projectsController = {
       });
     }
 
-    if (project.organizationId) {
-      const orgMembers = await db
-        .select({
-          userId: member.userId,
-          role: member.role,
-          createdAt: member.createdAt,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-        })
-        .from(member)
-        .innerJoin(user, eq(member.userId, user.id))
-        .where(eq(member.organizationId, project.organizationId));
-
-      for (const m of orgMembers) {
-        if (m.userId !== project.userId) {
-          accessList.push({
-            id: m.userId,
-            userId: m.userId,
-            name: m.name,
-            email: m.email,
-            image: m.image,
-            role: m.role as ProjectRole,
-            isOwner: false,
-            grantedAt: m.createdAt,
-          });
-        }
-      }
-    }
-
+    // Add users with explicit project access
     const explicitAccess = await db
       .select({
         id: projectAccess.id,
@@ -499,6 +460,49 @@ export const projectsController = {
       .returning();
 
     return deleted;
+  },
+
+  /**
+   * Remove all explicit project access for a user in a specific organization
+   * This should be called when a user is removed from an organization
+   * to ensure they lose access to any projects they were explicitly shared on
+   */
+  async revokeUserOrgProjectAccess(
+    userId: string,
+    organizationId: string,
+  ): Promise<number> {
+    try {
+      // Get all projects in this organization
+      const orgProjects = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.organizationId, organizationId));
+
+      if (orgProjects.length === 0) {
+        return 0;
+      }
+
+      const projectIds = orgProjects.map((p) => p.id);
+
+      // Remove user's explicit access to all these projects
+      const result = await db
+        .delete(projectAccess)
+        .where(
+          and(
+            eq(projectAccess.userId, userId),
+            inArray(projectAccess.projectId, projectIds),
+          ),
+        );
+
+      // Return the count of deleted rows (if available)
+      return (result as any).rowCount ?? 0;
+    } catch (error: any) {
+      // Handle case where projectAccess table doesn't exist yet
+      if (error?.cause?.code === "42P01") {
+        return 0;
+      }
+      throw error;
+    }
   },
 
   async updateProject(

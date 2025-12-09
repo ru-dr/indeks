@@ -12,6 +12,7 @@ import {
   BookUp2,
   Route,
   MonitorCog,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -34,6 +35,11 @@ const navigationItems = [
     name: "Analytics",
     href: "/analytics",
     icon: BarChart3,
+  },
+  {
+    name: "Uptime",
+    href: "/uptime",
+    icon: Activity,
   },
   {
     name: "Realtime Traffic",
