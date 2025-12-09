@@ -34,16 +34,11 @@ export const auth = betterAuth({
   plugins: [
     username(),
     admin({
-      // Admin plugin is for PLATFORM-level super admin
-      // user.role = "admin" means they have FULL control over EVERYTHING
-      // This supersedes all org-level roles including owner
-      defaultRole: "user", // Regular users get 'user' role by default
+      defaultRole: "viewer",
     }),
     organization({
       ac,
       roles: {
-        // Organization/Team roles: owner, member, viewer
-        // Admin role is handled at platform level via user.role
         owner: roles.owner,
         member: roles.member,
         viewer: roles.viewer,
@@ -54,7 +49,6 @@ export const auth = betterAuth({
         maximumTeams: 10,
       },
 
-      // Creator of org becomes owner
       creatorRole: "owner",
 
       allowUserToCreateOrganization: true,
@@ -85,12 +79,10 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          // Create a default "Personal" organization for new users
           const slug = `personal-${user.id.slice(0, 8)}`;
           const orgId = nanoid();
 
           try {
-            // Create the organization
             await db.insert(schema.organization).values({
               id: orgId,
               name: `${user.name || "Personal"}'s Workspace`,
@@ -98,12 +90,11 @@ export const auth = betterAuth({
               createdAt: new Date(),
             });
 
-            // Add the user as owner of the organization
             await db.insert(schema.member).values({
               id: nanoid(),
               organizationId: orgId,
               userId: user.id,
-              role: "owner", // User is OWNER of their default org
+              role: "owner",
               createdAt: new Date(),
             });
 
@@ -115,7 +106,6 @@ export const auth = betterAuth({
               `Failed to create default organization for user ${user.id}:`,
               error
             );
-            // Don't throw - user creation should still succeed
           }
         },
       },
@@ -136,10 +126,10 @@ export const auth = betterAuth({
     },
     defaultCookieAttributes: {
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: true, // Always true for HTTPS
       httpOnly: true,
       path: "/",
     },
-    useSecureCookies: process.env.NODE_ENV === "production",
+    useSecureCookies: true, // Always true for HTTPS production
   },
 });
