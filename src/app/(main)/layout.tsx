@@ -9,15 +9,20 @@ export default async function MainLayout({
   children: React.ReactNode;
 }) {
   console.log("[MainLayout] Checking session...");
-  
+
   const reqHeaders = await headers();
   console.log("[MainLayout] Cookie header:", reqHeaders.get("cookie"));
-  
+
   const session = await auth.api.getSession({
     headers: reqHeaders,
   });
 
-  console.log("[MainLayout] Session result:", session ? { userId: session.user.id, emailVerified: session.user.emailVerified } : null);
+  console.log(
+    "[MainLayout] Session result:",
+    session
+      ? { userId: session.user.id, emailVerified: session.user.emailVerified }
+      : null,
+  );
 
   if (!session) {
     console.log("[MainLayout] No session, redirecting to sign-in");

@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
-import { Role, OrgRole, roleHierarchy, statement, isRoleAtLeast as checkRoleAtLeast, getEffectiveRole } from "@/lib/permissions";
+import {
+  Role,
+  OrgRole,
+  roleHierarchy,
+  statement,
+  isRoleAtLeast as checkRoleAtLeast,
+  getEffectiveRole,
+} from "@/lib/permissions";
 
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
@@ -13,9 +20,9 @@ type PermissionCheck = {
 
 /**
  * Hook to get the current user's session and role information
- * 
+ *
  * Role hierarchy: viewer < member < owner < admin
- * 
+ *
  * - Platform admin (user.role === "admin") has FULL control over everything
  * - Org roles (owner, member, viewer) are stored in member.role
  */
@@ -24,24 +31,21 @@ export function useAuth() {
   const { data: activeOrg } = authClient.useActiveOrganization();
 
   const user = session?.user;
-  
-  // Platform-level role (admin or null)
+
   const platformRole = user?.role as string | null;
-  
-  // Org-level role from active organization membership
-  const orgRole = (activeOrg?.members?.find(m => m.userId === user?.id)?.role as OrgRole) || null;
-  
-  // Effective role considering both platform and org level
+
+  const orgRole =
+    (activeOrg?.members?.find((m) => m.userId === user?.id)?.role as OrgRole) ||
+    null;
+
   const role = getEffectiveRole(platformRole, orgRole) as Role;
-  
-  // Check if user is platform admin
+
   const isPlatformAdmin = platformRole === "admin";
 
   const isRoleAtLeast = useCallback(
     (requiredRole: Role): boolean => {
-      // Platform admin can do anything
       if (isPlatformAdmin) return true;
-      
+
       return checkRoleAtLeast(role, requiredRole);
     },
     [role, isPlatformAdmin],
@@ -50,13 +54,13 @@ export function useAuth() {
   return {
     session,
     user,
-    role,               // Effective role (considering platform admin status)
-    orgRole,            // Org-level role only
-    platformRole,       // Platform-level role (admin or null)
+    role,
+    orgRole,
+    platformRole,
     isLoading: isPending,
     isAuthenticated: !!session,
-    isAdmin: isPlatformAdmin,  // Platform super admin
-    isOwner: role === "owner" || isPlatformAdmin,  // Admin can act as owner
+    isAdmin: isPlatformAdmin,
+    isOwner: role === "owner" || isPlatformAdmin,
     isMember: isRoleAtLeast("member"),
     isViewer: isRoleAtLeast("viewer"),
     isRoleAtLeast,
@@ -77,7 +81,6 @@ export function usePermission(permissions: PermissionCheck) {
     let isMounted = true;
 
     const checkPermissions = async () => {
-      // Platform admin has ALL permissions
       if (isAdmin) {
         if (isMounted) {
           setHasPermission(true);
@@ -94,9 +97,11 @@ export function usePermission(permissions: PermissionCheck) {
         return;
       }
 
-      // Map org roles to admin roles for permission checking
-      const adminRole = (role === "owner" || role === "member" || role === "viewer") ? "admin" : role as "user" | "admin";
-      
+      const adminRole =
+        role === "owner" || role === "member" || role === "viewer"
+          ? "admin"
+          : (role as "user" | "admin");
+
       const result = authClient.admin.checkRolePermission({
         permissions: permissions as Record<string, string[]>,
         role: adminRole,
@@ -197,11 +202,13 @@ export function useAdminActions() {
     setError(null);
 
     try {
-      // Map to valid admin roles ("user" | "admin")
-      const adminRole = Array.isArray(role) 
-        ? role.map(r => r === "admin" ? "admin" : "user") as ("user" | "admin")[]
-        : (role === "admin" ? "admin" : "user") as "user" | "admin";
-      
+      const adminRole = Array.isArray(role)
+        ? (role.map((r) => (r === "admin" ? "admin" : "user")) as (
+            | "user"
+            | "admin"
+          )[])
+        : ((role === "admin" ? "admin" : "user") as "user" | "admin");
+
       const result = await authClient.admin.setRole({
         userId,
         role: adminRole,

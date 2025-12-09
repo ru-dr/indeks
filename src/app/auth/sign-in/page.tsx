@@ -156,14 +156,8 @@ function SignInForm() {
           type: "success",
         });
 
-        // Check cookies before redirect
         console.log("[Auth] Cookies after sign in:", document.cookie);
-        
-        // Use hard navigation to ensure cookies are sent with the request
-        // router.push() won't work because:
-        // 1. It does client-side navigation without full page reload
-        // 2. Server components in (main)/layout.tsx check session on server
-        // 3. With client nav, the auth cookie may not be sent with the cached RSC request
+
         const redirectPath = redirectUrl || "/";
         console.log("[Auth] Redirecting to:", redirectPath);
         window.location.href = redirectPath;

@@ -87,10 +87,7 @@ function AlertDialogHeader({
   );
 }
 
-function AlertDialogBody({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function AlertDialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn("px-6 pb-4", className)}

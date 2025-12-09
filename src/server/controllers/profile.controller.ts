@@ -30,7 +30,7 @@ export const profileController = {
       image?: string;
       username?: string;
       displayUsername?: string;
-    }
+    },
   ) {
     const updateData: Record<string, any> = {};
 
@@ -39,7 +39,6 @@ export const profileController = {
     }
 
     if (data.image !== undefined) {
-      
       if (data.image && !isValidUrl(data.image)) {
         throw new Error("Invalid image URL");
       }
@@ -51,7 +50,6 @@ export const profileController = {
         .toLowerCase()
         .replace(/[^a-z0-9_]/g, "");
 
-      
       if (normalizedUsername) {
         const [existing] = await db
           .select({ id: user.id })
@@ -65,7 +63,8 @@ export const profileController = {
       }
 
       updateData.username = normalizedUsername || null;
-      updateData.displayUsername = data.displayUsername || normalizedUsername || null;
+      updateData.displayUsername =
+        data.displayUsername || normalizedUsername || null;
     }
 
     if (Object.keys(updateData).length === 0) {

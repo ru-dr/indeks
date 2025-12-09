@@ -17,15 +17,10 @@ export const authClient = createAuthClient({
   baseURL: getBaseURL(),
   plugins: [
     usernameClient(),
-    adminClient({
-      // Admin client for platform-level super admin operations
-      // user.role = "admin" grants FULL control over everything
-    }),
+    adminClient({}),
     organizationClient({
       ac,
       roles: {
-        // Organization/Team roles: owner, member, viewer
-        // These are the same roles for both org and team contexts
         owner: roles.owner,
         member: roles.member,
         viewer: roles.viewer,

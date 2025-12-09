@@ -37,7 +37,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-// Types
 export interface Team {
   id: string;
   name: string;
@@ -107,13 +106,15 @@ export function TeamsSection({
   const [createTeamName, setCreateTeamName] = useState("");
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
-  
-  // Add team member dialog
+
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
-  const [selectedTeamForMember, setSelectedTeamForMember] = useState<Team | null>(null);
+  const [selectedTeamForMember, setSelectedTeamForMember] =
+    useState<Team | null>(null);
   const [selectedMemberToAdd, setSelectedMemberToAdd] = useState<string>("");
   const [isAddingTeamMember, setIsAddingTeamMember] = useState(false);
-  const [removingTeamMemberId, setRemovingTeamMemberId] = useState<string | null>(null);
+  const [removingTeamMemberId, setRemovingTeamMemberId] = useState<
+    string | null
+  >(null);
 
   const handleToggleTeam = (teamId: string) => {
     if (expandedTeamId === teamId) {
@@ -137,7 +138,9 @@ export function TeamsSection({
 
   const getAvailableMembersForTeam = (teamId: string) => {
     const currentTeamMembers = teamMembers[teamId] || [];
-    const teamMemberUserIds = new Set(currentTeamMembers.map((tm) => tm.userId));
+    const teamMemberUserIds = new Set(
+      currentTeamMembers.map((tm) => tm.userId),
+    );
     return members.filter((member) => !teamMemberUserIds.has(member.userId));
   };
 
@@ -159,7 +162,10 @@ export function TeamsSection({
         setShowCreateTeamDialog(false);
         setCreateTeamName("");
         setTimeout(() => {
-          toastManager.add({ type: "error", title: error.message || "Failed to create team" });
+          toastManager.add({
+            type: "error",
+            title: error.message || "Failed to create team",
+          });
         }, 100);
         return;
       }
@@ -192,7 +198,10 @@ export function TeamsSection({
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to delete team" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to delete team",
+        });
         return;
       }
 
@@ -212,7 +221,7 @@ export function TeamsSection({
 
     setIsAddingTeamMember(true);
     const teamId = selectedTeamForMember.id;
-    
+
     try {
       const { error } = await authClient.organization.addTeamMember({
         teamId,
@@ -224,7 +233,10 @@ export function TeamsSection({
         setSelectedTeamForMember(null);
         setSelectedMemberToAdd("");
         setTimeout(() => {
-          toastManager.add({ type: "error", title: error.message || "Failed to add member to team" });
+          toastManager.add({
+            type: "error",
+            title: error.message || "Failed to add member to team",
+          });
         }, 100);
         return;
       }
@@ -232,9 +244,9 @@ export function TeamsSection({
       setShowAddMemberDialog(false);
       setSelectedTeamForMember(null);
       setSelectedMemberToAdd("");
-      
+
       onLoadTeamMembers(teamId);
-      
+
       setTimeout(() => {
         toastManager.add({ type: "success", title: "Member added to team" });
       }, 100);
@@ -259,7 +271,10 @@ export function TeamsSection({
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to remove member" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to remove member",
+        });
         return;
       }
 
@@ -278,10 +293,15 @@ export function TeamsSection({
         <div className="flex items-center gap-2">
           <UsersRound className="h-4 w-4 text-muted-foreground" />
           <h4 className="text-sm font-medium">Teams</h4>
-          <Badge variant="outline" className="text-xs">{teams.length}</Badge>
+          <Badge variant="outline" className="text-xs">
+            {teams.length}
+          </Badge>
         </div>
         {canManageMembers && (
-          <Dialog open={showCreateTeamDialog} onOpenChange={setShowCreateTeamDialog}>
+          <Dialog
+            open={showCreateTeamDialog}
+            onOpenChange={setShowCreateTeamDialog}
+          >
             <DialogTrigger
               render={(props) => (
                 <Button {...props} size="sm" variant="outline">
@@ -293,7 +313,9 @@ export function TeamsSection({
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create Team</DialogTitle>
-                <DialogDescription>Create a team to group members.</DialogDescription>
+                <DialogDescription>
+                  Create a team to group members.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateTeam}>
                 <DialogBody className="space-y-4">
@@ -309,7 +331,11 @@ export function TeamsSection({
                   </div>
                 </DialogBody>
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setShowCreateTeamDialog(false)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowCreateTeamDialog(false)}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isCreatingTeam}>
@@ -355,7 +381,8 @@ export function TeamsSection({
                     <div>
                       <p className="font-medium text-sm">{team.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {currentTeamMembers.length} member{currentTeamMembers.length !== 1 ? "s" : ""}
+                        {currentTeamMembers.length} member
+                        {currentTeamMembers.length !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </div>
@@ -365,7 +392,10 @@ export function TeamsSection({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => { e.stopPropagation(); handleOpenAddMemberDialog(team); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAddMemberDialog(team);
+                          }}
                           className="h-8 px-2"
                           title="Add member"
                         >
@@ -374,7 +404,10 @@ export function TeamsSection({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTeam(team.id);
+                          }}
                           className="text-destructive hover:text-destructive h-8 px-2"
                           title="Delete team"
                         >
@@ -399,27 +432,43 @@ export function TeamsSection({
                     ) : currentTeamMembers.length > 0 ? (
                       <div className="space-y-2">
                         {currentTeamMembers.map((tm) => (
-                          <div key={tm.id} className="flex items-center justify-between gap-2 p-2 rounded-md bg-background border">
+                          <div
+                            key={tm.id}
+                            className="flex items-center justify-between gap-2 p-2 rounded-md bg-background border"
+                          >
                             <div className="flex items-center gap-2">
                               <Avatar className="h-7 w-7">
                                 {tm.user?.image ? (
-                                  <Image src={tm.user.image} alt={tm.user?.name || ""} width={28} height={28} className="rounded-full" />
+                                  <Image
+                                    src={tm.user.image}
+                                    alt={tm.user?.name || ""}
+                                    width={28}
+                                    height={28}
+                                    className="rounded-full"
+                                  />
                                 ) : (
                                   <AvatarFallback className="text-xs">
-                                    {tm.user?.name?.charAt(0)?.toUpperCase() || "?"}
+                                    {tm.user?.name?.charAt(0)?.toUpperCase() ||
+                                      "?"}
                                   </AvatarFallback>
                                 )}
                               </Avatar>
                               <div className="min-w-0">
-                                <p className="text-xs font-medium truncate">{tm.user?.name || "Unknown"}</p>
-                                <p className="text-xs text-muted-foreground truncate">{tm.user?.email || ""}</p>
+                                <p className="text-xs font-medium truncate">
+                                  {tm.user?.name || "Unknown"}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {tm.user?.email || ""}
+                                </p>
                               </div>
                             </div>
                             {canManageMembers && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleRemoveTeamMember(team.id, tm.userId)}
+                                onClick={() =>
+                                  handleRemoveTeamMember(team.id, tm.userId)
+                                }
                                 disabled={removingTeamMemberId === tm.userId}
                                 className="text-destructive hover:text-destructive h-6 w-6 p-0"
                               >
@@ -448,7 +497,9 @@ export function TeamsSection({
         <div className="text-center py-6 border rounded-lg border-dashed bg-muted/20">
           <UsersRound className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">No teams yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Create teams to organize members</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Create teams to organize members
+          </p>
         </div>
       )}
 
@@ -456,28 +507,39 @@ export function TeamsSection({
       <Dialog open={showAddMemberDialog} onOpenChange={setShowAddMemberDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Member to {selectedTeamForMember?.name}</DialogTitle>
-            <DialogDescription>Select an organization member to add.</DialogDescription>
+            <DialogTitle>
+              Add Member to {selectedTeamForMember?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Select an organization member to add.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddTeamMember}>
             <DialogBody className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="team-member-select">Select Member</Label>
-                {selectedTeamForMember && getAvailableMembersForTeam(selectedTeamForMember.id).length > 0 ? (
+                {selectedTeamForMember &&
+                getAvailableMembersForTeam(selectedTeamForMember.id).length >
+                  0 ? (
                   <Select
                     value={selectedMemberToAdd}
-                    onValueChange={(value) => setSelectedMemberToAdd(value ?? "")}
+                    onValueChange={(value) =>
+                      setSelectedMemberToAdd(value ?? "")
+                    }
                     disabled={isAddingTeamMember}
                   >
                     <SelectTrigger>
                       <SelectValue aria-placeholder="Select a member..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedTeamForMember && getAvailableMembersForTeam(selectedTeamForMember.id).map((member) => (
-                        <SelectItem key={member.userId} value={member.userId}>
-                          {member.user.name} ({member.user.email})
-                        </SelectItem>
-                      ))}
+                      {selectedTeamForMember &&
+                        getAvailableMembersForTeam(
+                          selectedTeamForMember.id,
+                        ).map((member) => (
+                          <SelectItem key={member.userId} value={member.userId}>
+                            {member.user.name} ({member.user.email})
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 ) : (
@@ -488,12 +550,24 @@ export function TeamsSection({
               </div>
             </DialogBody>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowAddMemberDialog(false)} disabled={isAddingTeamMember}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddMemberDialog(false)}
+                disabled={isAddingTeamMember}
+              >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={isAddingTeamMember || !selectedMemberToAdd || (selectedTeamForMember ? getAvailableMembersForTeam(selectedTeamForMember.id).length === 0 : true)}
+                disabled={
+                  isAddingTeamMember ||
+                  !selectedMemberToAdd ||
+                  (selectedTeamForMember
+                    ? getAvailableMembersForTeam(selectedTeamForMember.id)
+                        .length === 0
+                    : true)
+                }
               >
                 {isAddingTeamMember && <Spinner className="h-4 w-4 mr-2" />}
                 Add

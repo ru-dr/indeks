@@ -246,7 +246,6 @@ export const invitationRelations = relations(invitation, ({ one }) => ({
   }),
 }));
 
-
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
 

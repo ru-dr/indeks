@@ -60,7 +60,7 @@ export async function verifyProjectAccess(
 
 /**
  * Check if user is a PLATFORM ADMIN (Indeks super admin)
- * Platform admins have FULL control over EVERYTHING - all organizations, 
+ * Platform admins have FULL control over EVERYTHING - all organizations,
  * all users, all projects, and all system-level operations.
  *
  * NOTE: The user.role field is for platform-level permissions:
@@ -68,7 +68,7 @@ export async function verifyProjectAccess(
  * - null/undefined = Regular user (uses org-level roles)
  *
  * Org/Team roles (owner, member, viewer) are stored in the member table.
- * 
+ *
  * Hierarchy: viewer < member < owner < admin (platform)
  * Platform admin supersedes ALL org/team roles.
  */
@@ -85,4 +85,4 @@ export async function isUserAdmin(request: Request): Promise<boolean> {
  * Alias for clarity - checks if user is a platform admin
  */
 export const isPlatformAdmin = isUserAdmin;
-export const isSystemAdmin = isUserAdmin; // backwards compatibility
+export const isSystemAdmin = isUserAdmin;

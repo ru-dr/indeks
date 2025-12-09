@@ -24,13 +24,13 @@ import { Building2, Plus } from "lucide-react";
 
 import { OrgSelector } from "./OrgSelector";
 import { OrgSettings } from "./OrgSettings";
-import { MembersSection, type OrgMember, type Invitation } from "./MembersSection";
+import {
+  MembersSection,
+  type OrgMember,
+  type Invitation,
+} from "./MembersSection";
 import { TeamsSection, type Team, type TeamMember } from "./TeamsSection";
 import { DangerZone, type Organization } from "./DangerZone";
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface FullOrganization {
   id: string;
@@ -50,10 +50,6 @@ interface ActiveMember {
   organizationId: string;
   createdAt: Date;
 }
-
-// ============================================================================
-// Hooks
-// ============================================================================
 
 function useFullOrganization(organizationId: string, refreshKey: number = 0) {
   const [data, setData] = useState<FullOrganization | null>(null);
@@ -125,29 +121,38 @@ function useTeams(activeOrgId: string | undefined) {
 }
 
 function useTeamMembers(activeOrgId: string | undefined, teams: Team[]) {
-  const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>({});
-  const [teamMembersLoading, setTeamMembersLoading] = useState<Record<string, boolean>>({});
+  const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>(
+    {},
+  );
+  const [teamMembersLoading, setTeamMembersLoading] = useState<
+    Record<string, boolean>
+  >({});
 
-  const loadTeamMembers = useCallback(async (teamId: string) => {
-    if (!activeOrgId) return;
-    
-    setTeamMembersLoading((prev) => ({ ...prev, [teamId]: true }));
-    try {
-      const response = await fetch(`/api/v1/organizations/${activeOrgId}/teams/${teamId}/members`);
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        setTeamMembers((prev) => ({ ...prev, [teamId]: result.data }));
-      } else {
+  const loadTeamMembers = useCallback(
+    async (teamId: string) => {
+      if (!activeOrgId) return;
+
+      setTeamMembersLoading((prev) => ({ ...prev, [teamId]: true }));
+      try {
+        const response = await fetch(
+          `/api/v1/organizations/${activeOrgId}/teams/${teamId}/members`,
+        );
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          setTeamMembers((prev) => ({ ...prev, [teamId]: result.data }));
+        } else {
+          setTeamMembers((prev) => ({ ...prev, [teamId]: [] }));
+        }
+      } catch (error) {
+        console.error("[loadTeamMembers] Exception:", error);
         setTeamMembers((prev) => ({ ...prev, [teamId]: [] }));
+      } finally {
+        setTeamMembersLoading((prev) => ({ ...prev, [teamId]: false }));
       }
-    } catch (error) {
-      console.error("[loadTeamMembers] Exception:", error);
-      setTeamMembers((prev) => ({ ...prev, [teamId]: [] }));
-    } finally {
-      setTeamMembersLoading((prev) => ({ ...prev, [teamId]: false }));
-    }
-  }, [activeOrgId]);
+    },
+    [activeOrgId],
+  );
 
   useEffect(() => {
     if (activeOrgId) {
@@ -169,27 +174,34 @@ function useTeamMembers(activeOrgId: string | undefined, teams: Team[]) {
 }
 
 function generateSlug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 export function OrganizationManagement() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const { data: activeOrg, isPending: orgLoading } = authClient.useActiveOrganization();
-  const { data: organizations, isPending: orgsLoading } = authClient.useListOrganizations();
-  
+  const { data: activeOrg, isPending: orgLoading } =
+    authClient.useActiveOrganization();
+  const { data: organizations, isPending: orgsLoading } =
+    authClient.useListOrganizations();
+
   const isSystemAdmin = session?.user?.role === "admin";
   const activeOrgId = activeOrg?.id;
 
   const [refreshKey, setRefreshKey] = useState(0);
-  const { data: fullOrg, isPending: fullOrgLoading } = useFullOrganization(activeOrg?.id || "", refreshKey);
+  const { data: fullOrg, isPending: fullOrgLoading } = useFullOrganization(
+    activeOrg?.id || "",
+    refreshKey,
+  );
   const { data: activeMember } = useActiveMember(activeOrgId);
   const { teams, teamsLoading, loadTeams } = useTeams(activeOrgId);
-  const { teamMembers, teamMembersLoading, loadTeamMembers } = useTeamMembers(activeOrgId, teams);
+  const { teamMembers, teamMembersLoading, loadTeamMembers } = useTeamMembers(
+    activeOrgId,
+    teams,
+  );
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createName, setCreateName] = useState("");
@@ -209,7 +221,9 @@ export function OrganizationManagement() {
 
   const members: OrgMember[] = fullOrg?.members || [];
   const invitations: Invitation[] = fullOrg?.invitations || [];
-  const pendingInvitations = invitations.filter((inv) => inv.status === "pending");
+  const pendingInvitations = invitations.filter(
+    (inv) => inv.status === "pending",
+  );
 
   const handleRefresh = () => setRefreshKey((k) => k + 1);
   const handleSwitchOrg = async (orgId: string) => {
@@ -227,15 +241,23 @@ export function OrganizationManagement() {
   const handleCreateOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createName.trim()) {
-      toastManager.add({ type: "error", title: "Organization name is required" });
+      toastManager.add({
+        type: "error",
+        title: "Organization name is required",
+      });
       return;
     }
 
     setIsCreating(true);
     try {
-      const { data: slugCheck } = await authClient.organization.checkSlug({ slug: createSlug });
+      const { data: slugCheck } = await authClient.organization.checkSlug({
+        slug: createSlug,
+      });
       if (slugCheck?.status === false) {
-        toastManager.add({ type: "error", title: "This slug is already taken" });
+        toastManager.add({
+          type: "error",
+          title: "This slug is already taken",
+        });
         setIsCreating(false);
         return;
       }
@@ -246,7 +268,10 @@ export function OrganizationManagement() {
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to create organization" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to create organization",
+        });
         return;
       }
 
@@ -282,56 +307,116 @@ export function OrganizationManagement() {
           <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-blue)]" />
         </div>
         <div className="flex-1">
-          <h3 className="text-base sm:text-lg font-semibold">Organization Management</h3>
-          <p className="text-xs text-muted-foreground">Manage your organization settings, members, and teams</p>
+          <h3 className="text-base sm:text-lg font-semibold">
+            Organization Management
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Manage your organization settings, members, and teams
+          </p>
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger render={(props) => (
-            <Button {...props} variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />New
-            </Button>
-          )} />
+          <DialogTrigger
+            render={(props) => (
+              <Button {...props} variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                New
+              </Button>
+            )}
+          />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Organization</DialogTitle>
-              <DialogDescription>Create a new organization to manage your projects.</DialogDescription>
+              <DialogDescription>
+                Create a new organization to manage your projects.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateOrganization}>
               <DialogBody className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="dialog-org-name">Organization Name</Label>
-                  <Input id="dialog-org-name" value={createName} onChange={(e) => handleCreateNameChange(e.target.value)} placeholder="My Awesome Organization" disabled={isCreating} />
+                  <Input
+                    id="dialog-org-name"
+                    value={createName}
+                    onChange={(e) => handleCreateNameChange(e.target.value)}
+                    placeholder="My Awesome Organization"
+                    disabled={isCreating}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dialog-org-slug">Slug</Label>
-                  <Input id="dialog-org-slug" value={createSlug} onChange={(e) => setCreateSlug(e.target.value.toLowerCase())} placeholder="my-awesome-org" disabled={isCreating} />
+                  <Input
+                    id="dialog-org-slug"
+                    value={createSlug}
+                    onChange={(e) =>
+                      setCreateSlug(e.target.value.toLowerCase())
+                    }
+                    placeholder="my-awesome-org"
+                    disabled={isCreating}
+                  />
                   <p className="text-xs text-muted-foreground">Used in URLs</p>
                 </div>
               </DialogBody>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
-                <Button type="submit" disabled={isCreating}>{isCreating && <Spinner className="h-4 w-4 mr-2" />}Create</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating && <Spinner className="h-4 w-4 mr-2" />}Create
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <OrgSelector organizations={(organizations || []) as Organization[]} activeOrgId={activeOrgId} onSwitchOrg={handleSwitchOrg} />
+      <OrgSelector
+        organizations={(organizations || []) as Organization[]}
+        activeOrgId={activeOrgId}
+        onSwitchOrg={handleSwitchOrg}
+      />
 
       {(!organizations || organizations.length === 0) && (
         <div className="text-center py-8">
           <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground mb-4">No organizations yet.</p>
-          <Button onClick={() => setShowCreateDialog(true)}><Plus className="h-4 w-4 mr-2" />Create Organization</Button>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Organization
+          </Button>
         </div>
       )}
 
       {activeOrg && (
         <div className="space-y-6">
           <OrgSettings activeOrg={activeOrg as Organization} />
-          <MembersSection members={members} pendingInvitations={pendingInvitations} activeOrg={activeOrg as Organization} currentUserId={session?.user?.id || ""} currentUserRole={currentUserRole} isSystemAdmin={isSystemAdmin} canManageMembers={canManageMembers} canChangeRoles={canChangeRoles} assignableRoles={assignableRoles} isLoading={fullOrgLoading} onRefresh={handleRefresh} />
-          <TeamsSection teams={teams} teamMembers={teamMembers} teamMembersLoading={teamMembersLoading} members={members} activeOrg={activeOrg as Organization} canManageMembers={canManageMembers} isLoading={teamsLoading} onLoadTeams={loadTeams} onLoadTeamMembers={loadTeamMembers} />
+          <MembersSection
+            members={members}
+            pendingInvitations={pendingInvitations}
+            activeOrg={activeOrg as Organization}
+            currentUserId={session?.user?.id || ""}
+            currentUserRole={currentUserRole}
+            isSystemAdmin={isSystemAdmin}
+            canManageMembers={canManageMembers}
+            canChangeRoles={canChangeRoles}
+            assignableRoles={assignableRoles}
+            isLoading={fullOrgLoading}
+            onRefresh={handleRefresh}
+          />
+          <TeamsSection
+            teams={teams}
+            teamMembers={teamMembers}
+            teamMembersLoading={teamMembersLoading}
+            members={members}
+            activeOrg={activeOrg as Organization}
+            canManageMembers={canManageMembers}
+            isLoading={teamsLoading}
+            onLoadTeams={loadTeams}
+            onLoadTeamMembers={loadTeamMembers}
+          />
           {canDeleteOrg && <DangerZone activeOrg={activeOrg as Organization} />}
         </div>
       )}

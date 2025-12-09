@@ -99,12 +99,12 @@ export const auth = betterAuth({
             });
 
             console.log(
-              `Created default organization "${slug}" for user ${user.id}`
+              `Created default organization "${slug}" for user ${user.id}`,
             );
           } catch (error) {
             console.error(
               `Failed to create default organization for user ${user.id}:`,
-              error
+              error,
             );
           }
         },
@@ -126,10 +126,12 @@ export const auth = betterAuth({
     },
     defaultCookieAttributes: {
       sameSite: "lax",
-      secure: true, // Always true for HTTPS
+
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       path: "/",
     },
-    useSecureCookies: true, // Always true for HTTPS production
+
+    useSecureCookies: process.env.NODE_ENV === "production",
   },
 });

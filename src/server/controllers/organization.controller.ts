@@ -1,5 +1,11 @@
 import { db } from "@/db/connect";
-import { teamMember, team, member, user, organization } from "@/db/schema/schema";
+import {
+  teamMember,
+  team,
+  member,
+  user,
+  organization,
+} from "@/db/schema/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
@@ -52,8 +58,8 @@ export const organizationController = {
       .where(
         and(
           eq(member.organizationId, organizationId),
-          eq(member.userId, userId)
-        )
+          eq(member.userId, userId),
+        ),
       )
       .limit(1);
 
@@ -67,12 +73,7 @@ export const organizationController = {
     const [teamRecord] = await db
       .select({ id: team.id })
       .from(team)
-      .where(
-        and(
-          eq(team.id, teamId),
-          eq(team.organizationId, organizationId)
-        )
-      )
+      .where(and(eq(team.id, teamId), eq(team.organizationId, organizationId)))
       .limit(1);
 
     return teamRecord;
@@ -113,7 +114,9 @@ export const organizationController = {
   /**
    * Get all teams for an organization with member counts
    */
-  async getOrganizationTeams(organizationId: string): Promise<TeamWithMemberCount[]> {
+  async getOrganizationTeams(
+    organizationId: string,
+  ): Promise<TeamWithMemberCount[]> {
     const teams = await db
       .select({
         id: team.id,
@@ -136,7 +139,7 @@ export const organizationController = {
           ...t,
           memberCount: members.length,
         };
-      })
+      }),
     );
 
     return teamsWithCounts;
@@ -145,7 +148,9 @@ export const organizationController = {
   /**
    * Get all members of an organization with user info
    */
-  async getOrganizationMembers(organizationId: string): Promise<OrgMemberFormatted[]> {
+  async getOrganizationMembers(
+    organizationId: string,
+  ): Promise<OrgMemberFormatted[]> {
     const members = await db
       .select({
         id: member.id,
@@ -223,7 +228,10 @@ export const organizationController = {
   /**
    * Check if user can manage organization (owner or admin)
    */
-  async canManageOrganization(userId: string, organizationId: string): Promise<boolean> {
+  async canManageOrganization(
+    userId: string,
+    organizationId: string,
+  ): Promise<boolean> {
     const membership = await this.getUserMembership(userId, organizationId);
     return membership?.role === "owner" || membership?.role === "admin";
   },
@@ -249,16 +257,10 @@ export const organizationController = {
    * Add a user to a team
    */
   async addTeamMember(teamId: string, userId: string) {
-    // Check if already a member
     const [existing] = await db
       .select()
       .from(teamMember)
-      .where(
-        and(
-          eq(teamMember.teamId, teamId),
-          eq(teamMember.userId, userId)
-        )
-      )
+      .where(and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)))
       .limit(1);
 
     if (existing) {
@@ -294,12 +296,8 @@ export const organizationController = {
    * Delete a team
    */
   async deleteTeam(teamId: string) {
-    // First delete all team members
-    await db
-      .delete(teamMember)
-      .where(eq(teamMember.teamId, teamId));
+    await db.delete(teamMember).where(eq(teamMember.teamId, teamId));
 
-    // Then delete the team
     const [deleted] = await db
       .delete(team)
       .where(eq(team.id, teamId))

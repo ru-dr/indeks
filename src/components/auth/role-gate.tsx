@@ -91,15 +91,15 @@ interface AdminOnlyProps {
  */
 export function AdminOnly({ children, fallback = null }: AdminOnlyProps) {
   const { isAdmin, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return null;
   }
-  
+
   if (!isAdmin) {
     return <>{fallback}</>;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -114,15 +114,15 @@ interface OwnerOnlyProps {
  */
 export function OwnerOnly({ children, fallback = null }: OwnerOnlyProps) {
   const { isOwner, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return null;
   }
-  
+
   if (!isOwner) {
     return <>{fallback}</>;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -135,18 +135,20 @@ interface AdminOrOwnerOnlyProps {
  * Component that renders for either platform admins OR org owners
  * This is essentially the same as OwnerOnly since admin supersedes owner
  */
-export function AdminOrOwnerOnly({ children, fallback = null }: AdminOrOwnerOnlyProps) {
+export function AdminOrOwnerOnly({
+  children,
+  fallback = null,
+}: AdminOrOwnerOnlyProps) {
   const { isOwner, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return null;
   }
-  
-  // isOwner includes platform admin
+
   if (!isOwner) {
     return <>{fallback}</>;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -229,5 +231,4 @@ export function ImpersonationBanner({ className }: ImpersonationBannerProps) {
   );
 }
 
-// Backwards compatibility aliases
 export { AdminOrOwnerOnly as SystemAdminOrOwnerOnly };

@@ -55,7 +55,7 @@ export const profileRoutes = new Elysia({ prefix: "/v1/profile" })
       try {
         const updated = await profileController.updateProfile(
           session.user.id,
-          body
+          body,
         );
 
         if (!updated) {
@@ -72,7 +72,7 @@ export const profileRoutes = new Elysia({ prefix: "/v1/profile" })
         };
       } catch (error) {
         console.error("Error updating profile:", error);
-        
+
         if (error instanceof Error) {
           if (error.message === "Username is already taken") {
             set.status = 409;
@@ -104,5 +104,5 @@ export const profileRoutes = new Elysia({ prefix: "/v1/profile" })
         username: t.Optional(t.String({ maxLength: 50 })),
         displayUsername: t.Optional(t.String({ maxLength: 50 })),
       }),
-    }
+    },
   );

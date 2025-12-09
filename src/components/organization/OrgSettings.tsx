@@ -10,7 +10,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { toastManager } from "@/components/ui/toast";
 import { Settings, Save } from "lucide-react";
 
-// Types
 export interface Organization {
   id: string;
   name: string;
@@ -46,7 +45,10 @@ export function OrgSettings({ activeOrg }: OrgSettingsProps) {
   const handleUpdateOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgName.trim()) {
-      toastManager.add({ type: "error", title: "Organization name is required" });
+      toastManager.add({
+        type: "error",
+        title: "Organization name is required",
+      });
       return;
     }
 
@@ -57,7 +59,10 @@ export function OrgSettings({ activeOrg }: OrgSettingsProps) {
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to update" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to update",
+        });
         return;
       }
 
@@ -115,7 +120,11 @@ export function OrgSettings({ activeOrg }: OrgSettingsProps) {
             Cancel
           </Button>
           <Button type="submit" disabled={!hasChanges || isUpdating} size="sm">
-            {isUpdating ? <Spinner className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            {isUpdating ? (
+              <Spinner className="h-4 w-4 mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
             Save
           </Button>
         </div>

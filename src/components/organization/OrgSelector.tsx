@@ -3,7 +3,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-// Types
 export interface Organization {
   id: string;
   name: string;
@@ -13,9 +12,13 @@ export interface Organization {
   metadata?: Record<string, unknown> | null;
 }
 
-// Utils
 function getOrgInitials(name: string): string {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 interface OrgSelectorProps {
@@ -24,7 +27,11 @@ interface OrgSelectorProps {
   onSwitchOrg: (orgId: string) => void;
 }
 
-export function OrgSelector({ organizations, activeOrgId, onSwitchOrg }: OrgSelectorProps) {
+export function OrgSelector({
+  organizations,
+  activeOrgId,
+  onSwitchOrg,
+}: OrgSelectorProps) {
   if (!organizations || organizations.length === 0) {
     return null;
   }
@@ -52,10 +59,14 @@ export function OrgSelector({ organizations, activeOrgId, onSwitchOrg }: OrgSele
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{org.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{org.slug}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {org.slug}
+              </p>
             </div>
             {activeOrgId === org.id && (
-              <Badge variant="success" className="text-xs shrink-0">Active</Badge>
+              <Badge variant="success" className="text-xs shrink-0">
+                Active
+              </Badge>
             )}
           </button>
         ))}

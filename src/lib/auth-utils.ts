@@ -1,7 +1,14 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Role, OrgRole, roleHierarchy, statement, isRoleAtLeast as checkRoleAtLeast, getEffectiveRole } from "@/lib/permissions";
+import {
+  Role,
+  OrgRole,
+  roleHierarchy,
+  statement,
+  isRoleAtLeast as checkRoleAtLeast,
+  getEffectiveRole,
+} from "@/lib/permissions";
 
 type Resource = keyof typeof statement;
 type Action<R extends Resource> = (typeof statement)[R][number];
@@ -52,12 +59,9 @@ export async function getPlatformRole(): Promise<"admin" | null> {
 export async function getUserRole(): Promise<Role | null> {
   const session = await getSession();
   if (!session?.user) return null;
-  
-  // Platform admin has highest role
+
   if (session.user.role === "admin") return "admin";
-  
-  // For org role, we'd need to check the member table
-  // For now, return the stored role or default to viewer
+
   return (session.user.role as Role) || null;
 }
 
@@ -68,10 +72,9 @@ export async function getUserRole(): Promise<Role | null> {
 export async function hasRole(requiredRole: Role): Promise<boolean> {
   const session = await getSession();
   if (!session?.user) return false;
-  
-  // Platform admin can do anything
+
   if (session.user.role === "admin") return true;
-  
+
   const userRole = session.user.role as Role;
   return checkRoleAtLeast(userRole, requiredRole);
 }
@@ -84,10 +87,9 @@ export function isRoleAtLeast(
   requiredRole: Role,
 ): boolean {
   if (!userRole) return false;
-  
-  // Platform admin supersedes all
+
   if (userRole === "admin") return true;
-  
+
   return checkRoleAtLeast(userRole as Role, requiredRole);
 }
 
@@ -100,8 +102,7 @@ export async function hasPermission(
 ): Promise<boolean> {
   const session = await getSession();
   if (!session) return false;
-  
-  // Platform admin has all permissions
+
   if (session.user.role === "admin") return true;
 
   try {
@@ -159,10 +160,9 @@ export async function isPlatformAdmin(): Promise<boolean> {
 export async function isOwner(): Promise<boolean> {
   const session = await getSession();
   if (!session?.user) return false;
-  
-  // Platform admin supersedes owner
+
   if (session.user.role === "admin") return true;
-  
+
   return session.user.role === "owner";
 }
 
@@ -183,10 +183,9 @@ export async function getAuthenticatedUser() {
     role: (session.user.role as Role) || "viewer",
     platformRole: isPlatAdmin ? "admin" : null,
     isPlatformAdmin: isPlatAdmin,
-    isAdmin: isPlatAdmin, // Alias for backwards compatibility
+    isAdmin: isPlatAdmin,
     isOwner: isPlatAdmin || session.user.role === "owner",
   };
 }
 
-// Backwards compatibility alias
 export const isAdmin = isPlatformAdmin;

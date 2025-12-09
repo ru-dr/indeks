@@ -532,7 +532,6 @@ export const analyticsController = {
     startDate.setMonth(startDate.getMonth() - monthCount);
     const startDateStr = startDate.toISOString().split("T")[0];
 
-    
     const userProjects = await db
       .select({ id: projects.id })
       .from(projects)
@@ -544,7 +543,6 @@ export const analyticsController = {
       return { dailyData: [] };
     }
 
-    
     const dailyData = await db
       .select({
         date: analyticsDaily.date,

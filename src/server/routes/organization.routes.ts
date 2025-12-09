@@ -28,7 +28,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
     try {
       const organizations = await organizationController.getUserOrganizations(
-        session.user.id
+        session.user.id,
       );
 
       return {
@@ -74,7 +74,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const membership = await organizationController.getUserMembership(
         currentUser.id,
-        organizationId
+        organizationId,
       );
 
       const isSystemAdmin = currentUser.role === "admin";
@@ -89,9 +89,8 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       }
 
       try {
-        const organization = await organizationController.getOrganization(
-          organizationId
-        );
+        const organization =
+          await organizationController.getOrganization(organizationId);
 
         if (!organization) {
           set.status = 404;
@@ -123,7 +122,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       params: t.Object({
         organizationId: t.String(),
       }),
-    }
+    },
   )
 
   /**
@@ -154,7 +153,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const membership = await organizationController.getUserMembership(
         currentUser.id,
-        organizationId
+        organizationId,
       );
 
       const isSystemAdmin = currentUser.role === "admin";
@@ -169,9 +168,8 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       }
 
       try {
-        const members = await organizationController.getOrganizationMembers(
-          organizationId
-        );
+        const members =
+          await organizationController.getOrganizationMembers(organizationId);
 
         return {
           success: true,
@@ -191,7 +189,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       params: t.Object({
         organizationId: t.String(),
       }),
-    }
+    },
   )
 
   /**
@@ -222,7 +220,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const membership = await organizationController.getUserMembership(
         currentUser.id,
-        organizationId
+        organizationId,
       );
 
       const isSystemAdmin = currentUser.role === "admin";
@@ -237,9 +235,8 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       }
 
       try {
-        const teams = await organizationController.getOrganizationTeams(
-          organizationId
-        );
+        const teams =
+          await organizationController.getOrganizationTeams(organizationId);
 
         return {
           success: true,
@@ -259,7 +256,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       params: t.Object({
         organizationId: t.String(),
       }),
-    }
+    },
   )
 
   /**
@@ -283,7 +280,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const canManage = await organizationController.canManageOrganization(
         session.user.id,
-        organizationId
+        organizationId,
       );
 
       if (!canManage && session.user.role !== "admin") {
@@ -298,7 +295,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       try {
         const newTeam = await organizationController.createTeam(
           organizationId,
-          body.name
+          body.name,
         );
 
         return {
@@ -322,7 +319,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       body: t.Object({
         name: t.String({ minLength: 1, maxLength: 255 }),
       }),
-    }
+    },
   )
 
   /**
@@ -355,7 +352,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const membership = await organizationController.getUserMembership(
         currentUser.id,
-        organizationId
+        organizationId,
       );
 
       const isSystemAdmin = currentUser.role === "admin";
@@ -369,10 +366,9 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         };
       }
 
-      // Verify the team belongs to this organization
       const teamRecord = await organizationController.verifyTeamInOrganization(
         teamId,
-        organizationId
+        organizationId,
       );
 
       if (!teamRecord) {
@@ -406,7 +402,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         organizationId: t.String(),
         teamId: t.String(),
       }),
-    }
+    },
   )
 
   /**
@@ -430,7 +426,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const canManage = await organizationController.canManageOrganization(
         session.user.id,
-        organizationId
+        organizationId,
       );
 
       if (!canManage && session.user.role !== "admin") {
@@ -442,10 +438,9 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         };
       }
 
-      // Verify the team belongs to this organization
       const teamRecord = await organizationController.verifyTeamInOrganization(
         teamId,
-        organizationId
+        organizationId,
       );
 
       if (!teamRecord) {
@@ -460,7 +455,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       try {
         const result = await organizationController.addTeamMember(
           teamId,
-          body.userId
+          body.userId,
         );
 
         if ("error" in result) {
@@ -494,7 +489,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       body: t.Object({
         userId: t.String(),
       }),
-    }
+    },
   )
 
   /**
@@ -518,7 +513,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const canManage = await organizationController.canManageOrganization(
         session.user.id,
-        organizationId
+        organizationId,
       );
 
       if (!canManage && session.user.role !== "admin") {
@@ -530,10 +525,9 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         };
       }
 
-      // Verify the team belongs to this organization
       const teamRecord = await organizationController.verifyTeamInOrganization(
         teamId,
-        organizationId
+        organizationId,
       );
 
       if (!teamRecord) {
@@ -548,7 +542,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       try {
         const deleted = await organizationController.removeTeamMember(
           teamId,
-          memberId
+          memberId,
         );
 
         if (!deleted) {
@@ -580,7 +574,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         teamId: t.String(),
         memberId: t.String(),
       }),
-    }
+    },
   )
 
   /**
@@ -604,7 +598,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const canManage = await organizationController.canManageOrganization(
         session.user.id,
-        organizationId
+        organizationId,
       );
 
       if (!canManage && session.user.role !== "admin") {
@@ -616,10 +610,9 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         };
       }
 
-      // Verify the team belongs to this organization
       const teamRecord = await organizationController.verifyTeamInOrganization(
         teamId,
-        organizationId
+        organizationId,
       );
 
       if (!teamRecord) {
@@ -634,7 +627,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       try {
         const updated = await organizationController.updateTeam(
           teamId,
-          body.name
+          body.name,
         );
 
         return {
@@ -659,7 +652,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
       body: t.Object({
         name: t.String({ minLength: 1, maxLength: 255 }),
       }),
-    }
+    },
   )
 
   /**
@@ -683,7 +676,7 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
 
       const canManage = await organizationController.canManageOrganization(
         session.user.id,
-        organizationId
+        organizationId,
       );
 
       if (!canManage && session.user.role !== "admin") {
@@ -695,10 +688,9 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         };
       }
 
-      // Verify the team belongs to this organization
       const teamRecord = await organizationController.verifyTeamInOrganization(
         teamId,
-        organizationId
+        organizationId,
       );
 
       if (!teamRecord) {
@@ -741,5 +733,5 @@ export const organizationRoutes = new Elysia({ prefix: "/v1/organizations" })
         organizationId: t.String(),
         teamId: t.String(),
       }),
-    }
+    },
   );

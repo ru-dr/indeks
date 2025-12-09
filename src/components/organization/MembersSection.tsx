@@ -30,7 +30,6 @@ import { toastManager } from "@/components/ui/toast";
 import { roleDisplayNames, type Role } from "@/lib/permissions";
 import { Users, UserPlus, Mail, Clock, X } from "lucide-react";
 
-// Types
 export interface OrgMember {
   id: string;
   userId: string;
@@ -62,12 +61,16 @@ export interface Organization {
   metadata?: Record<string, unknown> | null;
 }
 
-// Utils
-function getRoleBadgeVariant(role: string): "default" | "secondary" | "outline" {
+function getRoleBadgeVariant(
+  role: string,
+): "default" | "secondary" | "outline" {
   switch (role) {
-    case "owner": return "default";
-    case "member": return "secondary";
-    default: return "outline";
+    case "owner":
+      return "default";
+    case "member":
+      return "secondary";
+    default:
+      return "outline";
   }
 }
 
@@ -103,7 +106,9 @@ export function MembersSection({
   const [inviteRole, setInviteRole] = useState<Role>("member");
   const [isInviting, setIsInviting] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
-  const [cancellingInviteId, setCancellingInviteId] = useState<string | null>(null);
+  const [cancellingInviteId, setCancellingInviteId] = useState<string | null>(
+    null,
+  );
 
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +130,10 @@ export function MembersSection({
         setInviteEmail("");
         setInviteRole("member");
         setTimeout(() => {
-          toastManager.add({ type: "error", title: error.message || "Failed to send invitation" });
+          toastManager.add({
+            type: "error",
+            title: error.message || "Failed to send invitation",
+          });
         }, 100);
         return;
       }
@@ -136,7 +144,10 @@ export function MembersSection({
       setInviteRole("member");
       onRefresh();
       setTimeout(() => {
-        toastManager.add({ type: "success", title: `Invitation sent to ${emailSent}` });
+        toastManager.add({
+          type: "success",
+          title: `Invitation sent to ${emailSent}`,
+        });
       }, 100);
     } catch {
       setShowInviteDialog(false);
@@ -158,7 +169,10 @@ export function MembersSection({
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to remove member" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to remove member",
+        });
         return;
       }
 
@@ -181,7 +195,10 @@ export function MembersSection({
       });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to update role" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to update role",
+        });
         return;
       }
 
@@ -195,10 +212,15 @@ export function MembersSection({
   const handleCancelInvitation = async (invitationId: string) => {
     setCancellingInviteId(invitationId);
     try {
-      const { error } = await authClient.organization.cancelInvitation({ invitationId });
+      const { error } = await authClient.organization.cancelInvitation({
+        invitationId,
+      });
 
       if (error) {
-        toastManager.add({ type: "error", title: error.message || "Failed to cancel" });
+        toastManager.add({
+          type: "error",
+          title: error.message || "Failed to cancel",
+        });
         return;
       }
 
@@ -217,7 +239,9 @@ export function MembersSection({
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
           <h4 className="text-sm font-medium">Members</h4>
-          <Badge variant="outline" className="text-xs">{members.length}</Badge>
+          <Badge variant="outline" className="text-xs">
+            {members.length}
+          </Badge>
         </div>
         {canManageMembers && (
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
@@ -249,18 +273,31 @@ export function MembersSection({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="invite-role">Role</Label>
-                    <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as Role)} disabled={isInviting}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={inviteRole}
+                      onValueChange={(v) => setInviteRole(v as Role)}
+                      disabled={isInviting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         {assignableRoles.map((role) => (
-                          <SelectItem key={role} value={role}>{roleDisplayNames[role]}</SelectItem>
+                          <SelectItem key={role} value={role}>
+                            {roleDisplayNames[role]}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </DialogBody>
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setShowInviteDialog(false)} disabled={isInviting}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowInviteDialog(false)}
+                    disabled={isInviting}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isInviting}>
@@ -283,15 +320,32 @@ export function MembersSection({
           {members.map((member) => {
             const isCurrentUser = member.userId === currentUserId;
             const memberRole = member.role as Role;
-            const canRemove = isSystemAdmin ? !isCurrentUser : (currentUserRole === "owner" && !isCurrentUser && memberRole !== "owner");
-            const canEdit = isSystemAdmin ? !isCurrentUser : (currentUserRole === "owner" && !isCurrentUser && memberRole !== "owner");
+            const canRemove = isSystemAdmin
+              ? !isCurrentUser
+              : currentUserRole === "owner" &&
+                !isCurrentUser &&
+                memberRole !== "owner";
+            const canEdit = isSystemAdmin
+              ? !isCurrentUser
+              : currentUserRole === "owner" &&
+                !isCurrentUser &&
+                memberRole !== "owner";
 
             return (
-              <div key={member.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+              <div
+                key={member.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+              >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
                     {member.user.image ? (
-                      <Image src={member.user.image} alt={member.user.name} width={36} height={36} className="rounded-full" />
+                      <Image
+                        src={member.user.image}
+                        alt={member.user.name}
+                        width={36}
+                        height={36}
+                        className="rounded-full"
+                      />
                     ) : (
                       <AvatarFallback className="text-sm">
                         {member.user.name?.charAt(0)?.toUpperCase() || "?"}
@@ -301,23 +355,41 @@ export function MembersSection({
                   <div className="min-w-0">
                     <p className="font-medium text-sm truncate">
                       {member.user.name}
-                      {isCurrentUser && <span className="text-muted-foreground ml-1">(you)</span>}
+                      {isCurrentUser && (
+                        <span className="text-muted-foreground ml-1">
+                          (you)
+                        </span>
+                      )}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {member.user.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-12 sm:ml-0">
                   {canEdit && canChangeRoles ? (
-                    <Select value={memberRole} onValueChange={(v) => handleUpdateRole(member.id, v as Role)}>
-                      <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <Select
+                      value={memberRole}
+                      onValueChange={(v) =>
+                        handleUpdateRole(member.id, v as Role)
+                      }
+                    >
+                      <SelectTrigger className="w-24 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         {assignableRoles.map((role) => (
-                          <SelectItem key={role} value={role}>{roleDisplayNames[role]}</SelectItem>
+                          <SelectItem key={role} value={role}>
+                            {roleDisplayNames[role]}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   ) : (
-                    <Badge variant={getRoleBadgeVariant(memberRole)} className="text-xs">
+                    <Badge
+                      variant={getRoleBadgeVariant(memberRole)}
+                      className="text-xs"
+                    >
                       {roleDisplayNames[memberRole] || memberRole}
                     </Badge>
                   )}
@@ -325,11 +397,17 @@ export function MembersSection({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleRemoveMember(member.id, member.user.email)}
+                      onClick={() =>
+                        handleRemoveMember(member.id, member.user.email)
+                      }
                       disabled={removingMemberId === member.id}
                       className="text-destructive hover:text-destructive h-8 px-2"
                     >
-                      {removingMemberId === member.id ? <Spinner className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                      {removingMemberId === member.id ? (
+                        <Spinner className="h-3 w-3" />
+                      ) : (
+                        <X className="h-3 w-3" />
+                      )}
                     </Button>
                   )}
                 </div>
@@ -337,7 +415,9 @@ export function MembersSection({
             );
           })}
           {members.length === 0 && (
-            <p className="text-muted-foreground text-center py-4 text-sm">No members yet</p>
+            <p className="text-muted-foreground text-center py-4 text-sm">
+              No members yet
+            </p>
           )}
         </div>
       )}
@@ -353,7 +433,10 @@ export function MembersSection({
           </div>
           <div className="space-y-2">
             {pendingInvitations.map((inv) => (
-              <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-muted/30 border border-dashed">
+              <div
+                key={inv.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-muted/30 border border-dashed"
+              >
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -361,12 +444,15 @@ export function MembersSection({
                   <div className="min-w-0">
                     <p className="font-medium text-sm truncate">{inv.email}</p>
                     <p className="text-xs text-muted-foreground">
-                      Invited as {roleDisplayNames[inv.role as Role] || inv.role}
+                      Invited as{" "}
+                      {roleDisplayNames[inv.role as Role] || inv.role}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-12 sm:ml-0">
-                  <Badge variant="outline" className="text-xs">Pending</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Pending
+                  </Badge>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -374,7 +460,11 @@ export function MembersSection({
                     disabled={cancellingInviteId === inv.id}
                     className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
                   >
-                    {cancellingInviteId === inv.id ? <Spinner className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                    {cancellingInviteId === inv.id ? (
+                      <Spinner className="h-3 w-3" />
+                    ) : (
+                      <X className="h-3 w-3" />
+                    )}
                   </Button>
                 </div>
               </div>

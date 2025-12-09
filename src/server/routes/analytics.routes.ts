@@ -478,8 +478,10 @@ export const analyticsRoutes = new Elysia({ prefix: "/v1/analytics" })
       }
 
       try {
-        
-        return await analyticsController.getUserTrafficTrend(authContext.user.id, months);
+        return await analyticsController.getUserTrafficTrend(
+          authContext.user.id,
+          months,
+        );
       } catch (error) {
         console.error("Error fetching global traffic trend:", error);
         set.status = 500;

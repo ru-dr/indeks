@@ -2,52 +2,61 @@ import { createAccessControl } from "better-auth/plugins/access";
 
 /**
  * INDEKS ROLE SYSTEM
- * 
+ *
  * There are TWO separate role systems:
- * 
+ *
  * 1. ADMIN (Platform Level) - HIGHEST AUTHORITY
  *    - Stored in: user.role = "admin"
- *    - Has: FULL control over EVERYTHING - all organizations, all users, 
+ *    - Has: FULL control over EVERYTHING - all organizations, all users,
  *           all projects, global analytics, can override any permission
  *    - This is for Indeks platform administrators
  *    - Supersedes ALL org/team roles including owner
- * 
+ *
  * 2. ORGANIZATION/TEAM ROLES (Org & Team Level)
  *    - Stored in: member.role (for orgs), teamMember inherits from member.role
  *    - Roles: owner, member, viewer
  *    - owner: Full control over their organization/team
  *    - member: Can work on projects, limited management
  *    - viewer: Read-only access
- * 
+ *
  * HIERARCHY: viewer < member < owner < ADMIN (platform)
- * 
+ *
  * ADMIN has god-mode access - can do anything an owner can do
  * plus system-level operations across ALL organizations
  */
 
 export const statement = {
-  // Organization-level resources
-  organization: ["create", "read", "update", "delete", "manage-billing", "view-all"],
+  organization: [
+    "create",
+    "read",
+    "update",
+    "delete",
+    "manage-billing",
+    "view-all",
+  ],
   member: ["create", "read", "update", "delete", "manage-roles"],
   invitation: ["create", "cancel", "view"],
   team: ["create", "read", "update", "delete"],
 
-  // Project resources
-  project: ["create", "read", "update", "delete", "view-analytics", "manage-access"],
+  project: [
+    "create",
+    "read",
+    "update",
+    "delete",
+    "view-analytics",
+    "manage-access",
+  ],
 
-  // Analytics resources
   analytics: ["view", "export", "configure", "view-global"],
 
-  // Settings resources
   settings: ["view", "update", "manage-api-keys", "danger-zone"],
 
-  // System-level permissions (for platform admins only - ADMIN role)
   system: [
-    "full-access",           // Can do anything
-    "view-all-users", 
-    "manage-users", 
-    "view-all-orgs", 
-    "manage-orgs", 
+    "full-access",
+    "view-all-users",
+    "manage-users",
+    "view-all-orgs",
+    "manage-orgs",
     "view-global-analytics",
     "impersonate",
     "manage-billing-global",
@@ -97,7 +106,14 @@ export const owner = ac.newRole({
   member: ["create", "read", "update", "delete", "manage-roles"],
   invitation: ["create", "cancel", "view"],
   team: ["create", "read", "update", "delete"],
-  project: ["create", "read", "update", "delete", "view-analytics", "manage-access"],
+  project: [
+    "create",
+    "read",
+    "update",
+    "delete",
+    "view-analytics",
+    "manage-access",
+  ],
   analytics: ["view", "export", "configure"],
   settings: ["view", "update", "manage-api-keys", "danger-zone"],
 });
@@ -109,16 +125,28 @@ export const owner = ac.newRole({
  * This is the highest authority in the system
  */
 export const admin = ac.newRole({
-  // All owner permissions
-  organization: ["create", "read", "update", "delete", "manage-billing", "view-all"],
+  organization: [
+    "create",
+    "read",
+    "update",
+    "delete",
+    "manage-billing",
+    "view-all",
+  ],
   member: ["create", "read", "update", "delete", "manage-roles"],
   invitation: ["create", "cancel", "view"],
   team: ["create", "read", "update", "delete"],
-  project: ["create", "read", "update", "delete", "view-analytics", "manage-access"],
+  project: [
+    "create",
+    "read",
+    "update",
+    "delete",
+    "view-analytics",
+    "manage-access",
+  ],
   analytics: ["view", "export", "configure", "view-global"],
   settings: ["view", "update", "manage-api-keys", "danger-zone"],
-  
-  // System-level permissions (ADMIN ONLY)
+
   system: [
     "full-access",
     "view-all-users",
@@ -168,20 +196,24 @@ export const roleDescriptions: Record<Role, string> = {
   viewer: "Read-only access to projects and analytics",
   member: "Can create and work on projects, invite members",
   owner: "Full organization access including danger zone operations",
-  admin: "Platform super admin with full control over all organizations and users",
+  admin:
+    "Platform super admin with full control over all organizations and users",
 };
 
 /**
  * Check if a role has at least the permissions of another role
  */
-export function isRoleAtLeast(userRole: Role | null, requiredRole: Role): boolean {
+export function isRoleAtLeast(
+  userRole: Role | null,
+  requiredRole: Role,
+): boolean {
   if (!userRole) return false;
-  
+
   const userRoleIndex = roleHierarchy.indexOf(userRole);
   const requiredRoleIndex = roleHierarchy.indexOf(requiredRole);
-  
+
   if (userRoleIndex === -1) return false;
-  
+
   return userRoleIndex >= requiredRoleIndex;
 }
 
@@ -196,10 +228,11 @@ export function isAdmin(role: Role | string | null): boolean {
  * Get the effective role for a user
  * If user is platform admin, they have full access regardless of org role
  */
-export function getEffectiveRole(userRole: string | null, orgRole: OrgRole | null): Role {
-  // Platform admin always has highest role
+export function getEffectiveRole(
+  userRole: string | null,
+  orgRole: OrgRole | null,
+): Role {
   if (userRole === "admin") return "admin";
-  
-  // Otherwise use org role
+
   return orgRole || "viewer";
 }

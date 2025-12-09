@@ -55,4 +55,4 @@ export const app = new Elysia({ prefix: "/api" })
   .use(projectsRoutes)
   .use(collectRoutes)
   .use(analyticsRoutes)
-  .use(organizationRoutes)
+  .use(organizationRoutes);

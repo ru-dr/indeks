@@ -14,14 +14,16 @@ async function handleRequest(request: NextRequest) {
   }
 }
 
-function handleOptions() {
+function handleOptions(request: NextRequest) {
+  const origin = request.headers.get("origin") ?? "*";
   return new NextResponse(null, {
     status: 204,
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
       "Access-Control-Allow-Headers":
         "Content-Type, x-api-key, Authorization, User-Agent, Accept, Accept-Language, Accept-Encoding, Origin, Referer, X-Requested-With",
+      "Access-Control-Allow-Credentials": "true",
       "Access-Control-Max-Age": "86400",
     },
   });
@@ -47,6 +49,6 @@ export async function PATCH(request: NextRequest) {
   return handleRequest(request);
 }
 
-export async function OPTIONS() {
-  return handleOptions();
+export async function OPTIONS(request: NextRequest) {
+  return handleOptions(request);
 }

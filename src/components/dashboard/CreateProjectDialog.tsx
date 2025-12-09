@@ -231,7 +231,11 @@ export function CreateProjectDialog({
                       {formData.organizationId && (
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
-                          {organizations.find((org) => org.id === formData.organizationId)?.name}
+                          {
+                            organizations.find(
+                              (org) => org.id === formData.organizationId,
+                            )?.name
+                          }
                         </div>
                       )}
                     </SelectValue>

@@ -19,9 +19,11 @@ export function checkRolePermission(
   role: Role,
   permissions: Record<string, string[]>,
 ) {
-  // Map org roles to admin roles
-  const adminRole = (role === "owner" || role === "member" || role === "viewer") ? "admin" : role as "user" | "admin";
-  
+  const adminRole =
+    role === "owner" || role === "member" || role === "viewer"
+      ? "admin"
+      : (role as "user" | "admin");
+
   return authClient.admin.checkRolePermission({
     role: adminRole,
     permissions,
@@ -51,7 +53,14 @@ export const {
   setUserPassword,
 } = authClient.admin;
 
-// Re-export types from permissions
 export type { Role, OrgRole } from "@/lib/permissions";
 
-export type PermissionResource = "user" | "session" | "project" | "analytics" | "organization" | "member" | "team" | "system";
+export type PermissionResource =
+  | "user"
+  | "session"
+  | "project"
+  | "analytics"
+  | "organization"
+  | "member"
+  | "team"
+  | "system";

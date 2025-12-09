@@ -87,7 +87,6 @@ export default function SettingsPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Fetch profile from our custom API
   useEffect(() => {
     const fetchProfile = async () => {
       setProfileLoading(true);
@@ -141,7 +140,7 @@ export default function SettingsPage() {
     (key: keyof typeof notifications) => {
       setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
     },
-    []
+    [],
   );
 
   const handleImageUrlChange = (url: string) => {
@@ -154,12 +153,14 @@ export default function SettingsPage() {
   };
 
   const handleApplyImageUrl = async () => {
-    if (imageUrlInput && (imageUrlInput.startsWith("http://") || imageUrlInput.startsWith("https://"))) {
-      // Update local state immediately
+    if (
+      imageUrlInput &&
+      (imageUrlInput.startsWith("http://") ||
+        imageUrlInput.startsWith("https://"))
+    ) {
       setProfileForm((prev) => ({ ...prev, image: imageUrlInput }));
       setShowImageUrlInput(false);
-      
-      // Auto-save the image URL to the server
+
       try {
         const response = await fetch("/api/v1/profile", {
           method: "PATCH",
@@ -171,18 +172,15 @@ export default function SettingsPage() {
         const result = await response.json();
 
         if (!response.ok) {
-          // toast({ type: "destructive", title: result.message || "Failed to update profile image" });
-          // // Revert on error
           toastManager.add({
             title: "Failed to update profile image",
             description: result.message || "Please try again.",
-          })
+          });
           setProfileForm((prev) => ({ ...prev, image: originalProfile.image }));
           setImageUrlInput(originalProfile.image);
           return;
         }
 
-        // Update original profile to reflect the saved state
         setOriginalProfile((prev) => ({ ...prev, image: imageUrlInput }));
         toastManager.add({
           title: "Profile image updated",
@@ -194,16 +192,14 @@ export default function SettingsPage() {
           title: "Something went wrong",
           type: "error",
         });
-        // Revert on error
+
         setProfileForm((prev) => ({ ...prev, image: originalProfile.image }));
         setImageUrlInput(originalProfile.image);
       }
     } else if (!imageUrlInput) {
-      // Clear the image
       setProfileForm((prev) => ({ ...prev, image: "" }));
       setShowImageUrlInput(false);
-      
-      // Auto-save the cleared image
+
       try {
         const response = await fetch("/api/v1/profile", {
           method: "PATCH",
@@ -265,7 +261,12 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setIsLoading(true);
     try {
-      const updateData: { name?: string; image?: string; username?: string; displayUsername?: string } = {};
+      const updateData: {
+        name?: string;
+        image?: string;
+        username?: string;
+        displayUsername?: string;
+      } = {};
 
       if (profileForm.name !== originalProfile.name) {
         updateData.name = profileForm.name;
@@ -277,7 +278,8 @@ export default function SettingsPage() {
 
       if (profileForm.username !== originalProfile.username) {
         updateData.username = profileForm.username;
-        updateData.displayUsername = profileForm.displayUsername || profileForm.username;
+        updateData.displayUsername =
+          profileForm.displayUsername || profileForm.username;
       }
 
       if (Object.keys(updateData).length === 0) {
@@ -360,7 +362,9 @@ export default function SettingsPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Settings
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
               Manage your account, security, and preferences
             </p>
@@ -380,8 +384,12 @@ export default function SettingsPage() {
                 <User className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-blue)]" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold">Profile Information</h3>
-                <p className="text-xs text-muted-foreground">Update your personal details and avatar</p>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Profile Information
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Update your personal details and avatar
+                </p>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -403,7 +411,10 @@ export default function SettingsPage() {
                   <div className="relative group">
                     <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
                       {profileForm.image ? (
-                        <AvatarImage src={profileForm.image} alt={profileForm.name || "Profile"} />
+                        <AvatarImage
+                          src={profileForm.image}
+                          alt={profileForm.name || "Profile"}
+                        />
                       ) : null}
                       <AvatarFallback className="text-2xl sm:text-3xl bg-[var(--color-indeks-blue)]/10 text-[var(--color-indeks-blue)]">
                         {userInitials}
@@ -426,10 +437,19 @@ export default function SettingsPage() {
                         className="text-sm"
                       />
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowImageUrlInput(false)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setShowImageUrlInput(false)}
+                        >
                           Cancel
                         </Button>
-                        <Button size="sm" className="flex-1" onClick={handleApplyImageUrl}>
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={handleApplyImageUrl}
+                        >
                           Apply
                         </Button>
                       </div>
@@ -439,14 +459,18 @@ export default function SettingsPage() {
 
                 {/* Profile Summary */}
                 <div className="flex-1 flex flex-col justify-center text-center lg:text-left">
-                  <h2 className="text-2xl sm:text-3xl font-bold">{profileForm.name || "Your Name"}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold">
+                    {profileForm.name || "Your Name"}
+                  </h2>
                   {profileForm.username && (
                     <p className="text-base text-muted-foreground flex items-center justify-center lg:justify-start gap-1 mt-1">
                       <AtSign className="h-4 w-4" />
                       {profileForm.displayUsername || profileForm.username}
                     </p>
                   )}
-                  <p className="text-sm text-muted-foreground mt-1">{profileForm.email}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {profileForm.email}
+                  </p>
                   <div className="flex items-center justify-center lg:justify-start gap-2 mt-3">
                     {user?.emailVerified && (
                       <Badge variant="success" className="text-xs">
@@ -470,14 +494,21 @@ export default function SettingsPage() {
 
               {/* Profile Form */}
               <div className="pt-6">
-                <h4 className="text-sm font-medium text-muted-foreground mb-4">Edit Profile</h4>
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">
+                  Edit Profile
+                </h4>
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
                       value={profileForm.name}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setProfileForm((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                       placeholder="Enter your name"
                     />
                   </div>
@@ -489,33 +520,57 @@ export default function SettingsPage() {
                         id="username"
                         value={profileForm.username}
                         onChange={(e) => {
-                          const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                          const value = e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9_]/g, "");
                           setProfileForm((prev) => ({
                             ...prev,
                             username: value,
-                            displayUsername: e.target.value.replace(/[^a-zA-Z0-9_]/g, ""),
+                            displayUsername: e.target.value.replace(
+                              /[^a-zA-Z0-9_]/g,
+                              "",
+                            ),
                           }));
                         }}
                         placeholder="username"
                         className="pl-9"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">Letters, numbers, and underscores only</p>
+                    <p className="text-xs text-muted-foreground">
+                      Letters, numbers, and underscores only
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" value={profileForm.email} disabled className="bg-muted" />
-                    <p className="text-xs text-muted-foreground">Email cannot be changed here</p>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileForm.email}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Email cannot be changed here
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="organization">Active Organization</Label>
                     {(() => {
-                      const orgItems = organizations?.map((org) => ({ label: org.name, value: org.id })) || [];
-                      const selectedOrg = orgItems.find((item) => item.value === profileForm.organizationId) || null;
+                      const orgItems =
+                        organizations?.map((org) => ({
+                          label: org.name,
+                          value: org.id,
+                        })) || [];
+                      const selectedOrg =
+                        orgItems.find(
+                          (item) => item.value === profileForm.organizationId,
+                        ) || null;
                       return (
                         <Select
                           value={selectedOrg}
-                          onValueChange={(val: { label: string; value: string } | null) => {
+                          onValueChange={(
+                            val: { label: string; value: string } | null,
+                          ) => {
                             if (val) handleOrganizationChange(val.value);
                           }}
                         >
@@ -556,9 +611,13 @@ export default function SettingsPage() {
                   <Button
                     onClick={handleSaveProfile}
                     disabled={isLoading || !hasChanges}
-                    className={`w-full sm:w-auto ${hasChanges ? 'bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]' : ''}`}
+                    className={`w-full sm:w-auto ${hasChanges ? "bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]" : ""}`}
                   >
-                    {isLoading ? <Spinner className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    {isLoading ? (
+                      <Spinner className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Save Changes
                   </Button>
                 </div>
@@ -575,8 +634,12 @@ export default function SettingsPage() {
                 <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-green)]" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold">Two-Factor Authentication</h3>
-                <p className="text-xs text-muted-foreground">Extra security for your account</p>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Two-Factor Authentication
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Extra security for your account
+                </p>
               </div>
             </div>
 
@@ -585,7 +648,10 @@ export default function SettingsPage() {
                 <span className="text-sm font-medium">
                   {twoFactorEnabled ? "2FA is enabled" : "Enable 2FA"}
                 </span>
-                <Switch checked={twoFactorEnabled} onCheckedChange={setTwoFactorEnabled} />
+                <Switch
+                  checked={twoFactorEnabled}
+                  onCheckedChange={setTwoFactorEnabled}
+                />
               </div>
               <p className="text-xs text-muted-foreground">
                 {twoFactorEnabled
@@ -602,14 +668,18 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-semibold">Password</h3>
-                <p className="text-xs text-muted-foreground">Manage your password</p>
+                <p className="text-xs text-muted-foreground">
+                  Manage your password
+                </p>
               </div>
             </div>
 
             <div className="p-4 rounded-lg border">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Change Password</span>
-                <Badge variant="outline" className="text-xs">Set</Badge>
+                <Badge variant="outline" className="text-xs">
+                  Set
+                </Badge>
               </div>
               <p className="text-xs text-muted-foreground mb-3">
                 Update your password to keep your account secure
@@ -628,79 +698,111 @@ export default function SettingsPage() {
               <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--color-indeks-yellow)]" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-semibold">Notification Preferences</h3>
-              <p className="text-xs text-muted-foreground">Choose what updates you receive</p>
+              <h3 className="text-base sm:text-lg font-semibold">
+                Notification Preferences
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Choose what updates you receive
+              </p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">Email Notifications</h4>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Email Notifications
+              </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="text-sm font-medium">Account Updates</p>
-                    <p className="text-xs text-muted-foreground">Receive updates about your account</p>
+                    <p className="text-xs text-muted-foreground">
+                      Receive updates about your account
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.emailNotifications}
-                    onCheckedChange={() => handleNotificationChange("emailNotifications")}
+                    onCheckedChange={() =>
+                      handleNotificationChange("emailNotifications")
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="text-sm font-medium">Security Alerts</p>
-                    <p className="text-xs text-muted-foreground">Important security notifications</p>
+                    <p className="text-xs text-muted-foreground">
+                      Important security notifications
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.securityAlerts}
-                    onCheckedChange={() => handleNotificationChange("securityAlerts")}
+                    onCheckedChange={() =>
+                      handleNotificationChange("securityAlerts")
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="text-sm font-medium">Weekly Reports</p>
-                    <p className="text-xs text-muted-foreground">Analytics summary via email</p>
+                    <p className="text-xs text-muted-foreground">
+                      Analytics summary via email
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.weeklyReports}
-                    onCheckedChange={() => handleNotificationChange("weeklyReports")}
+                    onCheckedChange={() =>
+                      handleNotificationChange("weeklyReports")
+                    }
                   />
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">Product & Activity</h4>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Product & Activity
+              </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="text-sm font-medium">Product Updates</p>
-                    <p className="text-xs text-muted-foreground">News about new features</p>
+                    <p className="text-xs text-muted-foreground">
+                      News about new features
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.productUpdates}
-                    onCheckedChange={() => handleNotificationChange("productUpdates")}
+                    onCheckedChange={() =>
+                      handleNotificationChange("productUpdates")
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="text-sm font-medium">Usage Alerts</p>
-                    <p className="text-xs text-muted-foreground">When approaching limits</p>
+                    <p className="text-xs text-muted-foreground">
+                      When approaching limits
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.usageAlerts}
-                    onCheckedChange={() => handleNotificationChange("usageAlerts")}
+                    onCheckedChange={() =>
+                      handleNotificationChange("usageAlerts")
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="text-sm font-medium">Organization Activity</p>
-                    <p className="text-xs text-muted-foreground">Updates from organization members</p>
+                    <p className="text-xs text-muted-foreground">
+                      Updates from organization members
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.orgActivity}
-                    onCheckedChange={() => handleNotificationChange("orgActivity")}
+                    onCheckedChange={() =>
+                      handleNotificationChange("orgActivity")
+                    }
                   />
                 </div>
               </div>
@@ -719,20 +821,30 @@ export default function SettingsPage() {
                 <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold text-red-600 dark:text-red-400">Danger Zone</h3>
-                <p className="text-xs text-muted-foreground">Irreversible actions</p>
+                <h3 className="text-base sm:text-lg font-semibold text-red-600 dark:text-red-400">
+                  Danger Zone
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Irreversible actions
+                </p>
               </div>
             </div>
 
             <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-red-500/30 dark:border-red-500/25 bg-red-50 dark:bg-red-950/30">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Export Account Data</p>
+                  <p className="text-sm font-medium text-foreground">
+                    Export Account Data
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Download all your data in JSON format
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto border-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-950">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto border-red-300 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-950"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
@@ -740,21 +852,29 @@ export default function SettingsPage() {
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-red-500/30 dark:border-red-500/25 bg-red-50 dark:bg-red-950/30">
                 <div>
-                  <p className="text-sm font-medium text-red-700 dark:text-red-300">Delete Account</p>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                    Delete Account
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Permanently delete your account and all data
                   </p>
                 </div>
-                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialog
+                  open={isDeleteDialogOpen}
+                  onOpenChange={setIsDeleteDialogOpen}
+                >
                   <AlertDialogTrigger className="relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 px-3 py-1.5 text-sm font-medium text-white shadow-xs w-full sm:w-auto">
                     Delete
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your account and
-                        remove all your data from our servers.
+                        This action cannot be undone. This will permanently
+                        delete your account and remove all your data from our
+                        servers.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogBody className="space-y-2">
@@ -778,7 +898,10 @@ export default function SettingsPage() {
                       >
                         Cancel
                       </AlertDialogClose>
-                      <Button variant="destructive" disabled={deleteConfirmation !== "delete my account"}>
+                      <Button
+                        variant="destructive"
+                        disabled={deleteConfirmation !== "delete my account"}
+                      >
                         Delete Account
                       </Button>
                     </AlertDialogFooter>

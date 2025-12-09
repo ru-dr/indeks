@@ -20,7 +20,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/auth/sign-up") ||
     pathname.startsWith("/auth/forgot-password");
 
-  const sessionToken = request.cookies.get("better-auth.session_token");
+  const sessionToken =
+    request.cookies.get("__Secure-better-auth.session_token") ||
+    request.cookies.get("better-auth.session_token");
 
   if (isProtectedRoute && !sessionToken) {
     const signInUrl = new URL("/auth/sign-in", request.url);

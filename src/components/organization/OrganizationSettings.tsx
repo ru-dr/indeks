@@ -199,12 +199,16 @@ export function OrganizationSettings({
             <h2 className="text-base sm:text-lg font-semibold text-red-600 dark:text-red-400">
               Danger Zone
             </h2>
-            <p className="text-xs text-muted-foreground">Irreversible actions</p>
+            <p className="text-xs text-muted-foreground">
+              Irreversible actions
+            </p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-red-500/30 dark:border-red-500/25 bg-red-50 dark:bg-red-950/30">
           <div>
-            <p className="text-sm font-medium text-red-700 dark:text-red-300">Delete Organization</p>
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">
+              Delete Organization
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               Once you delete an organization, there is no going back. All
               projects and data associated with this organization will be
