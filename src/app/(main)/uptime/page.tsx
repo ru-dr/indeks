@@ -116,7 +116,7 @@ interface UptimeSummary {
   monitorsDegraded: number;
   monitorsUnknown: number;
   ongoingIncidents: number;
-  avgUptime: number;
+  avgUptime: number | null;
   projectSummaries: {
     projectId: string;
     projectTitle: string;
@@ -130,8 +130,8 @@ interface UptimeSummary {
 type FilterStatus = "all" | "up" | "down" | "degraded" | "paused";
 
 // Get bar color based on uptime
-function getUptimeBarColor(uptime: number | null): string {
-  if (uptime === null) return "hsl(var(--muted))";
+function getUptimeBarColor(uptime: number | null, hasData: boolean): string {
+  if (!hasData || uptime === null) return "#3f3f46"; // zinc-700 - visible grey for no data
   if (uptime >= 99.9) return "#22c55e"; // green-500
   if (uptime >= 99.0) return "#84cc16"; // lime-500
   if (uptime >= 97.0) return "#eab308"; // yellow-500
@@ -155,22 +155,26 @@ function UptimeShowcase({
       statsMap.set(stat.date.split("T")[0], stat);
     });
 
-    // Generate array for the last N days
-    const data: { date: string; uptime: number | null; downtime: number; incidents: number }[] = [];
+    // Generate array for the last N days (oldest first, today last)
+    const data: { date: string; uptime: number | null; downtime: number; incidents: number; hasData: boolean; isToday: boolean }[] = [];
     const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
 
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split("T")[0];
       const stat = statsMap.get(dateStr);
+      const isToday = dateStr === todayStr;
 
-      if (stat) {
+      if (stat && stat.totalChecks > 0) {
         data.push({
           date: dateStr,
           uptime: stat.uptimePercentage,
           downtime: Math.round(stat.totalDowntimeSeconds / 60),
           incidents: stat.incidentsCount,
+          hasData: true,
+          isToday,
         });
       } else {
         data.push({
@@ -178,6 +182,8 @@ function UptimeShowcase({
           uptime: null,
           downtime: 0,
           incidents: 0,
+          hasData: false,
+          isToday,
         });
       }
     }
@@ -203,27 +209,33 @@ function UptimeShowcase({
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-px">
+      <div className="flex gap-[2px]">
         {uptimeData.map((day, i) => (
           <Tooltip key={i}>
             <TooltipTrigger
               render={
                 <div
-                  className="h-8 w-1 min-w-[2px] flex-1 max-w-1 rounded-sm cursor-pointer transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: getUptimeBarColor(day.uptime) }}
+                  className={cn(
+                    "h-10 flex-1 min-w-[3px] rounded-sm cursor-pointer transition-opacity hover:opacity-80",
+                    day.isToday && "ring-1 ring-foreground/30 ring-offset-1 ring-offset-background"
+                  )}
+                  style={{ backgroundColor: getUptimeBarColor(day.uptime, day.hasData) }}
                 />
               }
             />
             <TooltipPopup>
               <div className="text-center">
-                <p className="font-semibold text-sm">{formatDate(day.date)}</p>
-                {day.uptime !== null ? (
+                <p className="font-semibold text-sm">
+                  {formatDate(day.date)}
+                  {day.isToday && " (Today)"}
+                </p>
+                {day.hasData ? (
                   <>
                     <p
                       className="text-sm font-medium"
-                      style={{ color: getUptimeBarColor(day.uptime) }}
+                      style={{ color: getUptimeBarColor(day.uptime, day.hasData) }}
                     >
-                      {day.uptime.toFixed(2)}% uptime
+                      {day.uptime?.toFixed(2)}% uptime
                     </p>
                     {day.downtime > 0 && (
                       <p className="text-xs text-muted-foreground">
@@ -637,7 +649,9 @@ export default function UptimePage() {
                     Avg Uptime
                   </p>
                   <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
-                    {summary.avgUptime.toFixed(2)}%
+                    {summary.totalMonitors > 0 && summary.avgUptime !== null 
+                      ? `${summary.avgUptime.toFixed(2)}%` 
+                      : "N/A"}
                   </h3>
                 </div>
                 <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
@@ -776,7 +790,7 @@ export default function UptimePage() {
                   </Empty>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {filteredMonitors.map((monitor) => (
                     <div
                       key={monitor.id}
@@ -885,6 +899,10 @@ export default function UptimePage() {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-[#ef4444]" />
                 <span>Major outage</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-zinc-700" />
+                <span>No data</span>
               </div>
             </div>
           </>

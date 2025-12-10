@@ -4,6 +4,7 @@ import { ReactNode, useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { CreateProjectDialog } from "@/components/dashboard/CreateProjectDialog";
 import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
@@ -82,6 +83,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-3 sm:p-4 md:p-6">{children}</main>
       </div>
+      
+      {/* Global Create Project Dialog - listens for events */}
+      <CreateProjectDialog />
     </div>
   );
 }

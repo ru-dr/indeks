@@ -9,26 +9,16 @@ import { Kbd } from "@/components/ui/kbd";
 import {
   LayoutDashboard,
   FolderKanban,
-  BarChart3,
   Globe,
-  FileText,
-  TrendingUp,
   Settings,
-  ShoppingCart,
-  Smartphone,
-  User,
   Search,
   ArrowRight,
   Plus,
-  Download,
-  Upload,
-  RefreshCw,
-  Zap,
-  Calendar,
+  BarChart3,
   Activity,
-  X as XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { appEvents, EVENTS } from "@/lib/events";
 
 interface SearchItem {
   id: string;
@@ -36,10 +26,10 @@ interface SearchItem {
   description?: string;
   icon: React.ElementType;
   href?: string;
-  category: "Navigation" | "Projects" | "Commands" | "Actions" | "Recent";
+  category: "Navigation" | "Commands";
   keywords?: string[];
   action?: () => void;
-  type: "navigation" | "command" | "action";
+  type: "navigation" | "command";
 }
 
 const navigationItems: SearchItem[] = [
@@ -80,20 +70,11 @@ const navigationItems: SearchItem[] = [
     type: "navigation",
   },
   {
-    id: "reports",
-    title: "Reports",
-    description: "Generate and view reports",
-    icon: FileText,
-    href: "/reports",
-    category: "Navigation",
-    type: "navigation",
-  },
-  {
-    id: "events",
-    title: "Events",
-    description: "Track user events",
-    icon: TrendingUp,
-    href: "/events",
+    id: "uptime",
+    title: "Uptime",
+    description: "Monitor website uptime",
+    icon: Activity,
+    href: "/uptime",
     category: "Navigation",
     type: "navigation",
   },
@@ -108,36 +89,6 @@ const navigationItems: SearchItem[] = [
   },
 ];
 
-const projectItems: SearchItem[] = [
-  {
-    id: "project-1",
-    title: "E-commerce Platform",
-    description: "Main online store project",
-    icon: ShoppingCart,
-    href: "/projects/1",
-    category: "Projects",
-    type: "navigation",
-  },
-  {
-    id: "project-2",
-    title: "Mobile App Analytics",
-    description: "iOS and Android app tracking",
-    icon: Smartphone,
-    href: "/projects/2",
-    category: "Projects",
-    type: "navigation",
-  },
-  {
-    id: "project-3",
-    title: "Blog Website",
-    description: "Content management system",
-    icon: FileText,
-    href: "/projects/3",
-    category: "Projects",
-    type: "navigation",
-  },
-];
-
 const commandItems: SearchItem[] = [
   {
     id: "create-project",
@@ -146,75 +97,7 @@ const commandItems: SearchItem[] = [
     icon: Plus,
     category: "Commands",
     type: "command",
-    action: () => {
-      window.location.href = "/projects?create=true";
-    },
-  },
-  {
-    id: "generate-report",
-    title: "Generate Report",
-    description: "Create a new analytics report",
-    icon: Download,
-    category: "Commands",
-    type: "command",
-    action: () => {
-      window.location.href = "/reports?generate=true";
-    },
-  },
-  {
-    id: "export-data",
-    title: "Export Data",
-    description: "Export analytics data to CSV",
-    icon: Upload,
-    category: "Commands",
-    type: "command",
-    action: () => {
-      alert("Data export started. You'll receive an email when ready.");
-    },
-  },
-  {
-    id: "refresh-data",
-    title: "Refresh Data",
-    description: "Sync latest analytics data",
-    icon: RefreshCw,
-    category: "Commands",
-    type: "command",
-    action: () => {
-      alert("Data refresh initiated. This may take a few minutes.");
-    },
-  },
-  {
-    id: "view-insights",
-    title: "View Insights",
-    description: "AI-powered analytics insights",
-    icon: Zap,
-    category: "Commands",
-    type: "command",
-    action: () => {
-      window.location.href = "/analytics?tab=insights";
-    },
-  },
-  {
-    id: "schedule-report",
-    title: "Schedule Report",
-    description: "Set up automated report delivery",
-    icon: Calendar,
-    category: "Commands",
-    type: "command",
-    action: () => {
-      window.location.href = "/reports?tab=scheduled";
-    },
-  },
-  {
-    id: "view-realtime",
-    title: "View Realtime Data",
-    description: "Monitor live user activity",
-    icon: Activity,
-    category: "Commands",
-    type: "command",
-    action: () => {
-      window.location.href = "/realtime-traffic";
-    },
+    keywords: ["new", "add", "project", "create"],
   },
 ];
 
@@ -426,7 +309,7 @@ export function GlobalSearch({
   const router = useRouter();
   const mobileInputRef = useRef<HTMLInputElement>(null);
 
-  const allItems = [...navigationItems, ...projectItems, ...commandItems];
+  const allItems = [...navigationItems, ...commandItems];
 
   const filteredItems = query
     ? allItems.filter((item) => {
@@ -457,10 +340,13 @@ export function GlobalSearch({
       setQuery("");
       setSelectedIndex(0);
 
-      if (item.type === "command" && item.action) {
-        item.action();
+      if (item.id === "create-project") {
+        // Emit event to open create project dialog
+        appEvents.emit(EVENTS.OPEN_CREATE_PROJECT_DIALOG);
       } else if (item.href) {
         router.push(item.href);
+      } else if (item.action) {
+        item.action();
       }
     },
     [router],
@@ -470,7 +356,7 @@ export function GlobalSearch({
     setOpen(false);
     setQuery("");
     setSelectedIndex(0);
-    window.location.href = "/projects?create=true";
+    appEvents.emit(EVENTS.OPEN_CREATE_PROJECT_DIALOG);
   }, []);
 
   const handleClose = useCallback(() => {

@@ -141,6 +141,7 @@ function DialogDescription({
 }: DialogPrimitive.Description.Props) {
   return (
     <DialogPrimitive.Description
+      render={<div />}
       className={cn("text-muted-foreground text-sm", className)}
       data-slot="dialog-description"
       {...props}

@@ -190,8 +190,8 @@ export function NotificationSettings() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Header row */}
-        <div className="grid grid-cols-[1fr_80px_80px] gap-4 px-4 pb-2 border-b">
+        {/* Header row - hidden on mobile */}
+        <div className="hidden sm:grid grid-cols-[1fr_80px_80px] gap-4 px-4 pb-2 border-b">
           <div className="text-sm font-medium text-muted-foreground">Notification Type</div>
           <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground">
             <Mail className="h-3.5 w-3.5" />
@@ -241,51 +241,111 @@ function NotificationRow({ category, preferences, saving, onToggle }: Notificati
   const isInAppSaving = saving === category.inAppKey;
 
   return (
-    <div className="grid grid-cols-[1fr_80px_80px] gap-4 items-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
-      <div className="flex items-center gap-3">
-        <div
-          className="p-2 rounded-lg shrink-0"
-          style={{ backgroundColor: `${category.color}15` }}
-        >
-          <Icon className="h-4 w-4" style={{ color: category.color }} />
+    <div className="p-3 sm:p-4 rounded-lg hover:bg-muted/50 transition-colors">
+      {/* Desktop layout */}
+      <div className="hidden sm:grid sm:grid-cols-[1fr_80px_80px] gap-4 items-center">
+        <div className="flex items-center gap-3">
+          <div
+            className="p-2 rounded-lg shrink-0"
+            style={{ backgroundColor: `${category.color}15` }}
+          >
+            <Icon className="h-4 w-4" style={{ color: category.color }} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium truncate">{category.title}</p>
+            <p className="text-xs text-muted-foreground truncate">{category.description}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{category.title}</p>
-          <p className="text-xs text-muted-foreground truncate">{category.description}</p>
+
+        {/* Email toggle */}
+        <div className="flex items-center justify-center">
+          <div className="relative">
+            {isEmailSaving && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <Spinner className="h-4 w-4" />
+              </div>
+            )}
+            <Switch
+              checked={preferences[category.emailKey]}
+              onCheckedChange={() => onToggle(category.emailKey)}
+              disabled={isEmailSaving}
+              className={cn(isEmailSaving && "opacity-0")}
+            />
+          </div>
+        </div>
+
+        {/* In-App toggle */}
+        <div className="flex items-center justify-center">
+          <div className="relative">
+            {isInAppSaving && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <Spinner className="h-4 w-4" />
+              </div>
+            )}
+            <Switch
+              checked={preferences[category.inAppKey]}
+              onCheckedChange={() => onToggle(category.inAppKey)}
+              disabled={isInAppSaving}
+              className={cn(isInAppSaving && "opacity-0")}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Email toggle */}
-      <div className="flex justify-center">
-        <div className="relative">
-          {isEmailSaving && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <Spinner className="h-4 w-4" />
-            </div>
-          )}
-          <Switch
-            checked={preferences[category.emailKey]}
-            onCheckedChange={() => onToggle(category.emailKey)}
-            disabled={isEmailSaving}
-            className={cn(isEmailSaving && "opacity-0")}
-          />
+      {/* Mobile layout */}
+      <div className="sm:hidden space-y-3">
+        <div className="flex items-center gap-3">
+          <div
+            className="p-2 rounded-lg shrink-0"
+            style={{ backgroundColor: `${category.color}15` }}
+          >
+            <Icon className="h-4 w-4" style={{ color: category.color }} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">{category.title}</p>
+            <p className="text-xs text-muted-foreground line-clamp-2">{category.description}</p>
+          </div>
         </div>
-      </div>
 
-      {/* In-App toggle */}
-      <div className="flex justify-center">
-        <div className="relative">
-          {isInAppSaving && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <Spinner className="h-4 w-4" />
+        {/* Toggles row */}
+        <div className="flex items-center justify-between pl-11">
+          {/* Email toggle */}
+          <div className="flex items-center gap-2">
+            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Email</span>
+            <div className="relative ml-1">
+              {isEmailSaving && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <Spinner className="h-4 w-4" />
+                </div>
+              )}
+              <Switch
+                checked={preferences[category.emailKey]}
+                onCheckedChange={() => onToggle(category.emailKey)}
+                disabled={isEmailSaving}
+                className={cn(isEmailSaving && "opacity-0")}
+              />
             </div>
-          )}
-          <Switch
-            checked={preferences[category.inAppKey]}
-            onCheckedChange={() => onToggle(category.inAppKey)}
-            disabled={isInAppSaving}
-            className={cn(isInAppSaving && "opacity-0")}
-          />
+          </div>
+
+          {/* In-App toggle */}
+          <div className="flex items-center gap-2">
+            <Monitor className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">In-App</span>
+            <div className="relative ml-1">
+              {isInAppSaving && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <Spinner className="h-4 w-4" />
+                </div>
+              )}
+              <Switch
+                checked={preferences[category.inAppKey]}
+                onCheckedChange={() => onToggle(category.inAppKey)}
+                disabled={isInAppSaving}
+                className={cn(isInAppSaving && "opacity-0")}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

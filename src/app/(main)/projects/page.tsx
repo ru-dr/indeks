@@ -508,7 +508,7 @@ export default function ProjectsPage() {
               Manage and monitor all your analytics projects
             </p>
           </div>
-          <CreateProjectDialog onProjectCreated={fetchProjects} />
+          <CreateProjectDialog onProjectCreated={fetchProjects} showTrigger />
         </div>
 
         {error && (

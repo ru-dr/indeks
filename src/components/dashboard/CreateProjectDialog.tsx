@@ -25,15 +25,26 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Plus, Building2 } from "lucide-react";
 import { useListOrganizations, authClient } from "@/lib/auth-client";
+import { appEvents, EVENTS } from "@/lib/events";
 
 interface CreateProjectDialogProps {
   onProjectCreated?: () => void;
+  showTrigger?: boolean;
 }
 
 export function CreateProjectDialog({
   onProjectCreated,
+  showTrigger = false,
 }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
+  
+  // Listen for global event to open dialog
+  useEffect(() => {
+    const unsubscribe = appEvents.on(EVENTS.OPEN_CREATE_PROJECT_DIALOG, () => {
+      setOpen(true);
+    });
+    return unsubscribe;
+  }, []);
   const [loading, setLoading] = useState(false);
   const [creatingOrg, setCreatingOrg] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,11 +161,13 @@ export function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-3 sm:px-4 py-2 w-full sm:w-auto">
-        <Plus className="mr-1 sm:mr-2 h-4 w-4" />
-        <span className="hidden sm:inline">New Project</span>
-        <span className="sm:hidden">New</span>
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-3 sm:px-4 py-2 w-full sm:w-auto">
+          <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">New Project</span>
+          <span className="sm:hidden">New</span>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>

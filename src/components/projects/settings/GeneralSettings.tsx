@@ -162,14 +162,14 @@ export function GeneralSettings({
           />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-muted/30">
           <div className="flex items-center gap-3">
             <Power
-              className={`h-5 w-5 ${isActive ? "text-green-500" : "text-muted-foreground"}`}
+              className={`h-5 w-5 shrink-0 ${isActive ? "text-green-500" : "text-muted-foreground"}`}
             />
             <div>
-              <p className="font-medium">Project Status</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="font-medium text-sm sm:text-base">Project Status</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {isActive
                   ? "Actively tracking analytics"
                   : "Analytics tracking paused"}
@@ -180,6 +180,7 @@ export function GeneralSettings({
             checked={isActive}
             onCheckedChange={setIsActive}
             disabled={!canEdit || saving}
+            className="ml-8 sm:ml-0"
           />
         </div>
       </div>

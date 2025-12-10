@@ -417,7 +417,7 @@ class UptimeController {
         monitorsDegraded: 0,
         monitorsUnknown: 0,
         ongoingIncidents: 0,
-        avgUptime: 100,
+        avgUptime: null,
         projectSummaries: [],
       };
     }
@@ -448,7 +448,7 @@ class UptimeController {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const monitorIds = monitors.map((m) => m.id);
 
-    let avgUptime = 100;
+    let avgUptime: number | null = null;
     if (monitorIds.length > 0) {
       const dailyStats = await db
         .select()
@@ -458,7 +458,9 @@ class UptimeController {
       if (dailyStats.length > 0) {
         const totalChecks = dailyStats.reduce((sum, d) => sum + d.totalChecks, 0);
         const successfulChecks = dailyStats.reduce((sum, d) => sum + d.successfulChecks, 0);
-        avgUptime = totalChecks > 0 ? (successfulChecks / totalChecks) * 100 : 100;
+        if (totalChecks > 0) {
+          avgUptime = (successfulChecks / totalChecks) * 100;
+        }
       }
     }
 
@@ -481,7 +483,7 @@ class UptimeController {
       monitorsDegraded: statusCounts.degraded,
       monitorsUnknown: statusCounts.unknown,
       ongoingIncidents: Number(ongoingIncidents[0]?.count || 0),
-      avgUptime: Math.round(avgUptime * 100) / 100,
+      avgUptime: avgUptime !== null ? Math.round(avgUptime * 100) / 100 : null,
       projectSummaries,
     };
   }

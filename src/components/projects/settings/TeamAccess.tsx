@@ -67,13 +67,13 @@ const ROLE_OPTIONS: {
     value: "admin",
     label: "Admin",
     icon: <Shield className="h-4 w-4" />,
-    description: "Can manage project settings and team members",
+    description: "Can manage project settings and team access",
   },
   {
     value: "member",
-    label: "member",
+    label: "Member",
     icon: <Edit3 className="h-4 w-4" />,
-    description: "Can view and export analytics data",
+    description: "Can edit project details and view analytics",
   },
   {
     value: "viewer",
@@ -471,12 +471,12 @@ export function TeamAccess({
         <h4 className="text-sm font-medium text-muted-foreground">
           Role Permissions
         </h4>
-        <div className="grid gap-2 text-sm">
+        <div className="grid gap-2 text-xs sm:text-sm">
           <div className="flex items-start gap-2">
             <Crown className="h-4 w-4 mt-0.5 text-yellow-500 shrink-0" />
             <div>
               <span className="font-medium">Owner</span>
-              <span className="text-muted-foreground ml-2">
+              <span className="text-muted-foreground ml-1 sm:ml-2">
                 — Full access including project deletion
               </span>
             </div>
@@ -488,7 +488,7 @@ export function TeamAccess({
               </span>
               <div>
                 <span className="font-medium">{role.label}</span>
-                <span className="text-muted-foreground ml-2">
+                <span className="text-muted-foreground ml-1 sm:ml-2">
                   — {role.description}
                 </span>
               </div>

@@ -263,11 +263,11 @@ export const projectsController = {
   },
 
   /**
-   * Check if user can manage project (owner or admin)
+   * Check if user can manage project (owner, admin, or member)
    */
   async canManageProject(userId: string, projectId: string): Promise<boolean> {
     const role = await this.getUserProjectRole(userId, projectId);
-    return role === "owner" || role === "admin";
+    return role === "owner" || role === "admin" || role === "member";
   },
 
   /**
