@@ -145,7 +145,7 @@ export default function ReportsPage() {
 
   const determineTrafficSource = (
     referrer: string | null,
-    metadata: Record<string, any>
+    metadata: Record<string, any>,
   ) => {
     if (metadata?.trafficSource) return metadata.trafficSource;
 
@@ -197,9 +197,9 @@ export default function ReportsPage() {
   const processEventsIntoSessions = (events: RawEvent[]): SessionData[] => {
     const sessionMap = new Map<string, SessionData>();
 
-    // Sort events by timestamp
     const sortedEvents = [...events].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
     for (const event of sortedEvents) {
@@ -235,18 +235,18 @@ export default function ReportsPage() {
       session.endTime = new Date(event.timestamp);
       session.exitPage = event.url || session.exitPage;
 
-      // Track pages viewed
       if (event.url) {
         session.pagesViewed.add(event.url);
       }
 
-      // Count event types
       if (event.event_type === "click" || event.event_type === "double_click") {
         session.totalClicks++;
       }
-      if (event.event_type === "scroll" || event.event_type === "scroll_depth") {
+      if (
+        event.event_type === "scroll" ||
+        event.event_type === "scroll_depth"
+      ) {
         session.totalScrolls++;
-        // Extract scroll depth
         const scrollDepth =
           event.metadata?.scrollPercentage ||
           event.metadata?.depth ||
@@ -256,12 +256,18 @@ export default function ReportsPage() {
           session.maxScrollDepth = scrollDepth;
         }
       }
-      if (event.event_type === "error" || event.event_type === "resource_error") {
+      if (
+        event.event_type === "error" ||
+        event.event_type === "resource_error"
+      ) {
         session.hasError = true;
       }
 
-      // Update device info if more complete
-      if (event.metadata?.device && Object.keys(event.metadata.device).length > Object.keys(session.device).length) {
+      if (
+        event.metadata?.device &&
+        Object.keys(event.metadata.device).length >
+          Object.keys(session.device).length
+      ) {
         session.device = event.metadata.device;
       }
     }
@@ -273,7 +279,8 @@ export default function ReportsPage() {
     const metadata = session.firstEvent.metadata || {};
     const device = session.device || {};
 
-    const sessionDuration = session.endTime.getTime() - session.startTime.getTime();
+    const sessionDuration =
+      session.endTime.getTime() - session.startTime.getTime();
     const isBounce = session.pagesViewed.size <= 1 && session.totalClicks === 0;
 
     return {
@@ -289,7 +296,8 @@ export default function ReportsPage() {
       "Page URLs": Array.from(session.pagesViewed).join(" | "),
       "Total Clicks": String(session.totalClicks),
       "Total Scrolls": String(session.totalScrolls),
-      "Max Scroll Depth": session.maxScrollDepth > 0 ? `${session.maxScrollDepth}%` : "",
+      "Max Scroll Depth":
+        session.maxScrollDepth > 0 ? `${session.maxScrollDepth}%` : "",
       Bounce: isBounce ? "Yes" : "No",
       "Has Error": session.hasError ? "Yes" : "No",
       "Traffic Source": determineTrafficSource(session.referrer, metadata),
@@ -304,7 +312,13 @@ export default function ReportsPage() {
       Longitude: session.longitude ? String(session.longitude) : "",
       Timezone: device.timezone || "",
       Language: device.language || "",
-      "Device Type": device.deviceType || (metadata.isMobile ? "mobile" : metadata.isTablet ? "tablet" : "desktop"),
+      "Device Type":
+        device.deviceType ||
+        (metadata.isMobile
+          ? "mobile"
+          : metadata.isTablet
+            ? "tablet"
+            : "desktop"),
       "Device Vendor": device.deviceVendor || "",
       "Device Model": device.deviceModel || "",
       "OS Name": device.osName || "",
@@ -313,12 +327,20 @@ export default function ReportsPage() {
       "Browser Version": device.browserVersion || "",
       "Screen Width": device.screenWidth ? String(device.screenWidth) : "",
       "Screen Height": device.screenHeight ? String(device.screenHeight) : "",
-      "Viewport Width": device.viewportWidth ? String(device.viewportWidth) : "",
-      "Viewport Height": device.viewportHeight ? String(device.viewportHeight) : "",
-      "Is Mobile": device.deviceType === "mobile" || metadata.isMobile ? "Yes" : "No",
-      "Is Tablet": device.deviceType === "tablet" || metadata.isTablet ? "Yes" : "No",
-      "Is Desktop": device.deviceType === "desktop" || metadata.isDesktop ? "Yes" : "No",
-      "Connection Type": device.connectionType || device.connectionEffectiveType || "",
+      "Viewport Width": device.viewportWidth
+        ? String(device.viewportWidth)
+        : "",
+      "Viewport Height": device.viewportHeight
+        ? String(device.viewportHeight)
+        : "",
+      "Is Mobile":
+        device.deviceType === "mobile" || metadata.isMobile ? "Yes" : "No",
+      "Is Tablet":
+        device.deviceType === "tablet" || metadata.isTablet ? "Yes" : "No",
+      "Is Desktop":
+        device.deviceType === "desktop" || metadata.isDesktop ? "Yes" : "No",
+      "Connection Type":
+        device.connectionType || device.connectionEffectiveType || "",
       "Is Bot": device.isBot ? "Yes" : "No",
     };
   };
@@ -333,9 +355,8 @@ export default function ReportsPage() {
     setStatus({ type: null, message: "" });
 
     try {
-      // Fetch events from the API (limited to get enough for ~100 sessions)
       const response = await fetch(
-        `/api/v1/analytics/${selectedProject}/events-stream?limit=500`
+        `/api/v1/analytics/${selectedProject}/events-stream?limit=500`,
       );
 
       if (!response.ok) {
@@ -354,7 +375,6 @@ export default function ReportsPage() {
         return;
       }
 
-      // Process events into sessions and calculate metrics
       const sessions = processEventsIntoSessions(events);
 
       if (sessions.length === 0) {
@@ -366,20 +386,18 @@ export default function ReportsPage() {
         return;
       }
 
-      // Transform sessions to rows
-      const trafficRows = sessions.map((session) => transformSessionToRow(session));
+      const trafficRows = sessions.map((session) =>
+        transformSessionToRow(session),
+      );
 
-      // Sort by date/time descending (most recent first)
       trafficRows.sort((a, b) => {
         const dateA = new Date(`${a.Date}T${a.Time}`);
         const dateB = new Date(`${b.Date}T${b.Time}`);
         return dateB.getTime() - dateA.getTime();
       });
 
-      // Limit to 100 rows
       const limitedRows = trafficRows.slice(0, 100);
 
-      // Send to our API route which handles SheetDB
       const exportResponse = await fetch(EXPORT_API, {
         method: "POST",
         headers: {
@@ -509,7 +527,9 @@ export default function ReportsPage() {
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                   Total Reports
                 </p>
-                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">1</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                  1
+                </h3>
               </div>
               <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
             </div>

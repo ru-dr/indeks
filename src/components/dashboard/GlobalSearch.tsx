@@ -341,7 +341,6 @@ export function GlobalSearch({
       setSelectedIndex(0);
 
       if (item.id === "create-project") {
-        // Emit event to open create project dialog
         appEvents.emit(EVENTS.OPEN_CREATE_PROJECT_DIALOG);
       } else if (item.href) {
         router.push(item.href);

@@ -55,10 +55,10 @@ export default function OrgNotificationEmail({
       <Section style={detailsBox}>
         <Text style={detailLabel}>Organization</Text>
         <Text style={detailValue}>{orgName}</Text>
-        
+
         <Text style={detailLabel}>Member</Text>
         <Text style={detailValue}>{memberName}</Text>
-        
+
         {newRole && (
           <>
             <Text style={detailLabel}>New Role</Text>
@@ -74,8 +74,8 @@ export default function OrgNotificationEmail({
       <Hr style={hr} />
 
       <Text style={subtext}>
-        You&apos;re receiving this because you&apos;re an admin of this organization.
-        You can manage your notification preferences in settings.
+        You&apos;re receiving this because you&apos;re an admin of this
+        organization. You can manage your notification preferences in settings.
       </Text>
     </BaseTemplate>
   );

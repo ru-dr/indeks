@@ -33,7 +33,7 @@ export const emailService = {
   }) => {
     plunk.emails.send({ to, subject, body: html }).catch(console.error);
   },
-  
+
   sendVerificationEmail: async ({
     user,
     url,
@@ -49,7 +49,7 @@ export const emailService = {
     });
     return html;
   },
-  
+
   sendResetPasswordEmail: async ({
     user,
     url,
@@ -65,7 +65,7 @@ export const emailService = {
     });
     return html;
   },
-  
+
   sendTeamInvitationEmail: async (
     data: TeamInvitationData,
   ): Promise<string> => {

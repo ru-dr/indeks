@@ -53,7 +53,6 @@ class UptimeController {
       return [];
     }
 
-    // Get daily stats for all monitors
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
@@ -63,12 +62,11 @@ class UptimeController {
       .where(
         and(
           sql`${uptimeDaily.monitorId} IN ${monitorIds}`,
-          gte(uptimeDaily.date, ninetyDaysAgo.toISOString().split("T")[0])
-        )
+          gte(uptimeDaily.date, ninetyDaysAgo.toISOString().split("T")[0]),
+        ),
       )
       .orderBy(asc(uptimeDaily.date));
 
-    // Group stats by monitor
     const statsByMonitor = new Map<string, typeof dailyStats>();
     for (const stat of dailyStats) {
       if (!statsByMonitor.has(stat.monitorId)) {
@@ -77,7 +75,6 @@ class UptimeController {
       statsByMonitor.get(stat.monitorId)!.push(stat);
     }
 
-    // Calculate uptime for different periods
     const now = new Date();
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -88,8 +85,13 @@ class UptimeController {
       const filtered = stats.filter((s) => new Date(s.date) >= afterDate);
       if (filtered.length === 0) return 100;
       const totalChecks = filtered.reduce((sum, d) => sum + d.totalChecks, 0);
-      const successfulChecks = filtered.reduce((sum, d) => sum + d.successfulChecks, 0);
-      return totalChecks > 0 ? Math.round((successfulChecks / totalChecks) * 10000) / 100 : 100;
+      const successfulChecks = filtered.reduce(
+        (sum, d) => sum + d.successfulChecks,
+        0,
+      );
+      return totalChecks > 0
+        ? Math.round((successfulChecks / totalChecks) * 10000) / 100
+        : 100;
     };
 
     const monitorsWithUptime = monitors.map((monitor) => {
@@ -141,7 +143,7 @@ class UptimeController {
       checkInterval?: number;
       timeout?: number;
       expectedStatusCode?: number;
-    }
+    },
   ) {
     const project = await db
       .select()
@@ -183,7 +185,7 @@ class UptimeController {
       expectedStatusCode?: number;
       isPaused?: boolean;
       isActive?: boolean;
-    }
+    },
   ) {
     const monitor = await db
       .select({ monitor: uptimeMonitors, project: projects })
@@ -203,7 +205,9 @@ class UptimeController {
         ...(data.url && { url: data.url }),
         ...(data.checkInterval && { checkInterval: data.checkInterval }),
         ...(data.timeout && { timeout: data.timeout }),
-        ...(data.expectedStatusCode && { expectedStatusCode: data.expectedStatusCode }),
+        ...(data.expectedStatusCode && {
+          expectedStatusCode: data.expectedStatusCode,
+        }),
         ...(data.isPaused !== undefined && { isPaused: data.isPaused }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
       })
@@ -271,17 +275,26 @@ class UptimeController {
       .where(
         and(
           eq(uptimeDaily.monitorId, monitorId),
-          gte(uptimeDaily.date, thirtyDaysAgo.toISOString().split("T")[0])
-        )
+          gte(uptimeDaily.date, thirtyDaysAgo.toISOString().split("T")[0]),
+        ),
       )
       .orderBy(asc(uptimeDaily.date));
 
     const totalChecks = dailyStats.reduce((sum, d) => sum + d.totalChecks, 0);
-    const successfulChecks = dailyStats.reduce((sum, d) => sum + d.successfulChecks, 0);
-    const overallUptime = totalChecks > 0 ? (successfulChecks / totalChecks) * 100 : 100;
+    const successfulChecks = dailyStats.reduce(
+      (sum, d) => sum + d.successfulChecks,
+      0,
+    );
+    const overallUptime =
+      totalChecks > 0 ? (successfulChecks / totalChecks) * 100 : 100;
 
-    const responseTimes = dailyStats.filter((d) => d.avgResponseTime !== null).map((d) => d.avgResponseTime!);
-    const avgResponseTime = responseTimes.length > 0 ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length : null;
+    const responseTimes = dailyStats
+      .filter((d) => d.avgResponseTime !== null)
+      .map((d) => d.avgResponseTime!);
+    const avgResponseTime =
+      responseTimes.length > 0
+        ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
+        : null;
 
     return {
       ...monitorData[0].monitor,
@@ -297,7 +310,8 @@ class UptimeController {
         overallUptime: Math.round(overallUptime * 100) / 100,
         avgResponseTime: avgResponseTime ? Math.round(avgResponseTime) : null,
         totalIncidents: recentIncidents.length,
-        ongoingIncidents: recentIncidents.filter((i) => i.status === "ongoing").length,
+        ongoingIncidents: recentIncidents.filter((i) => i.status === "ongoing")
+          .length,
       },
     };
   }
@@ -326,7 +340,10 @@ class UptimeController {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), monitor.timeout * 1000);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        monitor.timeout * 1000,
+      );
 
       const response = await fetch(monitor.url, {
         method: "GET",
@@ -377,19 +394,37 @@ class UptimeController {
 
     if (statusChanged) {
       if (status === "down") {
-        await db.insert(uptimeIncidents).values({ monitorId, status: "ongoing", cause: errorMessage || "Unknown" });
+        await db
+          .insert(uptimeIncidents)
+          .values({
+            monitorId,
+            status: "ongoing",
+            cause: errorMessage || "Unknown",
+          });
       } else if (previousStatus === "down") {
         const ongoingIncident = await db
           .select()
           .from(uptimeIncidents)
-          .where(and(eq(uptimeIncidents.monitorId, monitorId), eq(uptimeIncidents.status, "ongoing")))
+          .where(
+            and(
+              eq(uptimeIncidents.monitorId, monitorId),
+              eq(uptimeIncidents.status, "ongoing"),
+            ),
+          )
           .limit(1);
 
         if (ongoingIncident.length > 0) {
-          const duration = Math.floor((Date.now() - new Date(ongoingIncident[0].startedAt).getTime()) / 1000);
+          const duration = Math.floor(
+            (Date.now() - new Date(ongoingIncident[0].startedAt).getTime()) /
+              1000,
+          );
           await db
             .update(uptimeIncidents)
-            .set({ status: "resolved", resolvedAt: new Date(), durationSeconds: duration })
+            .set({
+              status: "resolved",
+              resolvedAt: new Date(),
+              durationSeconds: duration,
+            })
             .where(eq(uptimeIncidents.id, ongoingIncident[0].id));
         }
       }
@@ -430,8 +465,16 @@ class UptimeController {
     const ongoingIncidents = await db
       .select({ count: sql<number>`count(*)` })
       .from(uptimeIncidents)
-      .innerJoin(uptimeMonitors, eq(uptimeIncidents.monitorId, uptimeMonitors.id))
-      .where(and(sql`${uptimeMonitors.projectId} IN ${projectIds}`, eq(uptimeIncidents.status, "ongoing")));
+      .innerJoin(
+        uptimeMonitors,
+        eq(uptimeIncidents.monitorId, uptimeMonitors.id),
+      )
+      .where(
+        and(
+          sql`${uptimeMonitors.projectId} IN ${projectIds}`,
+          eq(uptimeIncidents.status, "ongoing"),
+        ),
+      );
 
     const statusCounts = monitors.reduce(
       (acc, m) => {
@@ -441,7 +484,7 @@ class UptimeController {
         else acc.unknown++;
         return acc;
       },
-      { up: 0, down: 0, degraded: 0, unknown: 0 }
+      { up: 0, down: 0, degraded: 0, unknown: 0 },
     );
 
     const thirtyDaysAgo = new Date();
@@ -453,11 +496,22 @@ class UptimeController {
       const dailyStats = await db
         .select()
         .from(uptimeDaily)
-        .where(and(sql`${uptimeDaily.monitorId} IN ${monitorIds}`, gte(uptimeDaily.date, thirtyDaysAgo.toISOString().split("T")[0])));
+        .where(
+          and(
+            sql`${uptimeDaily.monitorId} IN ${monitorIds}`,
+            gte(uptimeDaily.date, thirtyDaysAgo.toISOString().split("T")[0]),
+          ),
+        );
 
       if (dailyStats.length > 0) {
-        const totalChecks = dailyStats.reduce((sum, d) => sum + d.totalChecks, 0);
-        const successfulChecks = dailyStats.reduce((sum, d) => sum + d.successfulChecks, 0);
+        const totalChecks = dailyStats.reduce(
+          (sum, d) => sum + d.totalChecks,
+          0,
+        );
+        const successfulChecks = dailyStats.reduce(
+          (sum, d) => sum + d.successfulChecks,
+          0,
+        );
         if (totalChecks > 0) {
           avgUptime = (successfulChecks / totalChecks) * 100;
         }
@@ -465,14 +519,20 @@ class UptimeController {
     }
 
     const projectSummaries = userProjects.map((project) => {
-      const projectMonitors = monitors.filter((m) => m.projectId === project.id);
+      const projectMonitors = monitors.filter(
+        (m) => m.projectId === project.id,
+      );
       return {
         projectId: project.id,
         projectTitle: project.title,
         totalMonitors: projectMonitors.length,
-        monitorsUp: projectMonitors.filter((m) => m.currentStatus === "up").length,
-        monitorsDown: projectMonitors.filter((m) => m.currentStatus === "down").length,
-        monitorsDegraded: projectMonitors.filter((m) => m.currentStatus === "degraded").length,
+        monitorsUp: projectMonitors.filter((m) => m.currentStatus === "up")
+          .length,
+        monitorsDown: projectMonitors.filter((m) => m.currentStatus === "down")
+          .length,
+        monitorsDegraded: projectMonitors.filter(
+          (m) => m.currentStatus === "degraded",
+        ).length,
       };
     });
 

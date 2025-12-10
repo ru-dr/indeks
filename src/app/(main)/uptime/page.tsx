@@ -58,11 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipPopup,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -129,17 +125,15 @@ interface UptimeSummary {
 
 type FilterStatus = "all" | "up" | "down" | "degraded" | "paused";
 
-// Get bar color based on uptime
 function getUptimeBarColor(uptime: number | null, hasData: boolean): string {
-  if (!hasData || uptime === null) return "#3f3f46"; // zinc-700 - visible grey for no data
-  if (uptime >= 99.9) return "#22c55e"; // green-500
-  if (uptime >= 99.0) return "#84cc16"; // lime-500
-  if (uptime >= 97.0) return "#eab308"; // yellow-500
-  if (uptime >= 95.0) return "#f97316"; // orange-500
-  return "#ef4444"; // red-500
+  if (!hasData || uptime === null) return "#3f3f46";
+  if (uptime >= 99.9) return "#22c55e";
+  if (uptime >= 99.0) return "#84cc16";
+  if (uptime >= 97.0) return "#eab308";
+  if (uptime >= 95.0) return "#f97316";
+  return "#ef4444";
 }
 
-// Uptime Showcase Component - Atlassian style bars
 function UptimeShowcase({
   dailyStats,
   days = 90,
@@ -149,14 +143,19 @@ function UptimeShowcase({
   days?: number;
 }) {
   const uptimeData = useMemo(() => {
-    // Create a map of existing stats by date
     const statsMap = new Map<string, DailyStat>();
     dailyStats.forEach((stat) => {
       statsMap.set(stat.date.split("T")[0], stat);
     });
 
-    // Generate array for the last N days (oldest first, today last)
-    const data: { date: string; uptime: number | null; downtime: number; incidents: number; hasData: boolean; isToday: boolean }[] = [];
+    const data: {
+      date: string;
+      uptime: number | null;
+      downtime: number;
+      incidents: number;
+      hasData: boolean;
+      isToday: boolean;
+    }[] = [];
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
 
@@ -217,9 +216,12 @@ function UptimeShowcase({
                 <div
                   className={cn(
                     "h-10 flex-1 min-w-[3px] rounded-sm cursor-pointer transition-opacity hover:opacity-80",
-                    day.isToday && "ring-1 ring-foreground/30 ring-offset-1 ring-offset-background"
+                    day.isToday &&
+                      "ring-1 ring-foreground/30 ring-offset-1 ring-offset-background",
                   )}
-                  style={{ backgroundColor: getUptimeBarColor(day.uptime, day.hasData) }}
+                  style={{
+                    backgroundColor: getUptimeBarColor(day.uptime, day.hasData),
+                  }}
                 />
               }
             />
@@ -233,7 +235,9 @@ function UptimeShowcase({
                   <>
                     <p
                       className="text-sm font-medium"
-                      style={{ color: getUptimeBarColor(day.uptime, day.hasData) }}
+                      style={{
+                        color: getUptimeBarColor(day.uptime, day.hasData),
+                      }}
                     >
                       {day.uptime?.toFixed(2)}% uptime
                     </p>
@@ -259,7 +263,9 @@ function UptimeShowcase({
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>{days} days ago</span>
         <span className="font-semibold text-foreground">
-          {overallUptime !== null ? `${overallUptime.toFixed(2)}% uptime` : "No data"}
+          {overallUptime !== null
+            ? `${overallUptime.toFixed(2)}% uptime`
+            : "No data"}
         </span>
         <span>Today</span>
       </div>
@@ -294,14 +300,16 @@ export default function UptimePage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-  const [timeFrame, setTimeFrame] = useState<{ label: string; value: string } | null>(
-    timeFrameItems[2]
-  );
+  const [timeFrame, setTimeFrame] = useState<{
+    label: string;
+    value: string;
+  } | null>(timeFrameItems[2]);
   const [checkingMonitor, setCheckingMonitor] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<{ label: string; value: string } | null>(
-    null
-  );
+  const [selectedProject, setSelectedProject] = useState<{
+    label: string;
+    value: string;
+  } | null>(null);
   const [newMonitorName, setNewMonitorName] = useState("");
   const [newMonitorUrl, setNewMonitorUrl] = useState("");
   const [newMonitorInterval, setNewMonitorInterval] = useState<{
@@ -359,7 +367,9 @@ export default function UptimePage() {
   const handleManualCheck = async (monitorId: string) => {
     setCheckingMonitor(monitorId);
     try {
-      await fetch(`/api/v1/uptime/monitors/${monitorId}/check`, { method: "POST" });
+      await fetch(`/api/v1/uptime/monitors/${monitorId}/check`, {
+        method: "POST",
+      });
       await fetchData();
     } catch (err) {
       console.error("Error performing check:", err);
@@ -396,17 +406,20 @@ export default function UptimePage() {
 
     setCreating(true);
     try {
-      const res = await fetch(`/api/v1/uptime/projects/${selectedProject.value}/monitors`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newMonitorName,
-          url: newMonitorUrl,
-          checkInterval: Number(newMonitorInterval?.value || "60"),
-          timeout: Number(newMonitorTimeout?.value || "30"),
-          expectedStatusCode: 200,
-        }),
-      });
+      const res = await fetch(
+        `/api/v1/uptime/projects/${selectedProject.value}/monitors`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: newMonitorName,
+            url: newMonitorUrl,
+            checkInterval: Number(newMonitorInterval?.value || "60"),
+            timeout: Number(newMonitorTimeout?.value || "30"),
+            expectedStatusCode: 200,
+          }),
+        },
+      );
       const data = await res.json();
       if (data.success) {
         setCreateDialogOpen(false);
@@ -427,8 +440,10 @@ export default function UptimePage() {
   const filteredMonitors = monitors.filter((monitor) => {
     if (filterStatus === "paused" && !monitor.isPaused) return false;
     if (filterStatus === "up" && monitor.currentStatus !== "up") return false;
-    if (filterStatus === "down" && monitor.currentStatus !== "down") return false;
-    if (filterStatus === "degraded" && monitor.currentStatus !== "degraded") return false;
+    if (filterStatus === "down" && monitor.currentStatus !== "down")
+      return false;
+    if (filterStatus === "degraded" && monitor.currentStatus !== "degraded")
+      return false;
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -445,11 +460,15 @@ export default function UptimePage() {
     if (isPaused) return <Pause className="h-4 w-4 text-muted-foreground" />;
     switch (status) {
       case "up":
-        return <CheckCircle2 className="h-4 w-4 text-[var(--color-indeks-green)]" />;
+        return (
+          <CheckCircle2 className="h-4 w-4 text-[var(--color-indeks-green)]" />
+        );
       case "down":
         return <XCircle className="h-4 w-4 text-destructive" />;
       case "degraded":
-        return <AlertTriangle className="h-4 w-4 text-[var(--color-indeks-yellow)]" />;
+        return (
+          <AlertTriangle className="h-4 w-4 text-[var(--color-indeks-yellow)]" />
+        );
       default:
         return <Signal className="h-4 w-4 text-muted-foreground" />;
     }
@@ -493,7 +512,9 @@ export default function UptimePage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Uptime</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Uptime
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
               Monitor the availability of your projects
             </p>
@@ -518,7 +539,10 @@ export default function UptimePage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Project</Label>
-                    <Select value={selectedProject} onValueChange={setSelectedProject}>
+                    <Select
+                      value={selectedProject}
+                      onValueChange={setSelectedProject}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -550,7 +574,10 @@ export default function UptimePage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Check Interval</Label>
-                      <Select value={newMonitorInterval} onValueChange={setNewMonitorInterval}>
+                      <Select
+                        value={newMonitorInterval}
+                        onValueChange={setNewMonitorInterval}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -565,7 +592,10 @@ export default function UptimePage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Timeout</Label>
-                      <Select value={newMonitorTimeout} onValueChange={setNewMonitorTimeout}>
+                      <Select
+                        value={newMonitorTimeout}
+                        onValueChange={setNewMonitorTimeout}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -582,13 +612,22 @@ export default function UptimePage() {
                 </div>
               </DialogPanel>
               <DialogFooter variant="bare">
-                <DialogClose render={<Button variant="outline">Cancel</Button>} />
+                <DialogClose
+                  render={<Button variant="outline">Cancel</Button>}
+                />
                 <Button
                   onClick={handleCreateMonitor}
-                  disabled={creating || !selectedProject || !newMonitorName || !newMonitorUrl}
+                  disabled={
+                    creating ||
+                    !selectedProject ||
+                    !newMonitorName ||
+                    !newMonitorUrl
+                  }
                   className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]"
                 >
-                  {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {creating && (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
                   Create Monitor
                 </Button>
               </DialogFooter>
@@ -634,7 +673,9 @@ export default function UptimePage() {
             <Card className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Down</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    Down
+                  </p>
                   <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2 text-destructive">
                     {summary.monitorsDown}
                   </h3>
@@ -649,8 +690,8 @@ export default function UptimePage() {
                     Avg Uptime
                   </p>
                   <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
-                    {summary.totalMonitors > 0 && summary.avgUptime !== null 
-                      ? `${summary.avgUptime.toFixed(2)}%` 
+                    {summary.totalMonitors > 0 && summary.avgUptime !== null
+                      ? `${summary.avgUptime.toFixed(2)}%`
                       : "N/A"}
                   </h3>
                 </div>
@@ -666,10 +707,13 @@ export default function UptimePage() {
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <div>
-                <h3 className="font-semibold text-destructive">Active Incidents</h3>
+                <h3 className="font-semibold text-destructive">
+                  Active Incidents
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {summary.ongoingIncidents} monitor
-                  {summary.ongoingIncidents > 1 ? "s are" : " is"} currently experiencing issues.
+                  {summary.ongoingIncidents > 1 ? "s are" : " is"} currently
+                  experiencing issues.
                 </p>
               </div>
             </div>
@@ -685,7 +729,8 @@ export default function UptimePage() {
                 </EmptyMedia>
                 <EmptyTitle>No monitors yet</EmptyTitle>
                 <EmptyDescription>
-                  Create your first uptime monitor to start tracking availability.
+                  Create your first uptime monitor to start tracking
+                  availability.
                 </EmptyDescription>
               </EmptyHeader>
               <Button
@@ -705,7 +750,9 @@ export default function UptimePage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Signal className="h-5 w-5 text-[var(--color-indeks-blue)]" />
-                    <h3 className="text-base sm:text-lg font-semibold">All Monitors</h3>
+                    <h3 className="text-base sm:text-lg font-semibold">
+                      All Monitors
+                    </h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <Select value={timeFrame} onValueChange={setTimeFrame}>
@@ -765,7 +812,9 @@ export default function UptimePage() {
                       <span className="hidden sm:inline">Down</span>
                     </Button>
                     <Button
-                      variant={filterStatus === "paused" ? "secondary" : "ghost"}
+                      variant={
+                        filterStatus === "paused" ? "secondary" : "ghost"
+                      }
                       size="sm"
                       onClick={() => setFilterStatus("paused")}
                       className="h-7 px-2 sm:px-3 text-xs"
@@ -785,7 +834,9 @@ export default function UptimePage() {
                         <Search />
                       </EmptyMedia>
                       <EmptyTitle>No monitors found</EmptyTitle>
-                      <EmptyDescription>Try adjusting your search or filter.</EmptyDescription>
+                      <EmptyDescription>
+                        Try adjusting your search or filter.
+                      </EmptyDescription>
                     </EmptyHeader>
                   </Empty>
                 </div>
@@ -799,14 +850,22 @@ export default function UptimePage() {
                       {/* Monitor Header */}
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {getStatusIcon(monitor.currentStatus, monitor.isPaused)}
+                          {getStatusIcon(
+                            monitor.currentStatus,
+                            monitor.isPaused,
+                          )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="font-semibold">{monitor.name}</h4>
-                              {getStatusBadge(monitor.currentStatus, monitor.isPaused)}
+                              {getStatusBadge(
+                                monitor.currentStatus,
+                                monitor.isPaused,
+                              )}
                             </div>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
-                              <span className="truncate">{getHostname(monitor.url)}</span>
+                              <span className="truncate">
+                                {getHostname(monitor.url)}
+                              </span>
                               <span>•</span>
                               <Link
                                 href={`/projects/${monitor.projectId}`}
@@ -827,17 +886,25 @@ export default function UptimePage() {
                             <RefreshCw
                               className={cn(
                                 "h-4 w-4",
-                                checkingMonitor === monitor.id && "animate-spin"
+                                checkingMonitor === monitor.id &&
+                                  "animate-spin",
                               )}
                             />
                           </Button>
                           <DropdownMenu>
-                            <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
+                            <DropdownMenuTrigger
+                              render={<Button variant="ghost" size="sm" />}
+                            >
                               <MoreVertical className="h-4 w-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => handleTogglePause(monitor.id, monitor.isPaused)}
+                                onClick={() =>
+                                  handleTogglePause(
+                                    monitor.id,
+                                    monitor.isPaused,
+                                  )
+                                }
                               >
                                 {monitor.isPaused ? (
                                   <>
@@ -852,7 +919,9 @@ export default function UptimePage() {
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => window.open(monitor.url, "_blank")}
+                                onClick={() =>
+                                  window.open(monitor.url, "_blank")
+                                }
                               >
                                 <ExternalLink className="h-4 w-4 mr-2" />
                                 Visit URL

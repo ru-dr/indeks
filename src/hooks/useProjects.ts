@@ -24,11 +24,12 @@ export function useProjects() {
         const result = await response.json();
 
         if (result.success && Array.isArray(result.data)) {
-          // Map title to name for compatibility
-          const mappedProjects = result.data.map((p: Project & { title: string }) => ({
-            ...p,
-            name: p.title || p.name,
-          }));
+          const mappedProjects = result.data.map(
+            (p: Project & { title: string }) => ({
+              ...p,
+              name: p.title || p.name,
+            }),
+          );
           setProjects(mappedProjects);
         } else {
           setError(result.message || "Failed to fetch projects");

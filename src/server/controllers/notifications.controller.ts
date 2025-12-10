@@ -9,7 +9,6 @@ import {
 import { eq, and, or, desc, isNull, gt, sql } from "drizzle-orm";
 import { notificationService } from "@/services/notification.service";
 
-// Default preferences
 const defaultPreferences = {
   emailAccountUpdates: true,
   inAppAccountUpdates: true,
@@ -31,7 +30,7 @@ class NotificationsController {
       category?: string;
       unreadOnly?: string;
       limit?: number;
-    }
+    },
   ) {
     const { category, unreadOnly, limit = 50 } = options;
 
@@ -40,7 +39,7 @@ class NotificationsController {
       eq(notifications.isDismissed, false),
       or(
         isNull(notifications.expiresAt),
-        gt(notifications.expiresAt, new Date())
+        gt(notifications.expiresAt, new Date()),
       ),
     ];
 
@@ -105,9 +104,9 @@ class NotificationsController {
           eq(notifications.isDismissed, false),
           or(
             isNull(notifications.expiresAt),
-            gt(notifications.expiresAt, new Date())
-          )
-        )
+            gt(notifications.expiresAt, new Date()),
+          ),
+        ),
       )
       .orderBy(desc(notifications.createdAt))
       .limit(50);
@@ -129,14 +128,17 @@ class NotificationsController {
             inviterName: user.name,
           })
           .from(invitation)
-          .leftJoin(organization, eq(invitation.organizationId, organization.id))
+          .leftJoin(
+            organization,
+            eq(invitation.organizationId, organization.id),
+          )
           .leftJoin(user, eq(invitation.inviterId, user.id))
           .where(
             and(
               eq(invitation.email, userEmail),
               eq(invitation.status, "pending"),
-              gt(invitation.expiresAt, new Date())
-            )
+              gt(invitation.expiresAt, new Date()),
+            ),
           )
           .orderBy(desc(invitation.createdAt))
       : [];
@@ -166,8 +168,12 @@ class NotificationsController {
       expiresAt: inv.expiresAt,
     }));
 
-    const allNotifications = [...invitationNotifications, ...regularNotifications].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const allNotifications = [
+      ...invitationNotifications,
+      ...regularNotifications,
+    ].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
 
     return allNotifications;
@@ -187,9 +193,9 @@ class NotificationsController {
           eq(notifications.isDismissed, false),
           or(
             isNull(notifications.expiresAt),
-            gt(notifications.expiresAt, new Date())
-          )
-        )
+            gt(notifications.expiresAt, new Date()),
+          ),
+        ),
       );
 
     const [invitationCount] = userEmail
@@ -200,12 +206,13 @@ class NotificationsController {
             and(
               eq(invitation.email, userEmail),
               eq(invitation.status, "pending"),
-              gt(invitation.expiresAt, new Date())
-            )
+              gt(invitation.expiresAt, new Date()),
+            ),
           )
       : [{ count: 0 }];
 
-    const total = (notificationCount?.count || 0) + (invitationCount?.count || 0);
+    const total =
+      (notificationCount?.count || 0) + (invitationCount?.count || 0);
 
     return {
       total,
@@ -224,8 +231,8 @@ class NotificationsController {
       .where(
         and(
           eq(notifications.id, notificationId),
-          eq(notifications.userId, userId)
-        )
+          eq(notifications.userId, userId),
+        ),
       );
 
     return { success: true };
@@ -239,10 +246,7 @@ class NotificationsController {
       .update(notifications)
       .set({ isRead: true, readAt: new Date() })
       .where(
-        and(
-          eq(notifications.userId, userId),
-          eq(notifications.isRead, false)
-        )
+        and(eq(notifications.userId, userId), eq(notifications.isRead, false)),
       );
 
     return { success: true };
@@ -258,8 +262,8 @@ class NotificationsController {
       .where(
         and(
           eq(notifications.id, notificationId),
-          eq(notifications.userId, userId)
-        )
+          eq(notifications.userId, userId),
+        ),
       );
 
     return { success: true };
@@ -282,7 +286,7 @@ class NotificationsController {
    */
   async updatePreferences(
     userId: string,
-    updates: Partial<typeof defaultPreferences>
+    updates: Partial<typeof defaultPreferences>,
   ) {
     const [existing] = await db
       .select({ id: notificationPreferences.id })
@@ -357,17 +361,15 @@ class NotificationsController {
       memberName?: string;
       orgName?: string;
       newRole?: string;
-    }
+    },
   ) {
-    // For test notifications, we create them directly without foreign key constraints
-    // This allows testing the notification system without requiring real projects/orgs
-    
     switch (testData.type) {
       case "uptime": {
-        const status = (testData.status as "down" | "up" | "degraded") || "down";
+        const status =
+          (testData.status as "down" | "up" | "degraded") || "down";
         const monitorName = testData.monitorName || "Test Monitor";
         const monitorUrl = testData.monitorUrl || "https://example.com";
-        
+
         const titleMap = {
           down: `🔴 ${monitorName} is DOWN`,
           up: `🟢 ${monitorName} is back UP`,
@@ -386,7 +388,6 @@ class NotificationsController {
           degraded: "uptime_degraded",
         };
 
-        // Create test notification without projectId to avoid FK constraint
         await db.insert(notifications).values({
           userId,
           type: typeMap[status],
@@ -401,14 +402,24 @@ class NotificationsController {
             status,
             isTest: true,
           }),
-          priority: status === "down" ? "urgent" : status === "degraded" ? "high" : "normal",
+          priority:
+            status === "down"
+              ? "urgent"
+              : status === "degraded"
+                ? "high"
+                : "normal",
         });
         break;
       }
 
       case "account": {
-        const accountType = (testData.accountType as "password_changed" | "email_changed" | "profile_updated" | "security_alert") || "password_changed";
-        
+        const accountType =
+          (testData.accountType as
+            | "password_changed"
+            | "email_changed"
+            | "profile_updated"
+            | "security_alert") || "password_changed";
+
         const titleMap = {
           password_changed: "🔐 Password Changed",
           email_changed: "📧 Email Address Changed",
@@ -417,15 +428,23 @@ class NotificationsController {
         };
 
         const messageMap = {
-          password_changed: "Your password was successfully changed. If you didn't make this change, please secure your account immediately.",
-          email_changed: "Your email address has been updated. If you didn't make this change, please contact support.",
-          profile_updated: "Your profile information has been updated successfully.",
-          security_alert: testData.details || "A security-related action was detected on your account.",
+          password_changed:
+            "Your password was successfully changed. If you didn't make this change, please secure your account immediately.",
+          email_changed:
+            "Your email address has been updated. If you didn't make this change, please contact support.",
+          profile_updated:
+            "Your profile information has been updated successfully.",
+          security_alert:
+            testData.details ||
+            "A security-related action was detected on your account.",
         };
 
         await db.insert(notifications).values({
           userId,
-          type: accountType === "security_alert" ? "account_security" : "account_update",
+          type:
+            accountType === "security_alert"
+              ? "account_security"
+              : "account_update",
           category: "account",
           title: titleMap[accountType],
           message: messageMap[accountType],
@@ -437,7 +456,11 @@ class NotificationsController {
       }
 
       case "org": {
-        const orgType = (testData.orgType as "member_joined" | "member_left" | "role_changed") || "member_joined";
+        const orgType =
+          (testData.orgType as
+            | "member_joined"
+            | "member_left"
+            | "role_changed") || "member_joined";
         const memberName = testData.memberName || "Test User";
         const orgName = testData.orgName || "Test Organization";
         const newRole = testData.newRole;
@@ -460,7 +483,6 @@ class NotificationsController {
           role_changed: `${memberName}'s role in "${orgName}" has been changed to ${newRole}.`,
         };
 
-        // Create test notification without organizationId to avoid FK constraint
         await db.insert(notifications).values({
           userId,
           type: typeMap[orgType],
@@ -480,10 +502,16 @@ class NotificationsController {
       }
 
       default:
-        return { error: "Invalid notification type. Use: uptime, account, or org", status: 400 };
+        return {
+          error: "Invalid notification type. Use: uptime, account, or org",
+          status: 400,
+        };
     }
 
-    return { success: true, message: `Test ${testData.type} notification sent` };
+    return {
+      success: true,
+      message: `Test ${testData.type} notification sent`,
+    };
   }
 
   /**
@@ -496,7 +524,8 @@ class NotificationsController {
       timestamp: new Date().toISOString(),
       availableTestTypes: ["uptime", "account", "org"],
       usage: {
-        description: "Send a test notification via GET request with query parameters",
+        description:
+          "Send a test notification via GET request with query parameters",
         endpoint: "GET /api/v1/notifications/test",
         parameters: {
           type: "Required. One of: uptime, account, org",
@@ -505,7 +534,8 @@ class NotificationsController {
           monitorUrl: "For uptime: Monitor URL (default: https://example.com)",
           errorMessage: "For uptime: Error message",
           projectId: "For uptime: Project ID",
-          accountType: "For account: password_changed, email_changed, profile_updated, security_alert",
+          accountType:
+            "For account: password_changed, email_changed, profile_updated, security_alert",
           details: "For account: Additional details",
           orgType: "For org: member_joined, member_left, role_changed",
           organizationId: "For org: Organization ID",
@@ -541,7 +571,7 @@ class NotificationsController {
       memberName?: string;
       orgName?: string;
       newRole?: string;
-    }
+    },
   ) {
     if (!query.type) {
       return {

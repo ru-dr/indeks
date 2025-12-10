@@ -8,13 +8,9 @@ export async function POST(request: NextRequest) {
     const { data } = body;
 
     if (!data || !Array.isArray(data) || data.length === 0) {
-      return NextResponse.json(
-        { error: "No data provided" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No data provided" }, { status: 400 });
     }
 
-    // Send to SheetDB in batches
     const batchSize = 100;
     let totalCreated = 0;
 
@@ -33,8 +29,10 @@ export async function POST(request: NextRequest) {
         const errorText = await sheetResponse.text();
         console.error("SheetDB error:", errorText);
         return NextResponse.json(
-          { error: `Failed to save batch ${Math.floor(i / batchSize) + 1}: ${errorText}` },
-          { status: 500 }
+          {
+            error: `Failed to save batch ${Math.floor(i / batchSize) + 1}: ${errorText}`,
+          },
+          { status: 500 },
         );
       }
 
@@ -50,8 +48,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Export error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to export data" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Failed to export data",
+      },
+      { status: 500 },
     );
   }
 }

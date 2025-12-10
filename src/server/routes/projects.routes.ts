@@ -86,14 +86,12 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
     }
 
     try {
-      // Always use getUserProjects which respects explicit project access
-      // This ensures users only see projects they own or have been granted access to
-      const projects = await projectsController.getUserProjects(session.user.id);
+      const projects = await projectsController.getUserProjects(
+        session.user.id,
+      );
 
-      // If organizationId is provided, filter to only that org's projects
       let filteredProjects = projects;
       if (query?.organizationId) {
-        // Verify user is a member of the organization
         const [membership] = await db
           .select()
           .from(member)
@@ -114,7 +112,7 @@ export const projectsRoutes = new Elysia({ prefix: "/v1/projects" })
         }
 
         filteredProjects = projects.filter(
-          (p) => p.organizationId === query.organizationId
+          (p) => p.organizationId === query.organizationId,
         );
       }
 

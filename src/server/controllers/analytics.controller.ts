@@ -538,14 +538,12 @@ export const analyticsController = {
     startDate.setMonth(startDate.getMonth() - monthCount);
     const startDateStr = startDate.toISOString().split("T")[0];
 
-    
     const userMemberships = await db
       .select({ organizationId: member.organizationId })
       .from(member)
       .where(eq(member.userId, userId));
     const orgIds = userMemberships.map((m) => m.organizationId);
 
-    
     let accessProjectIds: string[] = [];
     try {
       const accessRecords = await db
@@ -554,31 +552,25 @@ export const analyticsController = {
         .where(eq(projectAccess.userId, userId));
       accessProjectIds = accessRecords.map((a) => a.projectId);
     } catch (error: any) {
-      
       if (error?.cause?.code !== "42P01") {
         throw error;
       }
     }
 
-    
     const conditions = [];
 
-    
     conditions.push(
       and(eq(projects.userId, userId), isNull(projects.organizationId)),
     );
 
-    
     if (orgIds.length > 0) {
       conditions.push(inArray(projects.organizationId, orgIds));
     }
 
-    
     if (accessProjectIds.length > 0) {
       conditions.push(inArray(projects.id, accessProjectIds));
     }
 
-    
     const userProjects = await db
       .select({ id: projects.id })
       .from(projects)

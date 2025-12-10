@@ -1069,7 +1069,9 @@ export default function ProjectDetailPage() {
         project={project}
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
-        onProjectUpdate={(updated) => setProject({ ...updated, userRole: project.userRole })}
+        onProjectUpdate={(updated) =>
+          setProject({ ...updated, userRole: project.userRole })
+        }
         onProjectDelete={() => router.push("/projects")}
         currentUserId={user?.id || ""}
       />

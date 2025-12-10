@@ -371,9 +371,7 @@ export function TeamAccess({
             const isCurrentUser = member.userId === currentUserId;
 
             const canModify =
-              canManageTeam &&
-              !member.isOwner &&
-              !isCurrentUser;
+              canManageTeam && !member.isOwner && !isCurrentUser;
 
             return (
               <div

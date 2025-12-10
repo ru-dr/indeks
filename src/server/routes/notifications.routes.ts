@@ -21,14 +21,18 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       try {
         const notifications = await notificationsController.getNotifications(
           session.user.id,
-          { category, unreadOnly, limit: Number(limit) }
+          { category, unreadOnly, limit: Number(limit) },
         );
 
         return { success: true, data: notifications };
       } catch (error) {
         console.error("Error fetching notifications:", error);
         set.status = 500;
-        return { success: false, error: "Failed to fetch notifications", data: null };
+        return {
+          success: false,
+          error: "Failed to fetch notifications",
+          data: null,
+        };
       }
     },
     {
@@ -37,7 +41,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         unreadOnly: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
   /**
@@ -52,16 +56,21 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
     }
 
     try {
-      const allNotifications = await notificationsController.getAllNotifications(
-        session.user.id,
-        session.user.email
-      );
+      const allNotifications =
+        await notificationsController.getAllNotifications(
+          session.user.id,
+          session.user.email,
+        );
 
       return { success: true, data: allNotifications };
     } catch (error) {
       console.error("Error fetching all notifications:", error);
       set.status = 500;
-      return { success: false, error: "Failed to fetch notifications", data: null };
+      return {
+        success: false,
+        error: "Failed to fetch notifications",
+        data: null,
+      };
     }
   })
 
@@ -79,23 +88,27 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
     try {
       const counts = await notificationsController.getUnreadCount(
         session.user.id,
-        session.user.email
+        session.user.email,
       );
 
       return { success: true, data: counts };
     } catch (error) {
       console.error("Error counting notifications:", error);
       set.status = 500;
-      return { success: false, error: "Failed to count notifications", data: null };
+      return {
+        success: false,
+        error: "Failed to count notifications",
+        data: null,
+      };
     }
   })
 
   /**
    * Test endpoint - GET (check status or send test notification via query params)
-   * 
+   *
    * Without params: Returns system status and usage info
    * With params: Sends a test notification
-   * 
+   *
    * Examples:
    *   GET /api/v1/notifications/test
    *   GET /api/v1/notifications/test?type=uptime&status=down&monitorName=My%20Site
@@ -112,17 +125,16 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         return { success: false, error: "Unauthorized" };
       }
 
-      // If no type param, return status/usage info
       if (!query.type) {
         return notificationsController.getTestStatus();
       }
 
-      // Otherwise, send a test notification
       try {
-        const result = await notificationsController.sendTestNotificationViaQuery(
-          session.user.id,
-          query
-        );
+        const result =
+          await notificationsController.sendTestNotificationViaQuery(
+            session.user.id,
+            query,
+          );
 
         if ("error" in result && "status" in result) {
           set.status = result.status;
@@ -152,7 +164,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         orgName: t.Optional(t.String()),
         newRole: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
   /**
@@ -177,7 +189,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         return { success: false, error: "Failed to update notification" };
       }
     },
-    { params: t.Object({ id: t.String() }) }
+    { params: t.Object({ id: t.String() }) },
   )
 
   /**
@@ -215,7 +227,10 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       }
 
       try {
-        await notificationsController.dismissNotification(params.id, session.user.id);
+        await notificationsController.dismissNotification(
+          params.id,
+          session.user.id,
+        );
         return { success: true };
       } catch (error) {
         console.error("Error dismissing notification:", error);
@@ -223,7 +238,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         return { success: false, error: "Failed to dismiss notification" };
       }
     },
-    { params: t.Object({ id: t.String() }) }
+    { params: t.Object({ id: t.String() }) },
   )
 
   /**
@@ -238,12 +253,18 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
     }
 
     try {
-      const prefs = await notificationsController.getPreferences(session.user.id);
+      const prefs = await notificationsController.getPreferences(
+        session.user.id,
+      );
       return { success: true, data: prefs };
     } catch (error) {
       console.error("Error fetching notification preferences:", error);
       set.status = 500;
-      return { success: false, error: "Failed to fetch preferences", data: null };
+      return {
+        success: false,
+        error: "Failed to fetch preferences",
+        data: null,
+      };
     }
   })
 
@@ -280,7 +301,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         emailTeamInvitations: t.Optional(t.Boolean()),
         inAppTeamInvitations: t.Optional(t.Boolean()),
       }),
-    }
+    },
   )
 
   /**
@@ -302,7 +323,8 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       }
 
       try {
-        const newNotification = await notificationsController.createNotification(body);
+        const newNotification =
+          await notificationsController.createNotification(body);
         return { success: true, data: newNotification };
       } catch (error) {
         console.error("Error creating notification:", error);
@@ -323,51 +345,55 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         actionUrl: t.Optional(t.String()),
         priority: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
   /**
    * Test notification endpoint - POST (for sending test notifications)
    */
-  .post("/test", async ({ request, set, body }) => {
-    const session = await auth.api.getSession({ headers: request.headers });
+  .post(
+    "/test",
+    async ({ request, set, body }) => {
+      const session = await auth.api.getSession({ headers: request.headers });
 
-    if (!session?.user) {
-      set.status = 401;
-      return { success: false, error: "Unauthorized" };
-    }
-
-    try {
-      const result = await notificationsController.sendTestNotification(
-        session.user.id,
-        body
-      );
-
-      if ("error" in result && "status" in result) {
-        set.status = result.status;
-        return { success: false, error: result.error };
+      if (!session?.user) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
       }
 
-      return result;
-    } catch (error) {
-      console.error("Error sending test notification:", error);
-      set.status = 500;
-      return { success: false, error: "Failed to send test notification" };
-    }
-  }, {
-    body: t.Object({
-      type: t.String(),
-      status: t.Optional(t.String()),
-      monitorName: t.Optional(t.String()),
-      monitorUrl: t.Optional(t.String()),
-      errorMessage: t.Optional(t.String()),
-      projectId: t.Optional(t.String()),
-      accountType: t.Optional(t.String()),
-      details: t.Optional(t.String()),
-      organizationId: t.Optional(t.String()),
-      orgType: t.Optional(t.String()),
-      memberName: t.Optional(t.String()),
-      orgName: t.Optional(t.String()),
-      newRole: t.Optional(t.String()),
-    }),
-  });
+      try {
+        const result = await notificationsController.sendTestNotification(
+          session.user.id,
+          body,
+        );
+
+        if ("error" in result && "status" in result) {
+          set.status = result.status;
+          return { success: false, error: result.error };
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Error sending test notification:", error);
+        set.status = 500;
+        return { success: false, error: "Failed to send test notification" };
+      }
+    },
+    {
+      body: t.Object({
+        type: t.String(),
+        status: t.Optional(t.String()),
+        monitorName: t.Optional(t.String()),
+        monitorUrl: t.Optional(t.String()),
+        errorMessage: t.Optional(t.String()),
+        projectId: t.Optional(t.String()),
+        accountType: t.Optional(t.String()),
+        details: t.Optional(t.String()),
+        organizationId: t.Optional(t.String()),
+        orgType: t.Optional(t.String()),
+        memberName: t.Optional(t.String()),
+        orgName: t.Optional(t.String()),
+        newRole: t.Optional(t.String()),
+      }),
+    },
+  );

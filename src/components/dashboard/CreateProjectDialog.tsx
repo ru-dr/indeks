@@ -37,8 +37,7 @@ export function CreateProjectDialog({
   showTrigger = false,
 }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
-  
-  // Listen for global event to open dialog
+
   useEffect(() => {
     const unsubscribe = appEvents.on(EVENTS.OPEN_CREATE_PROJECT_DIALOG, () => {
       setOpen(true);

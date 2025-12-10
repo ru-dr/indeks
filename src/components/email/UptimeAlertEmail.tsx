@@ -39,7 +39,7 @@ export default function UptimeAlertEmail({
   return (
     <BaseTemplate>
       <Heading style={{ ...h1, color: config.color }}>{config.title}</Heading>
-      
+
       <Text style={text}>
         Your monitor <strong>{monitorName}</strong> {config.message}
       </Text>
@@ -47,14 +47,16 @@ export default function UptimeAlertEmail({
       <Section style={detailsBox}>
         <Text style={detailLabel}>Monitor</Text>
         <Text style={detailValue}>{monitorName}</Text>
-        
+
         <Text style={detailLabel}>URL</Text>
         <Text style={detailValue}>{monitorUrl}</Text>
-        
+
         {errorMessage && (
           <>
             <Text style={detailLabel}>Error</Text>
-            <Text style={{ ...detailValue, color: "#ef4444" }}>{errorMessage}</Text>
+            <Text style={{ ...detailValue, color: "#ef4444" }}>
+              {errorMessage}
+            </Text>
           </>
         )}
       </Section>
@@ -66,8 +68,8 @@ export default function UptimeAlertEmail({
       <Hr style={hr} />
 
       <Text style={subtext}>
-        You&apos;re receiving this because you have uptime alerts enabled. 
-        You can manage your notification preferences in settings.
+        You&apos;re receiving this because you have uptime alerts enabled. You
+        can manage your notification preferences in settings.
       </Text>
     </BaseTemplate>
   );

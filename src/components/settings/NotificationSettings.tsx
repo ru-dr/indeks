@@ -23,16 +23,12 @@ import {
 } from "lucide-react";
 
 interface NotificationPreferences {
-  // Account notifications
   emailAccountUpdates: boolean;
   inAppAccountUpdates: boolean;
-  // Uptime notifications
   emailUptimeAlerts: boolean;
   inAppUptimeAlerts: boolean;
-  // Organization notifications
   emailOrgUpdates: boolean;
   inAppOrgUpdates: boolean;
-  // Team invitation notifications
   emailTeamInvitations: boolean;
   inAppTeamInvitations: boolean;
 }
@@ -98,7 +94,8 @@ const notificationCategories: NotificationCategory[] = [
 ];
 
 export function NotificationSettings() {
-  const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
+  const [preferences, setPreferences] =
+    useState<NotificationPreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -129,7 +126,6 @@ export function NotificationSettings() {
     const newValue = !preferences[key];
     setSaving(key);
 
-    // Optimistic update
     setPreferences((prev) => ({ ...prev, [key]: newValue }));
 
     try {
@@ -141,7 +137,6 @@ export function NotificationSettings() {
       });
 
       if (!response.ok) {
-        // Revert on failure
         setPreferences((prev) => ({ ...prev, [key]: !newValue }));
         toastManager.add({
           type: "error",
@@ -150,7 +145,6 @@ export function NotificationSettings() {
       }
     } catch (error) {
       console.error("Failed to update preference:", error);
-      // Revert on error
       setPreferences((prev) => ({ ...prev, [key]: !newValue }));
       toastManager.add({
         type: "error",
@@ -192,7 +186,9 @@ export function NotificationSettings() {
       <CardContent className="space-y-6">
         {/* Header row - hidden on mobile */}
         <div className="hidden sm:grid grid-cols-[1fr_80px_80px] gap-4 px-4 pb-2 border-b">
-          <div className="text-sm font-medium text-muted-foreground">Notification Type</div>
+          <div className="text-sm font-medium text-muted-foreground">
+            Notification Type
+          </div>
           <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground">
             <Mail className="h-3.5 w-3.5" />
             Email
@@ -220,7 +216,8 @@ export function NotificationSettings() {
         <div className="pt-4 border-t">
           <p className="text-xs text-muted-foreground">
             Email notifications will be sent to your registered email address.
-            In-app notifications appear in the notification center at the top of the page.
+            In-app notifications appear in the notification center at the top of
+            the page.
           </p>
         </div>
       </CardContent>
@@ -235,7 +232,12 @@ interface NotificationRowProps {
   onToggle: (key: keyof NotificationPreferences) => void;
 }
 
-function NotificationRow({ category, preferences, saving, onToggle }: NotificationRowProps) {
+function NotificationRow({
+  category,
+  preferences,
+  saving,
+  onToggle,
+}: NotificationRowProps) {
   const Icon = category.icon;
   const isEmailSaving = saving === category.emailKey;
   const isInAppSaving = saving === category.inAppKey;
@@ -253,7 +255,9 @@ function NotificationRow({ category, preferences, saving, onToggle }: Notificati
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium truncate">{category.title}</p>
-            <p className="text-xs text-muted-foreground truncate">{category.description}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {category.description}
+            </p>
           </div>
         </div>
 
@@ -303,7 +307,9 @@ function NotificationRow({ category, preferences, saving, onToggle }: Notificati
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">{category.title}</p>
-            <p className="text-xs text-muted-foreground line-clamp-2">{category.description}</p>
+            <p className="text-xs text-muted-foreground line-clamp-2">
+              {category.description}
+            </p>
           </div>
         </div>
 

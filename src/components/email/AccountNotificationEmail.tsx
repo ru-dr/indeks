@@ -3,7 +3,11 @@ import BaseTemplate from "./BaseTemplate";
 
 interface AccountNotificationEmailProps {
   userName: string;
-  type: "password_changed" | "email_changed" | "profile_updated" | "security_alert";
+  type:
+    | "password_changed"
+    | "email_changed"
+    | "profile_updated"
+    | "security_alert";
   details?: string;
   settingsLink: string;
 }
@@ -18,13 +22,15 @@ export default function AccountNotificationEmail({
     password_changed: {
       title: "🔐 Password Changed",
       message: "Your password was successfully changed.",
-      warning: "If you didn't make this change, please secure your account immediately by resetting your password.",
+      warning:
+        "If you didn't make this change, please secure your account immediately by resetting your password.",
       color: "#06FFA5",
     },
     email_changed: {
       title: "📧 Email Updated",
       message: "Your email address has been updated.",
-      warning: "If you didn't make this change, please contact support immediately.",
+      warning:
+        "If you didn't make this change, please contact support immediately.",
       color: "#00A8E8",
     },
     profile_updated: {
@@ -35,7 +41,8 @@ export default function AccountNotificationEmail({
     },
     security_alert: {
       title: "⚠️ Security Alert",
-      message: details || "A security-related action was detected on your account.",
+      message:
+        details || "A security-related action was detected on your account.",
       warning: "If this wasn't you, please secure your account immediately.",
       color: "#ef4444",
     },
@@ -64,8 +71,8 @@ export default function AccountNotificationEmail({
       <Hr style={hr} />
 
       <Text style={subtext}>
-        You&apos;re receiving this because you have account notifications enabled.
-        You can manage your preferences in settings.
+        You&apos;re receiving this because you have account notifications
+        enabled. You can manage your preferences in settings.
       </Text>
     </BaseTemplate>
   );

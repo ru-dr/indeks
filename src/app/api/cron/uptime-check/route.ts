@@ -17,7 +17,10 @@ async function performCheck(monitor: typeof uptimeMonitors.$inferSelect) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), monitor.timeout * 1000);
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      monitor.timeout * 1000,
+    );
 
     const response = await fetch(monitor.url, {
       method: "GET",
@@ -47,7 +50,6 @@ async function performCheck(monitor: typeof uptimeMonitors.$inferSelect) {
 
   const responseTime = Date.now() - startTime;
 
-  // Mark as degraded if response time > 2s but still up
   if (status === "up" && responseTime > 2000) {
     status = "degraded";
   }
@@ -55,13 +57,19 @@ async function performCheck(monitor: typeof uptimeMonitors.$inferSelect) {
   return { status, statusCode, responseTime, errorMessage };
 }
 
-async function updateDailyStats(monitorId: string, status: string, responseTime: number) {
+async function updateDailyStats(
+  monitorId: string,
+  status: string,
+  responseTime: number,
+) {
   const today = new Date().toISOString().split("T")[0];
-  
+
   const existing = await db
     .select()
     .from(uptimeDaily)
-    .where(and(eq(uptimeDaily.monitorId, monitorId), eq(uptimeDaily.date, today)))
+    .where(
+      and(eq(uptimeDaily.monitorId, monitorId), eq(uptimeDaily.date, today)),
+    )
     .limit(1);
 
   if (existing.length === 0) {
@@ -81,14 +89,17 @@ async function updateDailyStats(monitorId: string, status: string, responseTime:
   } else {
     const record = existing[0];
     const newTotalChecks = record.totalChecks + 1;
-    const newSuccessfulChecks = record.successfulChecks + (status === "up" || status === "degraded" ? 1 : 0);
+    const newSuccessfulChecks =
+      record.successfulChecks +
+      (status === "up" || status === "degraded" ? 1 : 0);
     const newFailedChecks = record.failedChecks + (status === "down" ? 1 : 0);
     const newUptimePercentage = (newSuccessfulChecks / newTotalChecks) * 100;
-    
+
     const newAvgResponseTime = Math.round(
-      ((record.avgResponseTime || 0) * record.totalChecks + responseTime) / newTotalChecks
+      ((record.avgResponseTime || 0) * record.totalChecks + responseTime) /
+        newTotalChecks,
     );
-    
+
     await db
       .update(uptimeDaily)
       .set({
@@ -97,8 +108,14 @@ async function updateDailyStats(monitorId: string, status: string, responseTime:
         failedChecks: newFailedChecks,
         uptimePercentage: Math.round(newUptimePercentage * 100) / 100,
         avgResponseTime: newAvgResponseTime,
-        minResponseTime: Math.min(record.minResponseTime || responseTime, responseTime),
-        maxResponseTime: Math.max(record.maxResponseTime || responseTime, responseTime),
+        minResponseTime: Math.min(
+          record.minResponseTime || responseTime,
+          responseTime,
+        ),
+        maxResponseTime: Math.max(
+          record.maxResponseTime || responseTime,
+          responseTime,
+        ),
       })
       .where(eq(uptimeDaily.id, record.id));
   }
@@ -108,39 +125,37 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  // Allow unauthenticated in dev, require auth in production
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const now = new Date();
-    
-    // Get all active, non-paused monitors
+
     const monitorsToCheck = await db
       .select()
       .from(uptimeMonitors)
       .where(
         and(
           eq(uptimeMonitors.isActive, true),
-          eq(uptimeMonitors.isPaused, false)
-        )
+          eq(uptimeMonitors.isPaused, false),
+        ),
       );
 
-    // Filter monitors that need checking based on their interval
     const monitorsNeedingCheck = monitorsToCheck.filter((monitor) => {
       if (!monitor.lastCheckedAt) return true;
       const lastCheck = new Date(monitor.lastCheckedAt);
-      const secondsSinceLastCheck = (now.getTime() - lastCheck.getTime()) / 1000;
+      const secondsSinceLastCheck =
+        (now.getTime() - lastCheck.getTime()) / 1000;
       return secondsSinceLastCheck >= monitor.checkInterval;
     });
 
     const results = [];
-    
+
     for (const monitor of monitorsNeedingCheck) {
-      const { status, statusCode, responseTime, errorMessage } = await performCheck(monitor);
-      
-      // Insert check record
+      const { status, statusCode, responseTime, errorMessage } =
+        await performCheck(monitor);
+
       const [check] = await db
         .insert(uptimeChecks)
         .values({
@@ -152,13 +167,11 @@ export async function GET(request: NextRequest) {
         })
         .returning();
 
-      // Update daily stats
       await updateDailyStats(monitor.id, status, responseTime);
 
       const previousStatus = monitor.currentStatus;
       const statusChanged = previousStatus !== status;
 
-      // Update monitor status
       await db
         .update(uptimeMonitors)
         .set({
@@ -168,17 +181,14 @@ export async function GET(request: NextRequest) {
         })
         .where(eq(uptimeMonitors.id, monitor.id));
 
-      // Handle incidents and send notifications
       if (statusChanged) {
         if (status === "down") {
-          // Create new incident
           await db.insert(uptimeIncidents).values({
             monitorId: monitor.id,
             status: "ongoing",
             cause: errorMessage || "Unknown",
           });
-          
-          // Update daily stats with incident
+
           const today = new Date().toISOString().split("T")[0];
           await db
             .update(uptimeDaily)
@@ -188,11 +198,10 @@ export async function GET(request: NextRequest) {
             .where(
               and(
                 eq(uptimeDaily.monitorId, monitor.id),
-                eq(uptimeDaily.date, today)
-              )
+                eq(uptimeDaily.date, today),
+              ),
             );
 
-          // Send notification for DOWN status
           try {
             await notificationService.sendUptimeAlert({
               monitorId: monitor.id,
@@ -206,23 +215,24 @@ export async function GET(request: NextRequest) {
             console.error("Failed to send uptime notification:", notifyError);
           }
         } else if (previousStatus === "down") {
-          // Resolve ongoing incident
           const ongoingIncident = await db
             .select()
             .from(uptimeIncidents)
             .where(
               and(
                 eq(uptimeIncidents.monitorId, monitor.id),
-                eq(uptimeIncidents.status, "ongoing")
-              )
+                eq(uptimeIncidents.status, "ongoing"),
+              ),
             )
             .limit(1);
 
           if (ongoingIncident.length > 0) {
             const duration = Math.floor(
-              (now.getTime() - new Date(ongoingIncident[0].startedAt).getTime()) / 1000
+              (now.getTime() -
+                new Date(ongoingIncident[0].startedAt).getTime()) /
+                1000,
             );
-            
+
             await db
               .update(uptimeIncidents)
               .set({
@@ -231,8 +241,7 @@ export async function GET(request: NextRequest) {
                 durationSeconds: duration,
               })
               .where(eq(uptimeIncidents.id, ongoingIncident[0].id));
-            
-            // Update daily downtime seconds
+
             const today = new Date().toISOString().split("T")[0];
             await db
               .update(uptimeDaily)
@@ -242,12 +251,11 @@ export async function GET(request: NextRequest) {
               .where(
                 and(
                   eq(uptimeDaily.monitorId, monitor.id),
-                  eq(uptimeDaily.date, today)
-                )
+                  eq(uptimeDaily.date, today),
+                ),
               );
           }
 
-          // Send notification for UP status (recovered)
           try {
             await notificationService.sendUptimeAlert({
               monitorId: monitor.id,
@@ -261,7 +269,6 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        // Send notification for DEGRADED status
         if (status === "degraded" && previousStatus !== "degraded") {
           try {
             await notificationService.sendUptimeAlert({
@@ -302,7 +309,7 @@ export async function GET(request: NextRequest) {
         error: "Check failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

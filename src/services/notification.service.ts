@@ -13,7 +13,6 @@ import UptimeAlertEmail from "@/components/email/UptimeAlertEmail";
 import AccountNotificationEmail from "@/components/email/AccountNotificationEmail";
 import OrgNotificationEmail from "@/components/email/OrgNotificationEmail";
 
-// Notification types
 export type NotificationType =
   | "account_update"
   | "account_security"
@@ -25,7 +24,11 @@ export type NotificationType =
   | "org_role_changed"
   | "team_invitation";
 
-export type NotificationCategory = "account" | "uptime" | "organization" | "invitations";
+export type NotificationCategory =
+  | "account"
+  | "uptime"
+  | "organization"
+  | "invitations";
 
 export interface CreateNotificationParams {
   userId: string;
@@ -42,7 +45,6 @@ export interface CreateNotificationParams {
   expiresAt?: Date;
 }
 
-// Default preferences
 const defaultPreferences = {
   emailAccountUpdates: true,
   inAppAccountUpdates: true,
@@ -54,17 +56,31 @@ const defaultPreferences = {
   inAppTeamInvitations: true,
 };
 
-// Map notification types to preference keys
-const preferenceMapping: Record<NotificationType, { email: keyof typeof defaultPreferences; inApp: keyof typeof defaultPreferences }> = {
-  account_update: { email: "emailAccountUpdates", inApp: "inAppAccountUpdates" },
-  account_security: { email: "emailAccountUpdates", inApp: "inAppAccountUpdates" },
+const preferenceMapping: Record<
+  NotificationType,
+  {
+    email: keyof typeof defaultPreferences;
+    inApp: keyof typeof defaultPreferences;
+  }
+> = {
+  account_update: {
+    email: "emailAccountUpdates",
+    inApp: "inAppAccountUpdates",
+  },
+  account_security: {
+    email: "emailAccountUpdates",
+    inApp: "inAppAccountUpdates",
+  },
   uptime_down: { email: "emailUptimeAlerts", inApp: "inAppUptimeAlerts" },
   uptime_up: { email: "emailUptimeAlerts", inApp: "inAppUptimeAlerts" },
   uptime_degraded: { email: "emailUptimeAlerts", inApp: "inAppUptimeAlerts" },
   org_member_joined: { email: "emailOrgUpdates", inApp: "inAppOrgUpdates" },
   org_member_left: { email: "emailOrgUpdates", inApp: "inAppOrgUpdates" },
   org_role_changed: { email: "emailOrgUpdates", inApp: "inAppOrgUpdates" },
-  team_invitation: { email: "emailTeamInvitations", inApp: "inAppTeamInvitations" },
+  team_invitation: {
+    email: "emailTeamInvitations",
+    inApp: "inAppTeamInvitations",
+  },
 };
 
 class NotificationService {
@@ -78,19 +94,23 @@ class NotificationService {
       .select()
       .from(notificationPreferences)
       .where(eq(notificationPreferences.userId, userId));
-    
+
     return prefs || defaultPreferences;
   }
 
   /**
    * Check if user should receive notification via specific channel
    */
-  async shouldNotify(userId: string, type: NotificationType, channel: "email" | "inApp"): Promise<boolean> {
+  async shouldNotify(
+    userId: string,
+    type: NotificationType,
+    channel: "email" | "inApp",
+  ): Promise<boolean> {
     const prefs = await this.getPreferences(userId);
     const mapping = preferenceMapping[type];
-    
+
     if (!mapping) return true;
-    
+
     const key = channel === "email" ? mapping.email : mapping.inApp;
     return (prefs as unknown as Record<string, boolean>)[key] ?? true;
   }
@@ -98,11 +118,19 @@ class NotificationService {
   /**
    * Create an in-app notification
    */
-  async createInAppNotification(params: CreateNotificationParams): Promise<string | null> {
-    const shouldNotify = await this.shouldNotify(params.userId, params.type, "inApp");
-    
+  async createInAppNotification(
+    params: CreateNotificationParams,
+  ): Promise<string | null> {
+    const shouldNotify = await this.shouldNotify(
+      params.userId,
+      params.type,
+      "inApp",
+    );
+
     if (!shouldNotify) {
-      console.log(`Skipping in-app notification for user ${params.userId} (disabled)`);
+      console.log(
+        `Skipping in-app notification for user ${params.userId} (disabled)`,
+      );
       return null;
     }
 
@@ -117,7 +145,9 @@ class NotificationService {
         projectId: params.projectId,
         organizationId: params.organizationId,
         invitationId: params.invitationId,
-        actionData: params.actionData ? JSON.stringify(params.actionData) : null,
+        actionData: params.actionData
+          ? JSON.stringify(params.actionData)
+          : null,
         actionUrl: params.actionUrl,
         priority: params.priority || "normal",
         expiresAt: params.expiresAt,
@@ -126,8 +156,6 @@ class NotificationService {
 
     return notification.id;
   }
-
-  // ===== Specific notification helpers =====
 
   /**
    * Send uptime alert notification
@@ -140,7 +168,6 @@ class NotificationService {
     errorMessage?: string;
     projectId: string;
   }): Promise<void> {
-    // Get project owner
     const [project] = await db
       .select({ userId: projects.userId, title: projects.title })
       .from(projects)
@@ -148,7 +175,6 @@ class NotificationService {
 
     if (!project) return;
 
-    // Get user info
     const [userData] = await db
       .select({ email: user.email, name: user.name })
       .from(user)
@@ -156,11 +182,12 @@ class NotificationService {
 
     if (!userData) return;
 
-    const type: NotificationType = params.status === "down" 
-      ? "uptime_down" 
-      : params.status === "up" 
-        ? "uptime_up" 
-        : "uptime_degraded";
+    const type: NotificationType =
+      params.status === "down"
+        ? "uptime_down"
+        : params.status === "up"
+          ? "uptime_up"
+          : "uptime_degraded";
 
     const titleMap = {
       down: `🔴 ${params.monitorName} is DOWN`,
@@ -174,7 +201,6 @@ class NotificationService {
       degraded: `Your monitor "${params.monitorName}" (${params.monitorUrl}) is experiencing degraded performance.`,
     };
 
-    // Create in-app notification
     await this.createInAppNotification({
       userId: project.userId,
       type,
@@ -189,11 +215,19 @@ class NotificationService {
         monitorUrl: params.monitorUrl,
         status: params.status,
       },
-      priority: params.status === "down" ? "urgent" : params.status === "degraded" ? "high" : "normal",
+      priority:
+        params.status === "down"
+          ? "urgent"
+          : params.status === "degraded"
+            ? "high"
+            : "normal",
     });
 
-    // Send email
-    const shouldSendEmail = await this.shouldNotify(project.userId, type, "email");
+    const shouldSendEmail = await this.shouldNotify(
+      project.userId,
+      type,
+      "email",
+    );
     if (shouldSendEmail) {
       try {
         const html = await render(
@@ -203,7 +237,7 @@ class NotificationService {
             status: params.status,
             errorMessage: params.errorMessage,
             dashboardLink: `${this.baseUrl}/uptime`,
-          })
+          }),
         );
 
         emailService.sendEmail({
@@ -222,10 +256,13 @@ class NotificationService {
    */
   async sendAccountNotification(params: {
     userId: string;
-    type: "password_changed" | "email_changed" | "profile_updated" | "security_alert";
+    type:
+      | "password_changed"
+      | "email_changed"
+      | "profile_updated"
+      | "security_alert";
     details?: string;
   }): Promise<void> {
-    // Get user info
     const [userData] = await db
       .select({ email: user.email, name: user.name })
       .from(user)
@@ -241,15 +278,20 @@ class NotificationService {
     };
 
     const messageMap = {
-      password_changed: "Your password was successfully changed. If you didn't make this change, please secure your account immediately.",
-      email_changed: "Your email address has been updated. If you didn't make this change, please contact support.",
-      profile_updated: "Your profile information has been updated successfully.",
-      security_alert: params.details || "A security-related action was detected on your account.",
+      password_changed:
+        "Your password was successfully changed. If you didn't make this change, please secure your account immediately.",
+      email_changed:
+        "Your email address has been updated. If you didn't make this change, please contact support.",
+      profile_updated:
+        "Your profile information has been updated successfully.",
+      security_alert:
+        params.details ||
+        "A security-related action was detected on your account.",
     };
 
-    const notificationType: NotificationType = params.type === "security_alert" ? "account_security" : "account_update";
+    const notificationType: NotificationType =
+      params.type === "security_alert" ? "account_security" : "account_update";
 
-    // Create in-app notification
     await this.createInAppNotification({
       userId: params.userId,
       type: notificationType,
@@ -260,8 +302,11 @@ class NotificationService {
       priority: params.type === "security_alert" ? "urgent" : "normal",
     });
 
-    // Send email
-    const shouldSendEmail = await this.shouldNotify(params.userId, notificationType, "email");
+    const shouldSendEmail = await this.shouldNotify(
+      params.userId,
+      notificationType,
+      "email",
+    );
     if (shouldSendEmail) {
       try {
         const html = await render(
@@ -270,7 +315,7 @@ class NotificationService {
             type: params.type,
             details: params.details,
             settingsLink: `${this.baseUrl}/settings`,
-          })
+          }),
         );
 
         emailService.sendEmail({
@@ -295,7 +340,6 @@ class NotificationService {
     orgName: string;
     newRole?: string;
   }): Promise<void> {
-    // Get user info
     const [userData] = await db
       .select({ email: user.email, name: user.name })
       .from(user)
@@ -323,7 +367,6 @@ class NotificationService {
 
     const notificationType = typeMap[params.type];
 
-    // Create in-app notification
     await this.createInAppNotification({
       userId: params.userId,
       type: notificationType,
@@ -339,8 +382,11 @@ class NotificationService {
       },
     });
 
-    // Send email
-    const shouldSendEmail = await this.shouldNotify(params.userId, notificationType, "email");
+    const shouldSendEmail = await this.shouldNotify(
+      params.userId,
+      notificationType,
+      "email",
+    );
     if (shouldSendEmail) {
       try {
         const html = await render(
@@ -351,7 +397,7 @@ class NotificationService {
             orgName: params.orgName,
             newRole: params.newRole,
             settingsLink: `${this.baseUrl}/settings/organization`,
-          })
+          }),
         );
 
         emailService.sendEmail({
@@ -376,20 +422,20 @@ class NotificationService {
     newRole?: string;
     excludeUserId?: string;
   }): Promise<void> {
-    // Get all admins/owners of the org
     const admins = await db
       .select({ userId: member.userId })
       .from(member)
       .where(
         and(
           eq(member.organizationId, params.organizationId),
-          or(eq(member.role, "owner"), eq(member.role, "admin"))
-        )
+          or(eq(member.role, "owner"), eq(member.role, "admin")),
+        ),
       );
 
     for (const admin of admins) {
-      if (params.excludeUserId && admin.userId === params.excludeUserId) continue;
-      
+      if (params.excludeUserId && admin.userId === params.excludeUserId)
+        continue;
+
       await this.sendOrgNotification({
         userId: admin.userId,
         organizationId: params.organizationId,
@@ -412,7 +458,6 @@ class NotificationService {
     invitationId: string;
     role: string;
   }): Promise<void> {
-    // In-app notification
     await this.createInAppNotification({
       userId: params.userId,
       type: "team_invitation",
@@ -428,7 +473,7 @@ class NotificationService {
         role: params.role,
       },
       priority: "high",
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
   }
 }

@@ -98,13 +98,10 @@ export const projectsController = {
   async getUserProjects(userId: string) {
     const accessProjectIds = await getUserProjectAccessIds(userId);
 
-    // Build conditions array
     const conditions = [];
 
-    // Include projects owned by user (regardless of whether they're in an org)
     conditions.push(eq(projects.userId, userId));
 
-    // Include explicitly shared projects (via projectAccess table)
     if (accessProjectIds.length > 0) {
       conditions.push(inArray(projects.id, accessProjectIds));
     }
@@ -161,13 +158,11 @@ export const projectsController = {
    * User must either own it or have explicit access via projectAccess table
    */
   async getProject(userId: string, projectId: string) {
-    // First check if user has any access at all
     const role = await this.getUserProjectRole(userId, projectId);
     if (!role) {
-      return null; // No access
+      return null;
     }
 
-    // User has access, fetch the project
     const [project] = await db
       .select({
         id: projects.id,
@@ -205,7 +200,6 @@ export const projectsController = {
     userId: string,
     projectId: string,
   ): Promise<ProjectRole | null> {
-    // First, get the project to check ownership
     const [project] = await db
       .select({
         id: projects.id,
@@ -216,18 +210,14 @@ export const projectsController = {
       .where(eq(projects.id, projectId))
       .limit(1);
 
-    // Project doesn't exist
     if (!project) {
       return null;
     }
 
-    // Check 1: Is the user the project owner?
     if (project.userId === userId) {
       return "owner";
     }
 
-    // Check 2: Does the user have explicit project access?
-    // This is the ONLY way non-owners can access a project
     try {
       const [access] = await db
         .select({ role: projectAccess.role })
@@ -244,13 +234,11 @@ export const projectsController = {
         return access.role as ProjectRole;
       }
     } catch (error: any) {
-      // Handle case where projectAccess table doesn't exist yet
       if (error?.cause?.code !== "42P01") {
         throw error;
       }
     }
 
-    // No access - organization membership alone does NOT grant access
     return null;
   },
 
@@ -305,7 +293,6 @@ export const projectsController = {
       grantedAt: Date | null;
     }[] = [];
 
-    // Add the owner
     const [owner] = await db
       .select({
         id: user.id,
@@ -330,7 +317,6 @@ export const projectsController = {
       });
     }
 
-    // Add users with explicit project access
     const explicitAccess = await db
       .select({
         id: projectAccess.id,
@@ -472,7 +458,6 @@ export const projectsController = {
     organizationId: string,
   ): Promise<number> {
     try {
-      // Get all projects in this organization
       const orgProjects = await db
         .select({ id: projects.id })
         .from(projects)
@@ -484,7 +469,6 @@ export const projectsController = {
 
       const projectIds = orgProjects.map((p) => p.id);
 
-      // Remove user's explicit access to all these projects
       const result = await db
         .delete(projectAccess)
         .where(
@@ -494,10 +478,8 @@ export const projectsController = {
           ),
         );
 
-      // Return the count of deleted rows (if available)
       return (result as any).rowCount ?? 0;
     } catch (error: any) {
-      // Handle case where projectAccess table doesn't exist yet
       if (error?.cause?.code === "42P01") {
         return 0;
       }

@@ -83,7 +83,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-3 sm:p-4 md:p-6">{children}</main>
       </div>
-      
+
       {/* Global Create Project Dialog - listens for events */}
       <CreateProjectDialog />
     </div>

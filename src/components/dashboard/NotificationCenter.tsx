@@ -19,17 +19,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverPopup,
-} from "@/components/ui/popover";
+import { Popover, PopoverTrigger, PopoverPopup } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
 import { toastManager } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-// Notification types
 type NotificationType =
   | "team_invitation"
   | "uptime_down"
@@ -41,7 +36,11 @@ type NotificationType =
   | "org_member_left"
   | "org_role_changed";
 
-type NotificationCategory = "account" | "uptime" | "organization" | "invitations";
+type NotificationCategory =
+  | "account"
+  | "uptime"
+  | "organization"
+  | "invitations";
 
 type NotificationPriority = "low" | "normal" | "high" | "urgent";
 
@@ -68,7 +67,6 @@ interface NotificationCount {
   invitations: number;
 }
 
-// Icon mapping
 const notificationIcons: Record<NotificationType, typeof Bell> = {
   team_invitation: UserPlus,
   uptime_down: Server,
@@ -81,7 +79,6 @@ const notificationIcons: Record<NotificationType, typeof Bell> = {
   org_role_changed: Building2,
 };
 
-// Color mapping
 const notificationColors: Record<NotificationType, string> = {
   team_invitation: "var(--color-indeks-green)",
   uptime_down: "var(--destructive)",
@@ -94,7 +91,6 @@ const notificationColors: Record<NotificationType, string> = {
   org_role_changed: "var(--color-indeks-blue)",
 };
 
-// Category labels
 const categoryLabels: Record<NotificationCategory, string> = {
   account: "Account",
   uptime: "Uptime",
@@ -102,7 +98,6 @@ const categoryLabels: Record<NotificationCategory, string> = {
   invitations: "Invitations",
 };
 
-// Category icons
 const categoryIcons: Record<NotificationCategory, typeof Bell> = {
   account: Users,
   uptime: Server,
@@ -114,10 +109,16 @@ export function NotificationCenter() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [count, setCount] = useState<NotificationCount>({ total: 0, notifications: 0, invitations: 0 });
+  const [count, setCount] = useState<NotificationCount>({
+    total: 0,
+    notifications: 0,
+    invitations: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<NotificationCategory | "all">("all");
+  const [activeFilter, setActiveFilter] = useState<
+    NotificationCategory | "all"
+  >("all");
 
   const { data: session } = authClient.useSession();
 
@@ -191,16 +192,26 @@ export function NotificationCenter() {
         return;
       }
 
-      const notification = notifications.find((n) => n.invitationId === invitationId);
-      const actionData = notification?.actionData ? JSON.parse(notification.actionData) : null;
+      const notification = notifications.find(
+        (n) => n.invitationId === invitationId,
+      );
+      const actionData = notification?.actionData
+        ? JSON.parse(notification.actionData)
+        : null;
 
       toastManager.add({
         type: "success",
         title: `You've joined ${actionData?.organizationName ?? "the team"}!`,
       });
 
-      setNotifications((prev) => prev.filter((n) => n.invitationId !== invitationId));
-      setCount((prev) => ({ ...prev, total: prev.total - 1, invitations: prev.invitations - 1 }));
+      setNotifications((prev) =>
+        prev.filter((n) => n.invitationId !== invitationId),
+      );
+      setCount((prev) => ({
+        ...prev,
+        total: prev.total - 1,
+        invitations: prev.invitations - 1,
+      }));
 
       if (actionData?.organizationId) {
         await authClient.organization.setActive({
@@ -230,8 +241,14 @@ export function NotificationCenter() {
       }
 
       toastManager.add({ type: "success", title: "Invitation declined" });
-      setNotifications((prev) => prev.filter((n) => n.invitationId !== invitationId));
-      setCount((prev) => ({ ...prev, total: prev.total - 1, invitations: prev.invitations - 1 }));
+      setNotifications((prev) =>
+        prev.filter((n) => n.invitationId !== invitationId),
+      );
+      setCount((prev) => ({
+        ...prev,
+        total: prev.total - 1,
+        invitations: prev.invitations - 1,
+      }));
     } catch {
       toastManager.add({ type: "error", title: "Something went wrong" });
     } finally {
@@ -249,7 +266,7 @@ export function NotificationCenter() {
       });
 
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
+        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
       );
       setCount((prev) => ({
         ...prev,
@@ -270,7 +287,10 @@ export function NotificationCenter() {
 
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setCount((prev) => ({ ...prev, notifications: 0 }));
-      toastManager.add({ type: "success", title: "All notifications marked as read" });
+      toastManager.add({
+        type: "success",
+        title: "All notifications marked as read",
+      });
     } catch (error) {
       console.error("Failed to mark all as read:", error);
     }
@@ -357,14 +377,15 @@ export function NotificationCenter() {
       acc[category].push(notification);
       return acc;
     },
-    {} as Record<NotificationCategory, Notification[]>
+    {} as Record<NotificationCategory, Notification[]>,
   );
 
   const unreadCount = count.total;
 
   const renderNotificationItem = (notification: Notification) => {
     const Icon = notificationIcons[notification.type] || Bell;
-    const color = notificationColors[notification.type] || "var(--color-indeks-blue)";
+    const color =
+      notificationColors[notification.type] || "var(--color-indeks-blue)";
     const isInvitation = notification.type === "team_invitation";
     const isProcessing = processingId === notification.id;
 
@@ -374,7 +395,7 @@ export function NotificationCenter() {
         className={cn(
           "px-4 py-4 hover:bg-muted/50 transition-colors cursor-pointer group relative border-b last:border-0",
           !notification.isRead && "bg-muted/30",
-          isProcessing && "opacity-60 pointer-events-none"
+          isProcessing && "opacity-60 pointer-events-none",
         )}
         onClick={() => !isInvitation && handleNotificationAction(notification)}
       >
@@ -387,7 +408,14 @@ export function NotificationCenter() {
           </div>
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-start justify-between gap-2">
-              <p className={cn("text-sm leading-none", !notification.isRead ? "font-semibold text-foreground" : "font-medium text-muted-foreground")}>
+              <p
+                className={cn(
+                  "text-sm leading-none",
+                  !notification.isRead
+                    ? "font-semibold text-foreground"
+                    : "font-medium text-muted-foreground",
+                )}
+              >
                 {notification.title}
               </p>
               {!notification.isRead && !isInvitation && (
@@ -408,12 +436,18 @@ export function NotificationCenter() {
                 </span>
               )}
               {notification.priority === "urgent" && (
-                <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">
+                <Badge
+                  variant="destructive"
+                  className="text-[10px] px-1.5 py-0 h-5"
+                >
                   Urgent
                 </Badge>
               )}
               {notification.priority === "high" && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-[var(--color-indeks-orange)] text-[var(--color-indeks-orange)]">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-1.5 py-0 h-5 border-[var(--color-indeks-orange)] text-[var(--color-indeks-orange)]"
+                >
                   High
                 </Badge>
               )}
@@ -450,9 +484,7 @@ export function NotificationCenter() {
               {isProcessing ? (
                 <Spinner className="h-3.5 w-3.5" />
               ) : (
-                <>
-                  Decline
-                </>
+                <>Decline</>
               )}
             </Button>
             <Button
@@ -464,13 +496,7 @@ export function NotificationCenter() {
               }}
               disabled={isProcessing}
             >
-              {isProcessing ? (
-                <Spinner className="h-3.5 w-3.5" />
-              ) : (
-                <>
-                  Accept
-                </>
-              )}
+              {isProcessing ? <Spinner className="h-3.5 w-3.5" /> : <>Accept</>}
             </Button>
           </div>
         )}
@@ -557,23 +583,27 @@ export function NotificationCenter() {
           >
             All
           </Button>
-          {(Object.keys(categoryLabels) as NotificationCategory[]).map((category) => {
-            const hasNotifications = notifications.some((n) => n.category === category);
-            if (!hasNotifications) return null;
-            const CategoryIcon = categoryIcons[category];
-            return (
-              <Button
-                key={category}
-                variant={activeFilter === category ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 text-xs shrink-0"
-                onClick={() => setActiveFilter(category)}
-              >
-                <CategoryIcon className="h-3 w-3 mr-1" />
-                {categoryLabels[category]}
-              </Button>
-            );
-          })}
+          {(Object.keys(categoryLabels) as NotificationCategory[]).map(
+            (category) => {
+              const hasNotifications = notifications.some(
+                (n) => n.category === category,
+              );
+              if (!hasNotifications) return null;
+              const CategoryIcon = categoryIcons[category];
+              return (
+                <Button
+                  key={category}
+                  variant={activeFilter === category ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-7 text-xs shrink-0"
+                  onClick={() => setActiveFilter(category)}
+                >
+                  <CategoryIcon className="h-3 w-3 mr-1" />
+                  {categoryLabels[category]}
+                </Button>
+              );
+            },
+          )}
         </div>
 
         {/* Content */}
@@ -594,7 +624,9 @@ export function NotificationCenter() {
             </div>
           ) : activeFilter === "all" ? (
             <div>
-              {(Object.keys(groupedNotifications) as NotificationCategory[]).map((category) => (
+              {(
+                Object.keys(groupedNotifications) as NotificationCategory[]
+              ).map((category) => (
                 <div key={category}>
                   <div className="px-4 py-2 bg-muted/50 sticky top-0">
                     <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -603,7 +635,10 @@ export function NotificationCenter() {
                         return <CategoryIcon className="h-3.5 w-3.5" />;
                       })()}
                       {categoryLabels[category]}
-                      <Badge variant="secondary" className="text-[10px] ml-auto">
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] ml-auto"
+                      >
                         {groupedNotifications[category].length}
                       </Badge>
                     </div>
