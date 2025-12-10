@@ -113,10 +113,107 @@ export const auth = betterAuth({
     },
     
     member: {
-      delete: {
-        after: async (member) => {
+      create: {
+        after: async (member: typeof schema.member.$inferSelect) => {
+          // Notify org admins when a new member joins
           try {
+            const { notificationService } = await import("@/services/notification.service");
             
+            // Get member and org info
+            const [memberInfo] = await db
+              .select({ name: schema.user.name })
+              .from(schema.user)
+              .where(eq(schema.user.id, member.userId));
+            
+            const [orgInfo] = await db
+              .select({ name: schema.organization.name })
+              .from(schema.organization)
+              .where(eq(schema.organization.id, member.organizationId));
+
+            if (memberInfo && orgInfo) {
+              await notificationService.notifyOrgAdmins({
+                organizationId: member.organizationId,
+                type: "member_joined",
+                memberName: memberInfo.name || "A new user",
+                orgName: orgInfo.name,
+                excludeUserId: member.userId, // Don't notify the user who just joined
+              });
+            }
+          } catch (error) {
+            console.error("Failed to send member joined notification:", error);
+          }
+        },
+      },
+      
+      update: {
+        after: async (member: typeof schema.member.$inferSelect) => {
+          // Notify when role changes
+          try {
+            const { notificationService } = await import("@/services/notification.service");
+            
+            const [memberInfo] = await db
+              .select({ name: schema.user.name })
+              .from(schema.user)
+              .where(eq(schema.user.id, member.userId));
+            
+            const [orgInfo] = await db
+              .select({ name: schema.organization.name })
+              .from(schema.organization)
+              .where(eq(schema.organization.id, member.organizationId));
+
+            if (memberInfo && orgInfo) {
+              // Notify the member whose role changed
+              await notificationService.sendOrgNotification({
+                userId: member.userId,
+                organizationId: member.organizationId,
+                type: "role_changed",
+                memberName: "Your",
+                orgName: orgInfo.name,
+                newRole: member.role,
+              });
+
+              // Notify admins
+              await notificationService.notifyOrgAdmins({
+                organizationId: member.organizationId,
+                type: "role_changed",
+                memberName: memberInfo.name || "A member",
+                orgName: orgInfo.name,
+                newRole: member.role,
+                excludeUserId: member.userId,
+              });
+            }
+          } catch (error) {
+            console.error("Failed to send role changed notification:", error);
+          }
+        },
+      },
+      
+      delete: {
+        after: async (member: typeof schema.member.$inferSelect) => {
+          try {
+            // Get member info before they're fully removed
+            const [memberInfo] = await db
+              .select({ name: schema.user.name })
+              .from(schema.user)
+              .where(eq(schema.user.id, member.userId));
+            
+            const [orgInfo] = await db
+              .select({ name: schema.organization.name })
+              .from(schema.organization)
+              .where(eq(schema.organization.id, member.organizationId));
+
+            // Send notification to org admins
+            if (memberInfo && orgInfo) {
+              const { notificationService } = await import("@/services/notification.service");
+              await notificationService.notifyOrgAdmins({
+                organizationId: member.organizationId,
+                type: "member_left",
+                memberName: memberInfo.name || "A member",
+                orgName: orgInfo.name,
+              });
+            }
+            
+            // Clean up project access
             const orgProjects = await db
               .select({ id: schema.projects.id })
               .from(schema.projects)
@@ -125,7 +222,6 @@ export const auth = betterAuth({
             if (orgProjects.length > 0) {
               const projectIds = orgProjects.map((p) => p.id);
 
-              
               await db
                 .delete(schema.projectAccess)
                 .where(
@@ -140,7 +236,7 @@ export const auth = betterAuth({
               );
             }
 
-            
+            // Clean up team memberships
             const orgTeams = await db
               .select({ id: schema.team.id })
               .from(schema.team)

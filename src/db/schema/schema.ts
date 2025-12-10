@@ -719,23 +719,21 @@ export const notificationPreferences = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .unique(),
     
-    
+    // Account notifications
     emailAccountUpdates: boolean("email_account_updates").default(true).notNull(),
-    emailSecurityAlerts: boolean("email_security_alerts").default(true).notNull(),
-    emailWeeklyReports: boolean("email_weekly_reports").default(false).notNull(),
-    emailProductUpdates: boolean("email_product_updates").default(true).notNull(),
-    emailUsageAlerts: boolean("email_usage_alerts").default(true).notNull(),
-    emailOrgActivity: boolean("email_org_activity").default(false).notNull(),
+    inAppAccountUpdates: boolean("in_app_account_updates").default(true).notNull(),
     
-    
-    inAppTeamInvitations: boolean("in_app_team_invitations").default(true).notNull(),
+    // Uptime notifications
+    emailUptimeAlerts: boolean("email_uptime_alerts").default(true).notNull(),
     inAppUptimeAlerts: boolean("in_app_uptime_alerts").default(true).notNull(),
-    inAppErrorAlerts: boolean("in_app_error_alerts").default(true).notNull(),
-    inAppUsageAlerts: boolean("in_app_usage_alerts").default(true).notNull(),
-    inAppSecurityAlerts: boolean("in_app_security_alerts").default(true).notNull(),
-    inAppOrgActivity: boolean("in_app_org_activity").default(true).notNull(),
-    inAppProductUpdates: boolean("in_app_product_updates").default(true).notNull(),
-    inAppWeeklyReports: boolean("in_app_weekly_reports").default(false).notNull(),
+    
+    // Organization notifications
+    emailOrgUpdates: boolean("email_org_updates").default(true).notNull(),
+    inAppOrgUpdates: boolean("in_app_org_updates").default(true).notNull(),
+    
+    // Team invitation notifications
+    emailTeamInvitations: boolean("email_team_invitations").default(true).notNull(),
+    inAppTeamInvitations: boolean("in_app_team_invitations").default(true).notNull(),
     
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

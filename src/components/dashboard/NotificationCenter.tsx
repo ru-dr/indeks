@@ -11,16 +11,11 @@ import {
   ChevronRight,
   Settings,
   Inbox,
-  AlertTriangle,
-  Activity,
-  Shield,
-  TrendingUp,
-  FileText,
-  Sparkles,
-  UserPlus,
   Server,
-  Bug,
+  Building2,
+  UserPlus,
   CheckCheck,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,25 +29,19 @@ import { toastManager } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-
+// Notification types
 type NotificationType =
   | "team_invitation"
-  | "uptime_alert"
-  | "error_spike"
-  | "usage_alert"
-  | "weekly_report"
-  | "security_alert"
-  | "org_activity"
-  | "product_update"
-  | "account_update";
+  | "uptime_down"
+  | "uptime_up"
+  | "uptime_degraded"
+  | "account_update"
+  | "account_security"
+  | "org_member_joined"
+  | "org_member_left"
+  | "org_role_changed";
 
-type NotificationCategory =
-  | "invitations"
-  | "alerts"
-  | "reports"
-  | "security"
-  | "activity"
-  | "updates";
+type NotificationCategory = "account" | "uptime" | "organization" | "invitations";
 
 type NotificationPriority = "low" | "normal" | "high" | "urgent";
 
@@ -79,50 +68,46 @@ interface NotificationCount {
   invitations: number;
 }
 
-
+// Icon mapping
 const notificationIcons: Record<NotificationType, typeof Bell> = {
   team_invitation: UserPlus,
-  uptime_alert: Server,
-  error_spike: Bug,
-  usage_alert: TrendingUp,
-  weekly_report: FileText,
-  security_alert: Shield,
-  org_activity: Activity,
-  product_update: Sparkles,
+  uptime_down: Server,
+  uptime_up: Server,
+  uptime_degraded: Server,
   account_update: Users,
+  account_security: Shield,
+  org_member_joined: Building2,
+  org_member_left: Building2,
+  org_role_changed: Building2,
 };
 
-
+// Color mapping
 const notificationColors: Record<NotificationType, string> = {
-  team_invitation: "var(--color-indeks-blue)",
-  uptime_alert: "#ef4444", 
-  error_spike: "#f97316", 
-  usage_alert: "#eab308", 
-  weekly_report: "var(--color-indeks-green)",
-  security_alert: "#ef4444", 
-  org_activity: "var(--color-indeks-blue)",
-  product_update: "#8b5cf6", 
-  account_update: "var(--color-indeks-yellow)",
+  team_invitation: "var(--color-indeks-green)",
+  uptime_down: "var(--destructive)",
+  uptime_up: "var(--color-indeks-green)",
+  uptime_degraded: "var(--color-indeks-yellow)",
+  account_update: "var(--color-indeks-blue)",
+  account_security: "var(--destructive)",
+  org_member_joined: "var(--color-indeks-blue)",
+  org_member_left: "var(--color-indeks-orange)",
+  org_role_changed: "var(--color-indeks-blue)",
 };
 
-
+// Category labels
 const categoryLabels: Record<NotificationCategory, string> = {
-  invitations: "Team Invitations",
-  alerts: "Alerts",
-  reports: "Reports",
-  security: "Security",
-  activity: "Activity",
-  updates: "Updates",
+  account: "Account",
+  uptime: "Uptime",
+  organization: "Organization",
+  invitations: "Invitations",
 };
 
-
+// Category icons
 const categoryIcons: Record<NotificationCategory, typeof Bell> = {
-  invitations: Users,
-  alerts: AlertTriangle,
-  reports: FileText,
-  security: Shield,
-  activity: Activity,
-  updates: Sparkles,
+  account: Users,
+  uptime: Server,
+  organization: Building2,
+  invitations: UserPlus,
 };
 
 export function NotificationCenter() {
@@ -180,13 +165,11 @@ export function NotificationCenter() {
   useEffect(() => {
     if (session?.user) {
       fetchCount();
-      
       const interval = setInterval(fetchCount, 30000);
       return () => clearInterval(interval);
     }
   }, [session?.user, fetchCount]);
 
-  
   useEffect(() => {
     if (isOpen && session?.user) {
       fetchNotifications();
@@ -216,11 +199,9 @@ export function NotificationCenter() {
         title: `You've joined ${actionData?.organizationName ?? "the team"}!`,
       });
 
-      
       setNotifications((prev) => prev.filter((n) => n.invitationId !== invitationId));
       setCount((prev) => ({ ...prev, total: prev.total - 1, invitations: prev.invitations - 1 }));
 
-      
       if (actionData?.organizationId) {
         await authClient.organization.setActive({
           organizationId: actionData.organizationId,
@@ -259,7 +240,6 @@ export function NotificationCenter() {
   };
 
   const handleMarkAsRead = async (notificationId: string) => {
-    
     if (notificationId.startsWith("inv_")) return;
 
     try {
@@ -271,7 +251,11 @@ export function NotificationCenter() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
-      setCount((prev) => ({ ...prev, total: Math.max(0, prev.total - 1), notifications: Math.max(0, prev.notifications - 1) }));
+      setCount((prev) => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1),
+        notifications: Math.max(0, prev.notifications - 1),
+      }));
     } catch (error) {
       console.error("Failed to mark as read:", error);
     }
@@ -293,7 +277,6 @@ export function NotificationCenter() {
   };
 
   const handleDismiss = async (notificationId: string) => {
-    
     if (notificationId.startsWith("inv_")) return;
 
     setProcessingId(notificationId);
@@ -304,7 +287,11 @@ export function NotificationCenter() {
       });
 
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-      setCount((prev) => ({ ...prev, total: Math.max(0, prev.total - 1), notifications: Math.max(0, prev.notifications - 1) }));
+      setCount((prev) => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1),
+        notifications: Math.max(0, prev.notifications - 1),
+      }));
     } catch (error) {
       console.error("Failed to dismiss:", error);
     } finally {
@@ -313,12 +300,10 @@ export function NotificationCenter() {
   };
 
   const handleNotificationAction = (notification: Notification) => {
-    
     if (!notification.isRead) {
       handleMarkAsRead(notification.id);
     }
 
-    
     if (notification.actionUrl) {
       setIsOpen(false);
       router.push(notification.actionUrl);
@@ -358,13 +343,11 @@ export function NotificationCenter() {
     return "Expiring soon";
   };
 
-  
   const filteredNotifications =
     activeFilter === "all"
       ? notifications
       : notifications.filter((n) => n.category === activeFilter);
 
-  
   const groupedNotifications = filteredNotifications.reduce(
     (acc, notification) => {
       const category = notification.category;
@@ -384,54 +367,53 @@ export function NotificationCenter() {
     const color = notificationColors[notification.type] || "var(--color-indeks-blue)";
     const isInvitation = notification.type === "team_invitation";
     const isProcessing = processingId === notification.id;
-    const actionData = notification.actionData ? JSON.parse(notification.actionData) : null;
 
     return (
       <div
         key={notification.id}
         className={cn(
-          "px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer",
-          !notification.isRead && "bg-primary/5",
-          isProcessing && "opacity-60"
+          "px-4 py-4 hover:bg-muted/50 transition-colors cursor-pointer group relative border-b last:border-0",
+          !notification.isRead && "bg-muted/30",
+          isProcessing && "opacity-60 pointer-events-none"
         )}
         onClick={() => !isInvitation && handleNotificationAction(notification)}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <div
-            className="p-2 rounded-full shrink-0"
+            className="p-2.5 rounded-xl shrink-0 shadow-sm"
             style={{ backgroundColor: `${color}15` }}
           >
-            <Icon className="h-4 w-4" style={{ color }} />
+            <Icon className="h-5 w-5" style={{ color }} />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-start justify-between gap-2">
-              <p className={cn("text-sm truncate", !notification.isRead && "font-medium")}>
+              <p className={cn("text-sm leading-none", !notification.isRead ? "font-semibold text-foreground" : "font-medium text-muted-foreground")}>
                 {notification.title}
               </p>
               {!notification.isRead && !isInvitation && (
-                <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-0.5" />
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
               {notification.message}
             </p>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-3 pt-1">
+              <span className="text-[11px] text-muted-foreground font-medium">
                 {formatTimeAgo(notification.createdAt)}
               </span>
               {notification.expiresAt && (
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
                   <Clock className="h-3 w-3" />
                   {formatExpiresIn(notification.expiresAt)}
                 </span>
               )}
               {notification.priority === "urgent" && (
-                <Badge variant="destructive" className="text-[9px] px-1 py-0">
+                <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">
                   Urgent
                 </Badge>
               )}
               {notification.priority === "high" && (
-                <Badge variant="outline" className="text-[9px] px-1 py-0 border-orange-500 text-orange-500">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-[var(--color-indeks-orange)] text-[var(--color-indeks-orange)]">
                   High
                 </Badge>
               )}
@@ -440,25 +422,25 @@ export function NotificationCenter() {
           {!isInvitation && (
             <Button
               variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 shrink-0 opacity-0 group-hover:opacity-100"
+              size="icon"
+              className="h-6 w-6 -mt-1 -mr-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
               onClick={(e) => {
                 e.stopPropagation();
                 handleDismiss(notification.id);
               }}
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>
 
-        {/* Invitation-specific actions */}
+        {/* Invitation actions */}
         {isInvitation && notification.invitationId && (
-          <div className="flex items-center gap-2 mt-3 ml-9">
+          <div className="flex items-center gap-3 mt-4 pl-[52px]">
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs flex-1"
+              className="h-8 text-xs flex-1 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 handleRejectInvitation(notification.invitationId!);
@@ -466,17 +448,16 @@ export function NotificationCenter() {
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <Spinner className="h-3 w-3" />
+                <Spinner className="h-3.5 w-3.5" />
               ) : (
                 <>
-                  <X className="h-3 w-3 mr-1" />
                   Decline
                 </>
               )}
             </Button>
             <Button
               size="sm"
-              className="h-7 text-xs flex-1 bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]"
+              className="h-8 text-xs flex-1 bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)] shadow-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleAcceptInvitation(notification.invitationId!);
@@ -484,10 +465,9 @@ export function NotificationCenter() {
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <Spinner className="h-3 w-3" />
+                <Spinner className="h-3.5 w-3.5" />
               ) : (
                 <>
-                  <Check className="h-3 w-3 mr-1" />
                   Accept
                 </>
               )}
@@ -495,20 +475,20 @@ export function NotificationCenter() {
           </div>
         )}
 
-        {/* Action button for non-invitation notifications with URLs */}
+        {/* Action button for non-invitation notifications */}
         {!isInvitation && notification.actionUrl && (
-          <div className="mt-2 ml-9">
+          <div className="mt-3 pl-[52px]">
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs"
+              className="h-8 text-xs w-full justify-between group/btn"
               onClick={(e) => {
                 e.stopPropagation();
                 handleNotificationAction(notification);
               }}
             >
               View Details
-              <ChevronRight className="h-3 w-3 ml-1" />
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover/btn:translate-x-0.5 transition-transform" />
             </Button>
           </div>
         )}
@@ -522,12 +502,9 @@ export function NotificationCenter() {
         className="inline-flex items-center justify-center h-9 w-9 relative rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
         aria-label="Notifications"
       >
-        <Bell
-          className="h-5 w-5"
-          style={{ color: "var(--color-indeks-yellow)" }}
-        />
+        <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center shadow-sm ring-1 ring-background">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -616,7 +593,6 @@ export function NotificationCenter() {
               </p>
             </div>
           ) : activeFilter === "all" ? (
-            
             <div>
               {(Object.keys(groupedNotifications) as NotificationCategory[]).map((category) => (
                 <div key={category}>
@@ -639,7 +615,6 @@ export function NotificationCenter() {
               ))}
             </div>
           ) : (
-            
             <div className="divide-y">
               {filteredNotifications.map(renderNotificationItem)}
             </div>

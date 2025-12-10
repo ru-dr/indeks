@@ -17,50 +17,85 @@ import {
   Mail,
   Monitor,
   Users,
-  Shield,
-  TrendingUp,
-  FileText,
-  Sparkles,
-  Activity,
   Server,
-  Bug,
+  Building2,
+  UserPlus,
 } from "lucide-react";
 
 interface NotificationPreferences {
-  
+  // Account notifications
   emailAccountUpdates: boolean;
-  emailSecurityAlerts: boolean;
-  emailWeeklyReports: boolean;
-  emailProductUpdates: boolean;
-  emailUsageAlerts: boolean;
-  emailOrgActivity: boolean;
-  
-  inAppTeamInvitations: boolean;
+  inAppAccountUpdates: boolean;
+  // Uptime notifications
+  emailUptimeAlerts: boolean;
   inAppUptimeAlerts: boolean;
-  inAppErrorAlerts: boolean;
-  inAppUsageAlerts: boolean;
-  inAppSecurityAlerts: boolean;
-  inAppOrgActivity: boolean;
-  inAppProductUpdates: boolean;
-  inAppWeeklyReports: boolean;
+  // Organization notifications
+  emailOrgUpdates: boolean;
+  inAppOrgUpdates: boolean;
+  // Team invitation notifications
+  emailTeamInvitations: boolean;
+  inAppTeamInvitations: boolean;
 }
 
 const defaultPreferences: NotificationPreferences = {
   emailAccountUpdates: true,
-  emailSecurityAlerts: true,
-  emailWeeklyReports: false,
-  emailProductUpdates: true,
-  emailUsageAlerts: true,
-  emailOrgActivity: false,
-  inAppTeamInvitations: true,
+  inAppAccountUpdates: true,
+  emailUptimeAlerts: true,
   inAppUptimeAlerts: true,
-  inAppErrorAlerts: true,
-  inAppUsageAlerts: true,
-  inAppSecurityAlerts: true,
-  inAppOrgActivity: true,
-  inAppProductUpdates: true,
-  inAppWeeklyReports: false,
+  emailOrgUpdates: true,
+  inAppOrgUpdates: true,
+  emailTeamInvitations: true,
+  inAppTeamInvitations: true,
 };
+
+interface NotificationCategory {
+  id: string;
+  title: string;
+  description: string;
+  icon: typeof Bell;
+  emailKey: keyof NotificationPreferences;
+  inAppKey: keyof NotificationPreferences;
+  color: string;
+}
+
+const notificationCategories: NotificationCategory[] = [
+  {
+    id: "account",
+    title: "Account Updates",
+    description: "Password changes, security alerts, and profile updates",
+    icon: Users,
+    emailKey: "emailAccountUpdates",
+    inAppKey: "inAppAccountUpdates",
+    color: "#facc15",
+  },
+  {
+    id: "uptime",
+    title: "Uptime Alerts",
+    description: "Site down/up notifications and performance degradation",
+    icon: Server,
+    emailKey: "emailUptimeAlerts",
+    inAppKey: "inAppUptimeAlerts",
+    color: "#ef4444",
+  },
+  {
+    id: "org",
+    title: "Organization Updates",
+    description: "Member joins, leaves, and role changes",
+    icon: Building2,
+    emailKey: "emailOrgUpdates",
+    inAppKey: "inAppOrgUpdates",
+    color: "#3b82f6",
+  },
+  {
+    id: "invitations",
+    title: "Team Invitations",
+    description: "Invitations to join organizations and teams",
+    icon: UserPlus,
+    emailKey: "emailTeamInvitations",
+    inAppKey: "inAppTeamInvitations",
+    color: "#10b981",
+  },
+];
 
 export function NotificationSettings() {
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
@@ -94,7 +129,7 @@ export function NotificationSettings() {
     const newValue = !preferences[key];
     setSaving(key);
 
-    
+    // Optimistic update
     setPreferences((prev) => ({ ...prev, [key]: newValue }));
 
     try {
@@ -106,7 +141,7 @@ export function NotificationSettings() {
       });
 
       if (!response.ok) {
-        
+        // Revert on failure
         setPreferences((prev) => ({ ...prev, [key]: !newValue }));
         toastManager.add({
           type: "error",
@@ -115,7 +150,7 @@ export function NotificationSettings() {
       }
     } catch (error) {
       console.error("Failed to update preference:", error);
-      
+      // Revert on error
       setPreferences((prev) => ({ ...prev, [key]: !newValue }));
       toastManager.add({
         type: "error",
@@ -148,202 +183,110 @@ export function NotificationSettings() {
           <div>
             <CardTitle>Notification Preferences</CardTitle>
             <CardDescription>
-              Choose what updates you receive via email and in-app
+              Choose how you want to be notified for different events
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-8">
-        {/* Email Notifications */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-1">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <h4 className="text-sm font-medium">Email Notifications</h4>
+      <CardContent className="space-y-6">
+        {/* Header row */}
+        <div className="grid grid-cols-[1fr_80px_80px] gap-4 px-4 pb-2 border-b">
+          <div className="text-sm font-medium text-muted-foreground">Notification Type</div>
+          <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground">
+            <Mail className="h-3.5 w-3.5" />
+            Email
           </div>
-          <div className="rounded-lg border divide-y">
-            <NotificationToggle
-              icon={Users}
-              title="Account Updates"
-              description="Important account-related emails"
-              checked={preferences.emailAccountUpdates}
-              onChange={() => handleToggle("emailAccountUpdates")}
-              loading={saving === "emailAccountUpdates"}
-            />
-            <NotificationToggle
-              icon={Shield}
-              title="Security Alerts"
-              description="Suspicious activity and security issues"
-              checked={preferences.emailSecurityAlerts}
-              onChange={() => handleToggle("emailSecurityAlerts")}
-              loading={saving === "emailSecurityAlerts"}
-              important
-            />
-            <NotificationToggle
-              icon={TrendingUp}
-              title="Usage Alerts"
-              description="When approaching plan limits"
-              checked={preferences.emailUsageAlerts}
-              onChange={() => handleToggle("emailUsageAlerts")}
-              loading={saving === "emailUsageAlerts"}
-            />
-            <NotificationToggle
-              icon={FileText}
-              title="Weekly Reports"
-              description="Analytics summary every week"
-              checked={preferences.emailWeeklyReports}
-              onChange={() => handleToggle("emailWeeklyReports")}
-              loading={saving === "emailWeeklyReports"}
-            />
-            <NotificationToggle
-              icon={Sparkles}
-              title="Product Updates"
-              description="New features and improvements"
-              checked={preferences.emailProductUpdates}
-              onChange={() => handleToggle("emailProductUpdates")}
-              loading={saving === "emailProductUpdates"}
-            />
-            <NotificationToggle
-              icon={Activity}
-              title="Organization Activity"
-              description="Team member actions and changes"
-              checked={preferences.emailOrgActivity}
-              onChange={() => handleToggle("emailOrgActivity")}
-              loading={saving === "emailOrgActivity"}
-            />
+          <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground">
+            <Monitor className="h-3.5 w-3.5" />
+            In-App
           </div>
         </div>
 
-        {/* In-App Notifications */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-1">
-            <Monitor className="h-4 w-4 text-muted-foreground" />
-            <h4 className="text-sm font-medium">In-App Notifications</h4>
-          </div>
-          <div className="rounded-lg border divide-y">
-            <NotificationToggle
-              icon={Users}
-              title="Team Invitations"
-              description="Pending organization invites"
-              checked={preferences.inAppTeamInvitations}
-              onChange={() => handleToggle("inAppTeamInvitations")}
-              loading={saving === "inAppTeamInvitations"}
-              highlighted
+        {/* Notification categories */}
+        <div className="space-y-1">
+          {notificationCategories.map((category) => (
+            <NotificationRow
+              key={category.id}
+              category={category}
+              preferences={preferences}
+              saving={saving}
+              onToggle={handleToggle}
             />
-            <NotificationToggle
-              icon={Server}
-              title="Uptime Alerts"
-              description="Site down/up notifications"
-              checked={preferences.inAppUptimeAlerts}
-              onChange={() => handleToggle("inAppUptimeAlerts")}
-              loading={saving === "inAppUptimeAlerts"}
-              important
-            />
-            <NotificationToggle
-              icon={Bug}
-              title="Error Alerts"
-              description="Error spikes and issues"
-              checked={preferences.inAppErrorAlerts}
-              onChange={() => handleToggle("inAppErrorAlerts")}
-              loading={saving === "inAppErrorAlerts"}
-              important
-            />
-            <NotificationToggle
-              icon={TrendingUp}
-              title="Usage Alerts"
-              description="Approaching plan limits"
-              checked={preferences.inAppUsageAlerts}
-              onChange={() => handleToggle("inAppUsageAlerts")}
-              loading={saving === "inAppUsageAlerts"}
-            />
-            <NotificationToggle
-              icon={Shield}
-              title="Security Alerts"
-              description="Security-related notifications"
-              checked={preferences.inAppSecurityAlerts}
-              onChange={() => handleToggle("inAppSecurityAlerts")}
-              loading={saving === "inAppSecurityAlerts"}
-              important
-            />
-            <NotificationToggle
-              icon={Activity}
-              title="Organization Activity"
-              description="Team member actions"
-              checked={preferences.inAppOrgActivity}
-              onChange={() => handleToggle("inAppOrgActivity")}
-              loading={saving === "inAppOrgActivity"}
-            />
-            <NotificationToggle
-              icon={Sparkles}
-              title="Product Updates"
-              description="New features announcements"
-              checked={preferences.inAppProductUpdates}
-              onChange={() => handleToggle("inAppProductUpdates")}
-              loading={saving === "inAppProductUpdates"}
-            />
-            <NotificationToggle
-              icon={FileText}
-              title="Weekly Reports"
-              description="Analytics summaries in-app"
-              checked={preferences.inAppWeeklyReports}
-              onChange={() => handleToggle("inAppWeeklyReports")}
-              loading={saving === "inAppWeeklyReports"}
-            />
-          </div>
+          ))}
+        </div>
+
+        {/* Info text */}
+        <div className="pt-4 border-t">
+          <p className="text-xs text-muted-foreground">
+            Email notifications will be sent to your registered email address.
+            In-app notifications appear in the notification center at the top of the page.
+          </p>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-interface NotificationToggleProps {
-  icon: typeof Bell;
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: () => void;
-  loading?: boolean;
-  important?: boolean;
-  highlighted?: boolean;
+interface NotificationRowProps {
+  category: NotificationCategory;
+  preferences: NotificationPreferences;
+  saving: string | null;
+  onToggle: (key: keyof NotificationPreferences) => void;
 }
 
-function NotificationToggle({
-  icon: Icon,
-  title,
-  description,
-  checked,
-  onChange,
-  loading,
-  important,
-  highlighted,
-}: NotificationToggleProps) {
+function NotificationRow({ category, preferences, saving, onToggle }: NotificationRowProps) {
+  const Icon = category.icon;
+  const isEmailSaving = saving === category.emailKey;
+  const isInAppSaving = saving === category.inAppKey;
+
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between p-4 transition-colors hover:bg-muted/50",
-        highlighted && "bg-[var(--color-indeks-blue)]/5 hover:bg-[var(--color-indeks-blue)]/10",
-        important && "bg-orange-500/5 hover:bg-orange-500/10"
-      )}
-    >
+    <div className="grid grid-cols-[1fr_80px_80px] gap-4 items-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
       <div className="flex items-center gap-3">
-        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-        <div>
-          <p className="text-sm font-medium">{title}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+        <div
+          className="p-2 rounded-lg shrink-0"
+          style={{ backgroundColor: `${category.color}15` }}
+        >
+          <Icon className="h-4 w-4" style={{ color: category.color }} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate">{category.title}</p>
+          <p className="text-xs text-muted-foreground truncate">{category.description}</p>
         </div>
       </div>
-      <div className="relative">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <Spinner className="h-4 w-4" />
-          </div>
-        )}
-        <Switch
-          checked={checked}
-          onCheckedChange={onChange}
-          disabled={loading}
-          className={loading ? "opacity-0" : ""}
-        />
+
+      {/* Email toggle */}
+      <div className="flex justify-center">
+        <div className="relative">
+          {isEmailSaving && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <Spinner className="h-4 w-4" />
+            </div>
+          )}
+          <Switch
+            checked={preferences[category.emailKey]}
+            onCheckedChange={() => onToggle(category.emailKey)}
+            disabled={isEmailSaving}
+            className={cn(isEmailSaving && "opacity-0")}
+          />
+        </div>
+      </div>
+
+      {/* In-App toggle */}
+      <div className="flex justify-center">
+        <div className="relative">
+          {isInAppSaving && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <Spinner className="h-4 w-4" />
+            </div>
+          )}
+          <Switch
+            checked={preferences[category.inAppKey]}
+            onCheckedChange={() => onToggle(category.inAppKey)}
+            disabled={isInAppSaving}
+            className={cn(isInAppSaving && "opacity-0")}
+          />
+        </div>
       </div>
     </div>
   );

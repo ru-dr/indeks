@@ -1,15 +1,6 @@
 import { Elysia, t } from "elysia";
 import { auth } from "@/lib/auth";
-import { db } from "@/db/connect";
-import {
-  notifications,
-  notificationPreferences,
-  invitation,
-  organization,
-  user,
-  projects,
-} from "@/db/schema/schema";
-import { eq, and, or, desc, isNull, gt, sql } from "drizzle-orm";
+import { notificationsController } from "@/server/controllers/notifications.controller";
 
 export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
   /**
@@ -25,49 +16,15 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         return { success: false, error: "Unauthorized", data: null };
       }
 
-      const { category, unreadOnly, limit = 50 } = query;
+      const { category, unreadOnly, limit = "50" } = query;
 
       try {
-        const conditions = [
-          eq(notifications.userId, session.user.id),
-          eq(notifications.isDismissed, false),
-          or(
-            isNull(notifications.expiresAt),
-            gt(notifications.expiresAt, new Date())
-          ),
-        ];
+        const notifications = await notificationsController.getNotifications(
+          session.user.id,
+          { category, unreadOnly, limit: Number(limit) }
+        );
 
-        if (category) {
-          conditions.push(eq(notifications.category, category));
-        }
-
-        if (unreadOnly === "true") {
-          conditions.push(eq(notifications.isRead, false));
-        }
-
-        const userNotifications = await db
-          .select({
-            id: notifications.id,
-            type: notifications.type,
-            category: notifications.category,
-            title: notifications.title,
-            message: notifications.message,
-            projectId: notifications.projectId,
-            organizationId: notifications.organizationId,
-            invitationId: notifications.invitationId,
-            actionData: notifications.actionData,
-            actionUrl: notifications.actionUrl,
-            isRead: notifications.isRead,
-            priority: notifications.priority,
-            createdAt: notifications.createdAt,
-            expiresAt: notifications.expiresAt,
-          })
-          .from(notifications)
-          .where(and(...conditions))
-          .orderBy(desc(notifications.createdAt))
-          .limit(Number(limit));
-
-        return { success: true, data: userNotifications };
+        return { success: true, data: notifications };
       } catch (error) {
         console.error("Error fetching notifications:", error);
         set.status = 500;
@@ -94,100 +51,10 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       return { success: false, error: "Unauthorized", data: null };
     }
 
-    const userEmail = session.user.email;
-
     try {
-      
-      const regularNotifications = await db
-        .select({
-          id: notifications.id,
-          type: notifications.type,
-          category: notifications.category,
-          title: notifications.title,
-          message: notifications.message,
-          projectId: notifications.projectId,
-          organizationId: notifications.organizationId,
-          invitationId: notifications.invitationId,
-          actionData: notifications.actionData,
-          actionUrl: notifications.actionUrl,
-          isRead: notifications.isRead,
-          priority: notifications.priority,
-          createdAt: notifications.createdAt,
-          expiresAt: notifications.expiresAt,
-        })
-        .from(notifications)
-        .where(
-          and(
-            eq(notifications.userId, session.user.id),
-            eq(notifications.isDismissed, false),
-            or(
-              isNull(notifications.expiresAt),
-              gt(notifications.expiresAt, new Date())
-            )
-          )
-        )
-        .orderBy(desc(notifications.createdAt))
-        .limit(50);
-
-      
-      const pendingInvitations = userEmail
-        ? await db
-            .select({
-              id: invitation.id,
-              email: invitation.email,
-              role: invitation.role,
-              status: invitation.status,
-              expiresAt: invitation.expiresAt,
-              organizationId: invitation.organizationId,
-              inviterId: invitation.inviterId,
-              createdAt: invitation.createdAt,
-              organizationName: organization.name,
-              organizationSlug: organization.slug,
-              inviterEmail: user.email,
-              inviterName: user.name,
-            })
-            .from(invitation)
-            .leftJoin(organization, eq(invitation.organizationId, organization.id))
-            .leftJoin(user, eq(invitation.inviterId, user.id))
-            .where(
-              and(
-                eq(invitation.email, userEmail),
-                eq(invitation.status, "pending"),
-                gt(invitation.expiresAt, new Date())
-              )
-            )
-            .orderBy(desc(invitation.createdAt))
-        : [];
-
-      
-      const invitationNotifications = pendingInvitations.map((inv) => ({
-        id: `inv_${inv.id}`,
-        type: "team_invitation" as const,
-        category: "invitations" as const,
-        title: `Invitation to ${inv.organizationName}`,
-        message: `${inv.inviterName || inv.inviterEmail} invited you to join as ${inv.role}`,
-        projectId: null,
-        organizationId: inv.organizationId,
-        invitationId: inv.id,
-        actionData: JSON.stringify({
-          invitationId: inv.id,
-          organizationName: inv.organizationName,
-          organizationSlug: inv.organizationSlug,
-          role: inv.role,
-          inviterEmail: inv.inviterEmail,
-          inviterName: inv.inviterName,
-          expiresAt: inv.expiresAt,
-        }),
-        actionUrl: `/invite/${inv.id}`,
-        isRead: false,
-        priority: "high",
-        createdAt: inv.createdAt,
-        expiresAt: inv.expiresAt,
-      }));
-
-      
-      const allNotifications = [...invitationNotifications, ...regularNotifications].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      const allNotifications = await notificationsController.getAllNotifications(
+        session.user.id,
+        session.user.email
       );
 
       return { success: true, data: allNotifications };
@@ -209,55 +76,84 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       return { success: false, error: "Unauthorized", data: null };
     }
 
-    const userEmail = session.user.email;
-
     try {
-      
-      const [notificationCount] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(notifications)
-        .where(
-          and(
-            eq(notifications.userId, session.user.id),
-            eq(notifications.isRead, false),
-            eq(notifications.isDismissed, false),
-            or(
-              isNull(notifications.expiresAt),
-              gt(notifications.expiresAt, new Date())
-            )
-          )
-        );
+      const counts = await notificationsController.getUnreadCount(
+        session.user.id,
+        session.user.email
+      );
 
-      
-      const [invitationCount] = userEmail
-        ? await db
-            .select({ count: sql<number>`count(*)::int` })
-            .from(invitation)
-            .where(
-              and(
-                eq(invitation.email, userEmail),
-                eq(invitation.status, "pending"),
-                gt(invitation.expiresAt, new Date())
-              )
-            )
-        : [{ count: 0 }];
-
-      const total = (notificationCount?.count || 0) + (invitationCount?.count || 0);
-
-      return {
-        success: true,
-        data: {
-          total,
-          notifications: notificationCount?.count || 0,
-          invitations: invitationCount?.count || 0,
-        },
-      };
+      return { success: true, data: counts };
     } catch (error) {
       console.error("Error counting notifications:", error);
       set.status = 500;
       return { success: false, error: "Failed to count notifications", data: null };
     }
   })
+
+  /**
+   * Test endpoint - GET (check status or send test notification via query params)
+   * 
+   * Without params: Returns system status and usage info
+   * With params: Sends a test notification
+   * 
+   * Examples:
+   *   GET /api/v1/notifications/test
+   *   GET /api/v1/notifications/test?type=uptime&status=down&monitorName=My%20Site
+   *   GET /api/v1/notifications/test?type=account&accountType=password_changed
+   *   GET /api/v1/notifications/test?type=org&orgType=member_joined&memberName=John&orgName=Acme
+   */
+  .get(
+    "/test",
+    async ({ request, set, query }) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (!session?.user) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
+      }
+
+      // If no type param, return status/usage info
+      if (!query.type) {
+        return notificationsController.getTestStatus();
+      }
+
+      // Otherwise, send a test notification
+      try {
+        const result = await notificationsController.sendTestNotificationViaQuery(
+          session.user.id,
+          query
+        );
+
+        if ("error" in result && "status" in result) {
+          set.status = result.status;
+          return { success: false, error: result.error };
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Error sending test notification:", error);
+        set.status = 500;
+        return { success: false, error: "Failed to send test notification" };
+      }
+    },
+    {
+      query: t.Object({
+        type: t.Optional(t.String()),
+        status: t.Optional(t.String()),
+        monitorName: t.Optional(t.String()),
+        monitorUrl: t.Optional(t.String()),
+        errorMessage: t.Optional(t.String()),
+        projectId: t.Optional(t.String()),
+        accountType: t.Optional(t.String()),
+        details: t.Optional(t.String()),
+        organizationId: t.Optional(t.String()),
+        orgType: t.Optional(t.String()),
+        memberName: t.Optional(t.String()),
+        orgName: t.Optional(t.String()),
+        newRole: t.Optional(t.String()),
+      }),
+    }
+  )
 
   /**
    * Mark notification as read
@@ -273,16 +169,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       }
 
       try {
-        await db
-          .update(notifications)
-          .set({ isRead: true, readAt: new Date() })
-          .where(
-            and(
-              eq(notifications.id, params.id),
-              eq(notifications.userId, session.user.id)
-            )
-          );
-
+        await notificationsController.markAsRead(params.id, session.user.id);
         return { success: true };
       } catch (error) {
         console.error("Error marking notification as read:", error);
@@ -305,16 +192,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
     }
 
     try {
-      await db
-        .update(notifications)
-        .set({ isRead: true, readAt: new Date() })
-        .where(
-          and(
-            eq(notifications.userId, session.user.id),
-            eq(notifications.isRead, false)
-          )
-        );
-
+      await notificationsController.markAllAsRead(session.user.id);
       return { success: true };
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
@@ -337,16 +215,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       }
 
       try {
-        await db
-          .update(notifications)
-          .set({ isDismissed: true })
-          .where(
-            and(
-              eq(notifications.id, params.id),
-              eq(notifications.userId, session.user.id)
-            )
-          );
-
+        await notificationsController.dismissNotification(params.id, session.user.id);
         return { success: true };
       } catch (error) {
         console.error("Error dismissing notification:", error);
@@ -369,34 +238,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
     }
 
     try {
-      const [prefs] = await db
-        .select()
-        .from(notificationPreferences)
-        .where(eq(notificationPreferences.userId, session.user.id));
-
-      
-      if (!prefs) {
-        return {
-          success: true,
-          data: {
-            emailAccountUpdates: true,
-            emailSecurityAlerts: true,
-            emailWeeklyReports: false,
-            emailProductUpdates: true,
-            emailUsageAlerts: true,
-            emailOrgActivity: false,
-            inAppTeamInvitations: true,
-            inAppUptimeAlerts: true,
-            inAppErrorAlerts: true,
-            inAppUsageAlerts: true,
-            inAppSecurityAlerts: true,
-            inAppOrgActivity: true,
-            inAppProductUpdates: true,
-            inAppWeeklyReports: false,
-          },
-        };
-      }
-
+      const prefs = await notificationsController.getPreferences(session.user.id);
       return { success: true, data: prefs };
     } catch (error) {
       console.error("Error fetching notification preferences:", error);
@@ -419,24 +261,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
       }
 
       try {
-        
-        const [existing] = await db
-          .select({ id: notificationPreferences.id })
-          .from(notificationPreferences)
-          .where(eq(notificationPreferences.userId, session.user.id));
-
-        if (existing) {
-          await db
-            .update(notificationPreferences)
-            .set(body)
-            .where(eq(notificationPreferences.userId, session.user.id));
-        } else {
-          await db.insert(notificationPreferences).values({
-            userId: session.user.id,
-            ...body,
-          });
-        }
-
+        await notificationsController.updatePreferences(session.user.id, body);
         return { success: true };
       } catch (error) {
         console.error("Error updating notification preferences:", error);
@@ -447,25 +272,19 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
     {
       body: t.Object({
         emailAccountUpdates: t.Optional(t.Boolean()),
-        emailSecurityAlerts: t.Optional(t.Boolean()),
-        emailWeeklyReports: t.Optional(t.Boolean()),
-        emailProductUpdates: t.Optional(t.Boolean()),
-        emailUsageAlerts: t.Optional(t.Boolean()),
-        emailOrgActivity: t.Optional(t.Boolean()),
-        inAppTeamInvitations: t.Optional(t.Boolean()),
+        inAppAccountUpdates: t.Optional(t.Boolean()),
+        emailUptimeAlerts: t.Optional(t.Boolean()),
         inAppUptimeAlerts: t.Optional(t.Boolean()),
-        inAppErrorAlerts: t.Optional(t.Boolean()),
-        inAppUsageAlerts: t.Optional(t.Boolean()),
-        inAppSecurityAlerts: t.Optional(t.Boolean()),
-        inAppOrgActivity: t.Optional(t.Boolean()),
-        inAppProductUpdates: t.Optional(t.Boolean()),
-        inAppWeeklyReports: t.Optional(t.Boolean()),
+        emailOrgUpdates: t.Optional(t.Boolean()),
+        inAppOrgUpdates: t.Optional(t.Boolean()),
+        emailTeamInvitations: t.Optional(t.Boolean()),
+        inAppTeamInvitations: t.Optional(t.Boolean()),
       }),
     }
   )
 
   /**
-   * Create a notification (internal use / testing)
+   * Create a notification (internal use / admin only)
    */
   .post(
     "/",
@@ -477,29 +296,13 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         return { success: false, error: "Unauthorized" };
       }
 
-      
       if (session.user.role !== "admin") {
         set.status = 403;
         return { success: false, error: "Forbidden" };
       }
 
       try {
-        const [newNotification] = await db
-          .insert(notifications)
-          .values({
-            userId: body.userId,
-            type: body.type,
-            category: body.category,
-            title: body.title,
-            message: body.message,
-            projectId: body.projectId,
-            organizationId: body.organizationId,
-            actionData: body.actionData,
-            actionUrl: body.actionUrl,
-            priority: body.priority || "normal",
-          })
-          .returning();
-
+        const newNotification = await notificationsController.createNotification(body);
         return { success: true, data: newNotification };
       } catch (error) {
         console.error("Error creating notification:", error);
@@ -521,4 +324,50 @@ export const notificationsRoutes = new Elysia({ prefix: "/v1/notifications" })
         priority: t.Optional(t.String()),
       }),
     }
-  );
+  )
+
+  /**
+   * Test notification endpoint - POST (for sending test notifications)
+   */
+  .post("/test", async ({ request, set, body }) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    if (!session?.user) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+      const result = await notificationsController.sendTestNotification(
+        session.user.id,
+        body
+      );
+
+      if ("error" in result && "status" in result) {
+        set.status = result.status;
+        return { success: false, error: result.error };
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error sending test notification:", error);
+      set.status = 500;
+      return { success: false, error: "Failed to send test notification" };
+    }
+  }, {
+    body: t.Object({
+      type: t.String(),
+      status: t.Optional(t.String()),
+      monitorName: t.Optional(t.String()),
+      monitorUrl: t.Optional(t.String()),
+      errorMessage: t.Optional(t.String()),
+      projectId: t.Optional(t.String()),
+      accountType: t.Optional(t.String()),
+      details: t.Optional(t.String()),
+      organizationId: t.Optional(t.String()),
+      orgType: t.Optional(t.String()),
+      memberName: t.Optional(t.String()),
+      orgName: t.Optional(t.String()),
+      newRole: t.Optional(t.String()),
+    }),
+  });

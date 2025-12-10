@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,6 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle2,
-  ChevronRight,
   ExternalLink,
   Loader2,
   MoreVertical,
@@ -32,22 +31,16 @@ import {
   TrendingUp,
   XCircle,
   Zap,
+  ChevronRight,
 } from "lucide-react";
-import { Frame } from "@/components/ui/frame";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
-  DialogContent,
+  DialogClose,
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogPanel,
+  DialogPopup,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -60,11 +53,16 @@ import {
 } from "@/components/ui/menu";
 import {
   Select,
-  SelectContent,
   SelectItem,
+  SelectPopup,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +70,21 @@ interface Project {
   id: string;
   title: string;
   link: string;
+}
+
+interface DailyStat {
+  id: string;
+  monitorId: string;
+  date: string;
+  totalChecks: number;
+  successfulChecks: number;
+  failedChecks: number;
+  uptimePercentage: number | null;
+  avgResponseTime: number | null;
+  minResponseTime: number | null;
+  maxResponseTime: number | null;
+  incidentsCount: number;
+  totalDowntimeSeconds: number;
 }
 
 interface Monitor {
@@ -90,6 +103,10 @@ interface Monitor {
   createdAt: string;
   projectTitle?: string;
   projectLink?: string;
+  uptime30d: number;
+  uptime60d: number;
+  uptime90d: number;
+  dailyStats: DailyStat[];
 }
 
 interface UptimeSummary {
@@ -112,6 +129,151 @@ interface UptimeSummary {
 
 type FilterStatus = "all" | "up" | "down" | "degraded" | "paused";
 
+// Get bar color based on uptime
+function getUptimeBarColor(uptime: number | null): string {
+  if (uptime === null) return "hsl(var(--muted))";
+  if (uptime >= 99.9) return "#22c55e"; // green-500
+  if (uptime >= 99.0) return "#84cc16"; // lime-500
+  if (uptime >= 97.0) return "#eab308"; // yellow-500
+  if (uptime >= 95.0) return "#f97316"; // orange-500
+  return "#ef4444"; // red-500
+}
+
+// Uptime Showcase Component - Atlassian style bars
+function UptimeShowcase({
+  dailyStats,
+  days = 90,
+}: {
+  monitorId: string;
+  dailyStats: DailyStat[];
+  days?: number;
+}) {
+  const uptimeData = useMemo(() => {
+    // Create a map of existing stats by date
+    const statsMap = new Map<string, DailyStat>();
+    dailyStats.forEach((stat) => {
+      statsMap.set(stat.date.split("T")[0], stat);
+    });
+
+    // Generate array for the last N days
+    const data: { date: string; uptime: number | null; downtime: number; incidents: number }[] = [];
+    const now = new Date();
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+      const stat = statsMap.get(dateStr);
+
+      if (stat) {
+        data.push({
+          date: dateStr,
+          uptime: stat.uptimePercentage,
+          downtime: Math.round(stat.totalDowntimeSeconds / 60),
+          incidents: stat.incidentsCount,
+        });
+      } else {
+        data.push({
+          date: dateStr,
+          uptime: null,
+          downtime: 0,
+          incidents: 0,
+        });
+      }
+    }
+
+    return data;
+  }, [dailyStats, days]);
+
+  const overallUptime = useMemo(() => {
+    const validData = uptimeData.filter((d) => d.uptime !== null);
+    if (validData.length === 0) return null;
+    const sum = validData.reduce((acc, d) => acc + (d.uptime || 0), 0);
+    return sum / validData.length;
+  }, [uptimeData]);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-px">
+        {uptimeData.map((day, i) => (
+          <Tooltip key={i}>
+            <TooltipTrigger
+              render={
+                <div
+                  className="h-8 w-1 min-w-[2px] flex-1 max-w-1 rounded-sm cursor-pointer transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: getUptimeBarColor(day.uptime) }}
+                />
+              }
+            />
+            <TooltipPopup>
+              <div className="text-center">
+                <p className="font-semibold text-sm">{formatDate(day.date)}</p>
+                {day.uptime !== null ? (
+                  <>
+                    <p
+                      className="text-sm font-medium"
+                      style={{ color: getUptimeBarColor(day.uptime) }}
+                    >
+                      {day.uptime.toFixed(2)}% uptime
+                    </p>
+                    {day.downtime > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {day.downtime} min downtime
+                      </p>
+                    )}
+                    {day.incidents > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {day.incidents} incident{day.incidents > 1 ? "s" : ""}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No data</p>
+                )}
+              </div>
+            </TooltipPopup>
+          </Tooltip>
+        ))}
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>{days} days ago</span>
+        <span className="font-semibold text-foreground">
+          {overallUptime !== null ? `${overallUptime.toFixed(2)}% uptime` : "No data"}
+        </span>
+        <span>Today</span>
+      </div>
+    </div>
+  );
+}
+
+const timeFrameItems = [
+  { label: "30 days", value: "30" },
+  { label: "60 days", value: "60" },
+  { label: "90 days", value: "90" },
+];
+
+const intervalItems = [
+  { label: "30 seconds", value: "30" },
+  { label: "1 minute", value: "60" },
+  { label: "5 minutes", value: "300" },
+  { label: "10 minutes", value: "600" },
+];
+
+const timeoutItems = [
+  { label: "10 seconds", value: "10" },
+  { label: "30 seconds", value: "30" },
+  { label: "60 seconds", value: "60" },
+];
+
 export default function UptimePage() {
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -120,22 +282,34 @@ export default function UptimePage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [timeFrame, setTimeFrame] = useState<{ label: string; value: string } | null>(
+    timeFrameItems[2]
+  );
   const [checkingMonitor, setCheckingMonitor] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newMonitor, setNewMonitor] = useState({
-    projectId: "",
-    name: "",
-    url: "",
-    checkInterval: 60,
-    timeout: 30,
-    expectedStatusCode: 200,
-  });
+  const [selectedProject, setSelectedProject] = useState<{ label: string; value: string } | null>(
+    null
+  );
+  const [newMonitorName, setNewMonitorName] = useState("");
+  const [newMonitorUrl, setNewMonitorUrl] = useState("");
+  const [newMonitorInterval, setNewMonitorInterval] = useState<{
+    label: string;
+    value: string;
+  } | null>(intervalItems[1]);
+  const [newMonitorTimeout, setNewMonitorTimeout] = useState<{
+    label: string;
+    value: string;
+  } | null>(timeoutItems[1]);
   const [creating, setCreating] = useState(false);
+
+  const projectItems = useMemo(() => {
+    return projects.map((p) => ({ label: p.title, value: p.id }));
+  }, [projects]);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       const monitorsRes = await fetch("/api/v1/uptime/monitors");
       const monitorsData = await monitorsRes.json();
       if (monitorsData.success) {
@@ -206,25 +380,29 @@ export default function UptimePage() {
   };
 
   const handleCreateMonitor = async () => {
-    if (!newMonitor.projectId || !newMonitor.name || !newMonitor.url) return;
-    
+    if (!selectedProject || !newMonitorName || !newMonitorUrl) return;
+
     setCreating(true);
     try {
-      const res = await fetch(`/api/v1/uptime/projects/${newMonitor.projectId}/monitors`, {
+      const res = await fetch(`/api/v1/uptime/projects/${selectedProject.value}/monitors`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: newMonitor.name,
-          url: newMonitor.url,
-          checkInterval: newMonitor.checkInterval,
-          timeout: newMonitor.timeout,
-          expectedStatusCode: newMonitor.expectedStatusCode,
+          name: newMonitorName,
+          url: newMonitorUrl,
+          checkInterval: Number(newMonitorInterval?.value || "60"),
+          timeout: Number(newMonitorTimeout?.value || "30"),
+          expectedStatusCode: 200,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setCreateDialogOpen(false);
-        setNewMonitor({ projectId: "", name: "", url: "", checkInterval: 60, timeout: 30, expectedStatusCode: 200 });
+        setSelectedProject(null);
+        setNewMonitorName("");
+        setNewMonitorUrl("");
+        setNewMonitorInterval(intervalItems[1]);
+        setNewMonitorTimeout(timeoutItems[1]);
         await fetchData();
       }
     } catch (err) {
@@ -239,10 +417,14 @@ export default function UptimePage() {
     if (filterStatus === "up" && monitor.currentStatus !== "up") return false;
     if (filterStatus === "down" && monitor.currentStatus !== "down") return false;
     if (filterStatus === "degraded" && monitor.currentStatus !== "degraded") return false;
-    
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return monitor.name.toLowerCase().includes(q) || monitor.url.toLowerCase().includes(q) || monitor.projectTitle?.toLowerCase().includes(q);
+      return (
+        monitor.name.toLowerCase().includes(q) ||
+        monitor.url.toLowerCase().includes(q) ||
+        monitor.projectTitle?.toLowerCase().includes(q)
+      );
     }
     return true;
   });
@@ -250,44 +432,37 @@ export default function UptimePage() {
   const getStatusIcon = (status: string, isPaused: boolean) => {
     if (isPaused) return <Pause className="h-4 w-4 text-muted-foreground" />;
     switch (status) {
-      case "up": return <CheckCircle2 className="h-4 w-4 text-[var(--color-indeks-green)]" />;
-      case "down": return <XCircle className="h-4 w-4 text-destructive" />;
-      case "degraded": return <AlertTriangle className="h-4 w-4 text-[var(--color-indeks-yellow)]" />;
-      default: return <Signal className="h-4 w-4 text-muted-foreground" />;
+      case "up":
+        return <CheckCircle2 className="h-4 w-4 text-[var(--color-indeks-green)]" />;
+      case "down":
+        return <XCircle className="h-4 w-4 text-destructive" />;
+      case "degraded":
+        return <AlertTriangle className="h-4 w-4 text-[var(--color-indeks-yellow)]" />;
+      default:
+        return <Signal className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getStatusBadge = (status: string, isPaused: boolean) => {
     if (isPaused) return <Badge variant="outline">Paused</Badge>;
     switch (status) {
-      case "up": return <Badge variant="success">Up</Badge>;
-      case "down": return <Badge variant="error">Down</Badge>;
-      case "degraded": return <Badge variant="warning">Degraded</Badge>;
-      default: return <Badge variant="outline">Unknown</Badge>;
+      case "up":
+        return <Badge variant="success">Operational</Badge>;
+      case "down":
+        return <Badge variant="error">Down</Badge>;
+      case "degraded":
+        return <Badge variant="warning">Degraded</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
-  const formatLastChecked = (date: string | null) => {
-    if (!date) return "Never";
-    const d = new Date(date);
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return d.toLocaleDateString();
-  };
-
-  const formatInterval = (seconds: number) => {
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    return `${Math.floor(seconds / 3600)}h`;
-  };
-
   const getHostname = (url: string) => {
-    try { return new URL(url).hostname; } catch { return url; }
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return url;
+    }
   };
 
   if (loading) {
@@ -303,83 +478,130 @@ export default function UptimePage() {
   return (
     <DashboardLayout>
       <div className="space-y-4 sm:space-y-6">
+        {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Uptime</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Monitor the availability of your projects</p>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Monitor the availability of your projects
+            </p>
           </div>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Add Monitor</Button>
-            </DialogTrigger>
-            <DialogContent>
+            <DialogTrigger
+              render={
+                <Button className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Monitor
+                </Button>
+              }
+            />
+            <DialogPopup>
               <DialogHeader>
                 <DialogTitle>Create New Monitor</DialogTitle>
-                <DialogDescription>Add a new uptime monitor to track your website's availability.</DialogDescription>
+                <DialogDescription>
+                  Add a new uptime monitor to track your website availability.
+                </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="project">Project</Label>
-                  <Select value={newMonitor.projectId} onValueChange={(v) => setNewMonitor((p) => ({ ...p, projectId: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select a project" /></SelectTrigger>
-                    <SelectContent>
-                      {projects.map((project) => (<SelectItem key={project.id} value={project.id}>{project.title}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Monitor Name</Label>
-                  <Input id="name" placeholder="e.g., Main Website" value={newMonitor.name} onChange={(e) => setNewMonitor((p) => ({ ...p, name: e.target.value }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="url">URL to Monitor</Label>
-                  <Input id="url" placeholder="https://example.com" value={newMonitor.url} onChange={(e) => setNewMonitor((p) => ({ ...p, url: e.target.value }))} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <DialogPanel>
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="interval">Check Interval</Label>
-                    <Select value={String(newMonitor.checkInterval)} onValueChange={(v) => setNewMonitor((p) => ({ ...p, checkInterval: Number(v) }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="30">30 seconds</SelectItem>
-                        <SelectItem value="60">1 minute</SelectItem>
-                        <SelectItem value="300">5 minutes</SelectItem>
-                        <SelectItem value="600">10 minutes</SelectItem>
-                      </SelectContent>
+                    <Label>Project</Label>
+                    <Select value={selectedProject} onValueChange={setSelectedProject}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectPopup>
+                        {projectItems.map((item) => (
+                          <SelectItem key={item.value} value={item}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectPopup>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="timeout">Timeout</Label>
-                    <Select value={String(newMonitor.timeout)} onValueChange={(v) => setNewMonitor((p) => ({ ...p, timeout: Number(v) }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="10">10 seconds</SelectItem>
-                        <SelectItem value="30">30 seconds</SelectItem>
-                        <SelectItem value="60">60 seconds</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Monitor Name</Label>
+                    <Input
+                      value={newMonitorName}
+                      onChange={(e) => setNewMonitorName(e.target.value)}
+                      placeholder="My Website Monitor"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>URL to Monitor</Label>
+                    <Input
+                      value={newMonitorUrl}
+                      onChange={(e) => setNewMonitorUrl(e.target.value)}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Check Interval</Label>
+                      <Select value={newMonitorInterval} onValueChange={setNewMonitorInterval}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectPopup>
+                          {intervalItems.map((item) => (
+                            <SelectItem key={item.value} value={item}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectPopup>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Timeout</Label>
+                      <Select value={newMonitorTimeout} onValueChange={setNewMonitorTimeout}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectPopup>
+                          {timeoutItems.map((item) => (
+                            <SelectItem key={item.value} value={item}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectPopup>
+                      </Select>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateMonitor} disabled={creating}>
-                  {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create Monitor
+              </DialogPanel>
+              <DialogFooter variant="bare">
+                <DialogClose render={<Button variant="outline">Cancel</Button>} />
+                <Button
+                  onClick={handleCreateMonitor}
+                  disabled={creating || !selectedProject || !newMonitorName || !newMonitorUrl}
+                  className="bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]"
+                >
+                  {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Create Monitor
                 </Button>
               </DialogFooter>
-            </DialogContent>
+            </DialogPopup>
           </Dialog>
         </div>
 
-        {error && <div className="rounded-md bg-destructive/15 p-3 sm:p-4 text-sm text-destructive">{error}</div>}
+        {error && (
+          <div className="rounded-md bg-destructive/15 p-3 sm:p-4 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
+        {/* Stats Cards */}
         {summary && (
           <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
             <Card className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Monitors</p>
-                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{summary.totalMonitors}</h3>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    Total Monitors
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                    {summary.totalMonitors}
+                  </h3>
                 </div>
                 <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-blue)]" />
               </div>
@@ -387,8 +609,12 @@ export default function UptimePage() {
             <Card className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Operational</p>
-                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2 text-[var(--color-indeks-green)]">{summary.monitorsUp}</h3>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    Operational
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2 text-[var(--color-indeks-green)]">
+                    {summary.monitorsUp}
+                  </h3>
                 </div>
                 <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-green)]" />
               </div>
@@ -397,7 +623,9 @@ export default function UptimePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-muted-foreground">Down</p>
-                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2 text-destructive">{summary.monitorsDown}</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2 text-destructive">
+                    {summary.monitorsDown}
+                  </h3>
                 </div>
                 <XCircle className="h-6 w-6 sm:h-8 sm:w-8 text-destructive" />
               </div>
@@ -405,8 +633,12 @@ export default function UptimePage() {
             <Card className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Avg Uptime</p>
-                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{summary.avgUptime.toFixed(2)}%</h3>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    Avg Uptime
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">
+                    {summary.avgUptime.toFixed(2)}%
+                  </h3>
                 </div>
                 <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-[var(--color-indeks-yellow)]" />
               </div>
@@ -414,13 +646,17 @@ export default function UptimePage() {
           </div>
         )}
 
+        {/* Active Incidents Alert */}
         {summary && summary.ongoingIncidents > 0 && (
           <Card className="p-4 sm:p-6 border-destructive bg-destructive/5">
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <div>
                 <h3 className="font-semibold text-destructive">Active Incidents</h3>
-                <p className="text-sm text-muted-foreground">{summary.ongoingIncidents} monitor{summary.ongoingIncidents > 1 ? "s are" : " is"} currently experiencing issues.</p>
+                <p className="text-sm text-muted-foreground">
+                  {summary.ongoingIncidents} monitor
+                  {summary.ongoingIncidents > 1 ? "s are" : " is"} currently experiencing issues.
+                </p>
               </div>
             </div>
           </Card>
@@ -430,54 +666,26 @@ export default function UptimePage() {
           <Card className="p-8 sm:p-12">
             <Empty>
               <EmptyHeader>
-                <EmptyMedia variant="icon"><Activity /></EmptyMedia>
+                <EmptyMedia variant="icon">
+                  <Activity />
+                </EmptyMedia>
                 <EmptyTitle>No monitors yet</EmptyTitle>
-                <EmptyDescription>Create your first uptime monitor to start tracking availability.</EmptyDescription>
+                <EmptyDescription>
+                  Create your first uptime monitor to start tracking availability.
+                </EmptyDescription>
               </EmptyHeader>
-              <Button onClick={() => setCreateDialogOpen(true)} className="mt-4"><Plus className="h-4 w-4 mr-2" />Add Monitor</Button>
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                className="mt-4 bg-[var(--color-indeks-green)] hover:bg-[var(--color-indeks-green)]/90 text-[var(--color-indeks-black)]"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Monitor
+              </Button>
             </Empty>
           </Card>
         ) : (
           <>
-            {summary && summary.projectSummaries.length > 0 && (
-              <Card className="p-4 sm:p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Zap className="h-5 w-5 text-[var(--color-indeks-yellow)]" />
-                  <h3 className="text-base sm:text-lg font-semibold">Project Overview</h3>
-                </div>
-                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {summary.projectSummaries.map((project) => (
-                    <Link key={project.projectId} href={`/projects/${project.projectId}`}>
-                      <div className="p-3 sm:p-4 rounded-lg border hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm truncate">{project.projectTitle}</h4>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex items-center gap-4 text-xs">
-                          <div className="flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3 text-[var(--color-indeks-green)]" />
-                            <span>{project.monitorsUp} up</span>
-                          </div>
-                          {project.monitorsDown > 0 && (
-                            <div className="flex items-center gap-1">
-                              <XCircle className="h-3 w-3 text-destructive" />
-                              <span className="text-destructive">{project.monitorsDown} down</span>
-                            </div>
-                          )}
-                          {project.monitorsDegraded > 0 && (
-                            <div className="flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3 text-[var(--color-indeks-yellow)]" />
-                              <span>{project.monitorsDegraded} degraded</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </Card>
-            )}
-
+            {/* All Monitors */}
             <Card className="p-4 sm:p-6">
               <div className="flex flex-col gap-4 mb-4">
                 <div className="flex items-center justify-between">
@@ -485,24 +693,71 @@ export default function UptimePage() {
                     <Signal className="h-5 w-5 text-[var(--color-indeks-blue)]" />
                     <h3 className="text-base sm:text-lg font-semibold">All Monitors</h3>
                   </div>
-                  <Button variant="outline" size="sm" onClick={fetchData}><RefreshCw className="h-4 w-4 mr-2" />Refresh</Button>
+                  <div className="flex items-center gap-2">
+                    <Select value={timeFrame} onValueChange={setTimeFrame}>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectPopup>
+                        {timeFrameItems.map((item) => (
+                          <SelectItem key={item.value} value={item}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectPopup>
+                    </Select>
+                    <Button variant="outline" size="sm" onClick={fetchData}>
+                      <RefreshCw className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Refresh</span>
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search monitors..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search monitors..."
+                      className="pl-9 h-9"
+                    />
                   </div>
                   <div className="flex items-center gap-1 border rounded-lg p-1 shrink-0">
-                    <Button variant={filterStatus === "all" ? "secondary" : "ghost"} size="sm" onClick={() => setFilterStatus("all")} className="h-7 px-2 sm:px-3 text-xs">All</Button>
-                    <Button variant={filterStatus === "up" ? "secondary" : "ghost"} size="sm" onClick={() => setFilterStatus("up")} className="h-7 px-2 sm:px-3 text-xs">
-                      <CheckCircle2 className="h-3 w-3 sm:mr-1 text-[var(--color-indeks-green)]" /><span className="hidden sm:inline">Up</span>
+                    <Button
+                      variant={filterStatus === "all" ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setFilterStatus("all")}
+                      className="h-7 px-2 sm:px-3 text-xs"
+                    >
+                      All
                     </Button>
-                    <Button variant={filterStatus === "down" ? "secondary" : "ghost"} size="sm" onClick={() => setFilterStatus("down")} className="h-7 px-2 sm:px-3 text-xs">
-                      <XCircle className="h-3 w-3 sm:mr-1 text-destructive" /><span className="hidden sm:inline">Down</span>
+                    <Button
+                      variant={filterStatus === "up" ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setFilterStatus("up")}
+                      className="h-7 px-2 sm:px-3 text-xs"
+                    >
+                      <CheckCircle2 className="h-3 w-3 sm:mr-1 text-[var(--color-indeks-green)]" />
+                      <span className="hidden sm:inline">Up</span>
                     </Button>
-                    <Button variant={filterStatus === "paused" ? "secondary" : "ghost"} size="sm" onClick={() => setFilterStatus("paused")} className="h-7 px-2 sm:px-3 text-xs">
-                      <Pause className="h-3 w-3 sm:mr-1" /><span className="hidden sm:inline">Paused</span>
+                    <Button
+                      variant={filterStatus === "down" ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setFilterStatus("down")}
+                      className="h-7 px-2 sm:px-3 text-xs"
+                    >
+                      <XCircle className="h-3 w-3 sm:mr-1 text-destructive" />
+                      <span className="hidden sm:inline">Down</span>
+                    </Button>
+                    <Button
+                      variant={filterStatus === "paused" ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setFilterStatus("paused")}
+                      className="h-7 px-2 sm:px-3 text-xs"
+                    >
+                      <Pause className="h-3 w-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Paused</span>
                     </Button>
                   </div>
                 </div>
@@ -512,122 +767,126 @@ export default function UptimePage() {
                 <div className="py-8">
                   <Empty>
                     <EmptyHeader>
-                      <EmptyMedia variant="icon"><Search /></EmptyMedia>
+                      <EmptyMedia variant="icon">
+                        <Search />
+                      </EmptyMedia>
                       <EmptyTitle>No monitors found</EmptyTitle>
                       <EmptyDescription>Try adjusting your search or filter.</EmptyDescription>
                     </EmptyHeader>
                   </Empty>
                 </div>
               ) : (
-                <>
-                  <div className="hidden md:block">
-                    <Frame className="w-full">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Monitor</TableHead>
-                            <TableHead>Project</TableHead>
-                            <TableHead className="text-center">Status</TableHead>
-                            <TableHead className="text-center">Last Check</TableHead>
-                            <TableHead className="text-center">Interval</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredMonitors.map((monitor) => (
-                            <TableRow key={monitor.id}>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  {getStatusIcon(monitor.currentStatus, monitor.isPaused)}
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-medium truncate">{monitor.name}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{getHostname(monitor.url)}</p>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Link href={`/projects/${monitor.projectId}`} className="text-sm hover:text-[var(--color-indeks-blue)] transition-colors">
-                                  {monitor.projectTitle}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="text-center">{getStatusBadge(monitor.currentStatus, monitor.isPaused)}</TableCell>
-                              <TableCell className="text-center text-sm text-muted-foreground">{formatLastChecked(monitor.lastCheckedAt)}</TableCell>
-                              <TableCell className="text-center text-sm text-muted-foreground">{formatInterval(monitor.checkInterval)}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center justify-end gap-2">
-                                  <Button variant="ghost" size="sm" onClick={() => handleManualCheck(monitor.id)} disabled={checkingMonitor === monitor.id}>
-                                    <RefreshCw className={cn("h-4 w-4", checkingMonitor === monitor.id && "animate-spin")} />
-                                  </Button>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={() => handleTogglePause(monitor.id, monitor.isPaused)}>
-                                        {monitor.isPaused ? <><Play className="h-4 w-4 mr-2" />Resume</> : <><Pause className="h-4 w-4 mr-2" />Pause</>}
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem asChild>
-                                        <a href={monitor.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" />Visit URL</a>
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem onClick={() => handleDelete(monitor.id)} className="text-destructive">
-                                        <Trash2 className="h-4 w-4 mr-2" />Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </Frame>
-                  </div>
-
-                  <div className="md:hidden space-y-3">
-                    {filteredMonitors.map((monitor) => (
-                      <div key={monitor.id} className="p-3 rounded-lg border">
-                        <div className="flex items-start justify-between gap-2">
+                <div className="space-y-4">
+                  {filteredMonitors.map((monitor) => (
+                    <div
+                      key={monitor.id}
+                      className="p-4 sm:p-5 rounded-lg border hover:bg-muted/30 transition-colors"
+                    >
+                      {/* Monitor Header */}
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {getStatusIcon(monitor.currentStatus, monitor.isPaused)}
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              {getStatusIcon(monitor.currentStatus, monitor.isPaused)}
-                              <h4 className="font-medium text-sm truncate">{monitor.name}</h4>
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate mb-2">{getHostname(monitor.url)}</p>
-                            <div className="flex items-center gap-3 text-xs">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-semibold">{monitor.name}</h4>
                               {getStatusBadge(monitor.currentStatus, monitor.isPaused)}
-                              <span className="text-muted-foreground">{formatLastChecked(monitor.lastCheckedAt)}</span>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Button variant="ghost" size="sm" onClick={() => handleManualCheck(monitor.id)} disabled={checkingMonitor === monitor.id}>
-                              <RefreshCw className={cn("h-4 w-4", checkingMonitor === monitor.id && "animate-spin")} />
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleTogglePause(monitor.id, monitor.isPaused)}>
-                                  {monitor.isPaused ? <><Play className="h-4 w-4 mr-2" />Resume</> : <><Pause className="h-4 w-4 mr-2" />Pause</>}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <a href={monitor.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" />Visit URL</a>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleDelete(monitor.id)} className="text-destructive">
-                                  <Trash2 className="h-4 w-4 mr-2" />Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                              <span className="truncate">{getHostname(monitor.url)}</span>
+                              <span>•</span>
+                              <Link
+                                href={`/projects/${monitor.projectId}`}
+                                className="hover:text-[var(--color-indeks-blue)] transition-colors"
+                              >
+                                {monitor.projectTitle}
+                              </Link>
+                            </div>
                           </div>
                         </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleManualCheck(monitor.id)}
+                            disabled={checkingMonitor === monitor.id}
+                          >
+                            <RefreshCw
+                              className={cn(
+                                "h-4 w-4",
+                                checkingMonitor === monitor.id && "animate-spin"
+                              )}
+                            />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
+                              <MoreVertical className="h-4 w-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleTogglePause(monitor.id, monitor.isPaused)}
+                              >
+                                {monitor.isPaused ? (
+                                  <>
+                                    <Play className="h-4 w-4 mr-2" />
+                                    Resume
+                                  </>
+                                ) : (
+                                  <>
+                                    <Pause className="h-4 w-4 mr-2" />
+                                    Pause
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => window.open(monitor.url, "_blank")}
+                              >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Visit URL
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(monitor.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </>
+
+                      {/* Uptime Graph */}
+                      <UptimeShowcase
+                        monitorId={monitor.id}
+                        dailyStats={monitor.dailyStats}
+                        days={Number(timeFrame?.value || "90")}
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </Card>
+
+            {/* Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-[#22c55e]" />
+                <span>Operational</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-[#eab308]" />
+                <span>Degraded</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-[#f97316]" />
+                <span>Partial outage</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-[#ef4444]" />
+                <span>Major outage</span>
+              </div>
+            </div>
           </>
         )}
       </div>
