@@ -66,7 +66,7 @@ export default function UptimeAlertEmail({
       <Hr style={hr} />
 
       <Text style={subtext}>
-        You're receiving this because you have uptime alerts enabled. 
+        You&apos;re receiving this because you have uptime alerts enabled. 
         You can manage your notification preferences in settings.
       </Text>
     </BaseTemplate>

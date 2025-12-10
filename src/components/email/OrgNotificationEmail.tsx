@@ -74,7 +74,7 @@ export default function OrgNotificationEmail({
       <Hr style={hr} />
 
       <Text style={subtext}>
-        You're receiving this because you're an admin of this organization.
+        You&apos;re receiving this because you&apos;re an admin of this organization.
         You can manage your notification preferences in settings.
       </Text>
     </BaseTemplate>

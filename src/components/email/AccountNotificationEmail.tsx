@@ -64,7 +64,7 @@ export default function AccountNotificationEmail({
       <Hr style={hr} />
 
       <Text style={subtext}>
-        You're receiving this because you have account notifications enabled.
+        You&apos;re receiving this because you have account notifications enabled.
         You can manage your preferences in settings.
       </Text>
     </BaseTemplate>
